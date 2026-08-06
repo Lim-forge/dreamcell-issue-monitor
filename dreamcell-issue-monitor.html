@@ -1,0 +1,1013 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>드림셀 이슈 모니터</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --sbw:212px;--sbbg:#1B2333;--sbtext:#8A95A8;
+  --accent:#D95F2B;--bg:#F4F6FA;--card:#fff;
+  --border:#E2E8F0;--text:#1A202C;--t2:#4A5568;--t3:#A0AEC0;
+  --ok:#2F855A;--err:#C53030;--info:#2B6CB0;--r:5px;
+}
+html,body{height:100%;overflow:hidden}
+body{font-family:'Pretendard',-apple-system,BlinkMacSystemFont,'Segoe UI','Malgun Gothic',sans-serif;
+     font-size:13px;background:var(--bg);color:var(--text);display:flex}
+
+/* ── loading ── */
+#lb{position:fixed;top:0;left:0;right:0;height:2px;
+    background:linear-gradient(90deg,var(--accent) 0%,#F6AD55 50%,var(--accent) 100%);
+    background-size:200%;animation:sh 1s linear infinite;display:none;z-index:9999}
+#lb.on{display:block}
+@keyframes sh{to{background-position:-200% center}}
+
+/* ── sidebar ── */
+.sb{width:var(--sbw);min-width:var(--sbw);height:100vh;background:var(--sbbg);
+    display:flex;flex-direction:column;overflow:hidden;flex-shrink:0}
+.sb-logo{padding:18px 16px 14px;border-bottom:1px solid rgba(255,255,255,.06)}
+.sb-brand{font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;
+          color:var(--accent);margin-bottom:3px}
+.sb-title{font-size:14.5px;font-weight:800;color:#fff;letter-spacing:-.01em}
+.sb-sub{font-size:10px;color:rgba(255,255,255,.28);margin-top:2px}
+.sb-grp{padding:18px 16px 5px;font-size:9.5px;font-weight:700;letter-spacing:.12em;
+        text-transform:uppercase;color:rgba(255,255,255,.25)}
+.ni{display:flex;align-items:center;gap:9px;padding:9px 16px 9px 14px;cursor:pointer;
+    border-left:3px solid transparent;transition:background .12s}
+.ni:hover{background:rgba(255,255,255,.05)}
+.ni.on{background:rgba(255,255,255,.08);border-left-color:var(--accent)}
+.ni.on .nl{color:#fff;font-weight:600}
+.nic{font-size:14px;width:18px;text-align:center;flex-shrink:0}
+.nl{font-size:12px;color:var(--sbtext);line-height:1.4;flex:1}
+.nb{font-size:10px;font-weight:700;min-width:20px;height:18px;padding:0 5px;border-radius:9px;
+    display:inline-flex;align-items:center;justify-content:center;background:var(--accent);color:#fff}
+.nb.z{background:rgba(255,255,255,.12);color:rgba(255,255,255,.4)}
+.sb-ft{margin-top:auto;padding:12px 16px;border-top:1px solid rgba(255,255,255,.05);
+       display:flex;align-items:center;gap:7px}
+.cd{width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,.2);flex-shrink:0}
+.cd.on{background:#48BB78}
+.ct{font-size:11px;color:rgba(255,255,255,.3)}
+
+/* ── main shell ── */
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0}
+.panel{display:none;flex-direction:column;height:100%;overflow:hidden}
+.panel.on{display:flex}
+
+/* ── panel header ── */
+.ph{height:52px;background:var(--card);border-bottom:1px solid var(--border);
+    padding:0 22px;display:flex;align-items:center;gap:10px;flex-shrink:0}
+.ph-t{font-size:14px;font-weight:700;letter-spacing:-.01em}
+.ph-n{font-size:11.5px;font-weight:600;color:var(--t2);background:#EDF2F7;
+      padding:2px 9px;border-radius:11px}
+.ph-s{flex:1}
+.ph-m{font-size:11px;color:var(--t3)}
+.mode-g{display:flex;border:1px solid var(--border);border-radius:var(--r);overflow:hidden}
+.mbtn{padding:5px 13px;font-size:12px;font-weight:600;cursor:pointer;border:none;
+      background:transparent;color:var(--t2);font-family:inherit;transition:background .1s,color .1s}
+.mbtn:hover{background:#F7FAFC}
+.mbtn.on{background:var(--accent);color:#fff}
+
+/* ── view / input area ── */
+.va{display:flex;flex-direction:column;flex:1;overflow:hidden}
+.ia{display:none;flex-direction:column;flex:1;overflow:hidden}
+
+/* ── filter bar ── */
+.fb{background:var(--card);border-bottom:1px solid var(--border);
+    padding:9px 22px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;flex-shrink:0}
+.fbl{font-size:11.5px;color:var(--t2);font-weight:500;white-space:nowrap}
+.fbs{font-size:11px;color:var(--t3)}
+input[type="date"],.fi,.fs{height:29px;border:1px solid var(--border);border-radius:var(--r);
+  font-size:12.5px;font-family:inherit;color:var(--text);background:#fff;outline:none;
+  padding:0 9px;transition:border-color .12s}
+input[type="date"]{width:128px}
+.fi{width:140px}
+.fs{cursor:pointer}
+input[type="date"]:focus,.fi:focus,.fs:focus{border-color:var(--accent)}
+.fbr{margin-left:auto;display:flex;gap:7px}
+
+/* ── content body ── */
+.cb{flex:1;overflow-y:auto;padding:18px 22px}
+
+/* ── table card ── */
+.tc{background:var(--card);border:1px solid var(--border);border-radius:var(--r);
+    overflow:hidden;box-shadow:0 1px 2px rgba(0,0,0,.07)}
+.tx{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:12.5px}
+thead th{background:#F7F8FC;border-bottom:1px solid var(--border);padding:8px 11px;
+         font-size:11.5px;font-weight:600;color:var(--t2);text-align:left;white-space:nowrap}
+thead th.r{text-align:right}
+tbody tr{border-bottom:1px solid #EDF2F7;transition:background .09s}
+tbody tr:hover{background:#F7FAFC}
+tbody tr:last-child{border-bottom:none}
+tbody td{padding:8px 11px;vertical-align:middle;white-space:nowrap}
+tbody td.r{text-align:right}
+tbody td.dm{color:var(--t3);font-size:12px}
+.badge{display:inline-block;padding:2px 7px;border-radius:9px;font-size:11px;font-weight:600}
+.br{background:#FFF5F5;color:var(--err)}
+.bo{background:#FFFAF0;color:#9C4221}
+.bg{background:#F0FFF4;color:var(--ok)}
+.bgr{background:#EDF2F7;color:#4A5568}
+.bb{background:#EBF8FF;color:var(--info)}
+.mlo{color:var(--err);font-weight:700}
+.empty{padding:55px 20px;text-align:center}
+.emic{font-size:34px;opacity:.35;margin-bottom:10px}
+.emt{font-size:13.5px;font-weight:600;color:var(--t2);margin-bottom:4px}
+.ems{font-size:12px;color:var(--t3)}
+
+/* ── input type tabs ── */
+.it-bar{background:var(--card);border-bottom:1px solid var(--border);
+        padding:0 22px;display:flex;flex-shrink:0}
+.it-tab{padding:10px 16px;font-size:12.5px;font-weight:600;cursor:pointer;border:none;
+        background:transparent;font-family:inherit;color:var(--t3);
+        border-bottom:2px solid transparent;transition:color .12s,border-color .12s}
+.it-tab.on{color:var(--accent);border-bottom-color:var(--accent)}
+.it-sec{display:none;flex:1;overflow:hidden}
+.it-sec.on{display:flex;flex-direction:column}
+
+/* ── csv zone ── */
+.csv-zone{border:2px dashed var(--border);border-radius:8px;padding:42px 20px;
+          text-align:center;cursor:pointer;transition:border-color .15s,background .15s;
+          margin-bottom:14px}
+.csv-zone:hover,.csv-zone.dov{border-color:var(--accent);background:#FFF5F0}
+.csv-ic{font-size:36px;margin-bottom:10px;opacity:.4}
+.csv-t1{font-size:13px;font-weight:700;color:var(--t2);margin-bottom:4px}
+.csv-t2{font-size:11.5px;color:var(--t3)}
+.col-guide{font-size:11.5px;color:var(--t2);line-height:1.7;
+           background:#F7F8FC;padding:10px 14px;border-radius:var(--r);
+           border:1px solid var(--border)}
+.col-guide b{color:var(--accent);margin-right:4px}
+
+/* ── grid ── */
+.grid-wrap{flex:1;overflow:auto;padding:18px 22px 0}
+.grid-table{border-collapse:collapse;font-size:12.5px;min-width:max-content}
+.grid-table th{background:#EDF2F7;padding:7px 8px;font-size:11.5px;font-weight:600;
+               color:var(--t2);border:1px solid #CBD5E0;white-space:nowrap;text-align:left;
+               position:sticky;top:0;z-index:2}
+.grid-table th.rn{width:36px;text-align:center}
+.grid-table td{border:1px solid #E2E8F0;padding:0;vertical-align:middle}
+.grid-table td.rnc{width:36px;text-align:center;font-size:11px;color:var(--t3);
+                   background:#F7F8FC;user-select:none;padding:5px 4px}
+.grid-table td[contenteditable]{padding:5px 7px;outline:none;min-height:28px;cursor:cell;
+                                white-space:nowrap;overflow:hidden;font-family:inherit;min-width:60px}
+.grid-table td[contenteditable]:focus{background:#EBF8FF;
+  outline:2px solid var(--info);outline-offset:-2px;position:relative;z-index:1}
+.grid-table td[contenteditable].ec{background:#FFF5F5;
+  outline:2px solid var(--err);outline-offset:-2px}
+/* date input cell */
+.grid-table td.gdt{padding:0}
+.gdt input[type="date"]{width:100%;height:28px;border:none;outline:none;
+  padding:4px 7px;font-size:12.5px;font-family:inherit;background:transparent;
+  cursor:pointer;color:var(--text)}
+.gdt:focus-within{background:#EBF8FF;outline:2px solid var(--info);
+  outline-offset:-2px;position:relative;z-index:1}
+.gdt.ec{background:#FFF5F5;outline:2px solid var(--err);outline-offset:-2px}
+.grid-act{padding:8px 22px;background:var(--card);border-top:1px solid var(--border);
+          display:flex;align-items:center;gap:8px;flex-shrink:0}
+.g-hint{font-size:11px;color:var(--t3);margin-left:6px}
+
+/* ── save bar ── */
+.save-bar{background:var(--card);border-top:2px solid var(--border);
+          padding:12px 22px;display:flex;justify-content:flex-end;gap:8px;flex-shrink:0}
+
+/* ── buttons ── */
+.btn{height:29px;padding:0 13px;border-radius:var(--r);font-size:12.5px;font-family:inherit;
+     font-weight:600;cursor:pointer;border:none;display:inline-flex;align-items:center;
+     gap:4px;transition:opacity .12s;white-space:nowrap}
+.btn:hover{opacity:.85}
+.btn-p{background:var(--accent);color:#fff}
+.btn-g{background:transparent;color:var(--t2);border:1px solid var(--border)}
+.btn-g:hover{background:#F7FAFC;opacity:1}
+</style>
+</head>
+<body>
+<div id="lb"></div>
+
+<!-- ═══ SIDEBAR ═══ -->
+<aside class="sb">
+  <div class="sb-logo">
+    <div class="sb-brand">DreamCell</div>
+    <div class="sb-title">이슈 모니터</div>
+    <div class="sb-sub">Issue Monitoring System</div>
+  </div>
+  <div class="sb-grp">출고 이슈</div>
+  <div class="ni on" id="nav-lms" onclick="go('lms')">
+    <span class="nic">📦</span><span class="nl">10% 미만 마진<br>출고건</span>
+    <span class="nb z" id="badge-lms">—</span>
+  </div>
+  <div class="ni" id="nav-ret" onclick="go('ret')">
+    <span class="nic">🔄</span><span class="nl">반품처리건</span>
+    <span class="nb z" id="badge-ret">—</span>
+  </div>
+  <div class="sb-grp">수주 이슈</div>
+  <div class="ni" id="nav-cc" onclick="go('cc')">
+    <span class="nic">⚠️</span><span class="nl">수주 취소·변경건</span>
+    <span class="nb z" id="badge-cc">—</span>
+  </div>
+  <div class="ni" id="nav-lmo" onclick="go('lmo')">
+    <span class="nic">📋</span><span class="nl">10% 미만 마진<br>수주건</span>
+    <span class="nb z" id="badge-lmo">—</span>
+  </div>
+  <div class="sb-ft">
+    <div class="cd" id="connDot"></div>
+    <span class="ct" id="connText">Supabase 미연결</span>
+  </div>
+</aside>
+
+<!-- ═══ MAIN ═══ -->
+<div class="main">
+
+  <!-- ▌ LMS -->
+  <div class="panel on" id="panel-lms">
+    <div class="ph">
+      <span class="ph-t">10% 미만 마진 출고건</span>
+      <span class="ph-n" id="cnt-lms">0건</span>
+      <div class="mode-g">
+        <button class="mbtn on" id="mbv-lms" onclick="setMode('lms','view')">📊 조회</button>
+        <button class="mbtn"    id="mbi-lms" onclick="setMode('lms','input')">✏️ 입력</button>
+      </div>
+      <span class="ph-s"></span>
+      <span class="ph-m" id="ts-lms"></span>
+    </div>
+    <div class="va" id="va-lms">
+      <div class="fb">
+        <span class="fbl">출고일</span>
+        <input type="date" id="lms-f"><span class="fbs">~</span><input type="date" id="lms-t">
+        <select class="fs" id="lms-rep" style="width:110px"><option value="">담당자 전체</option></select>
+        <input class="fi" placeholder="거래처 검색" id="lms-cust">
+        <button class="btn btn-p" onclick="loadLMS()">🔍 조회</button>
+        <div class="fbr"><button class="btn btn-g" onclick="xcsv('lms')">⬇ CSV</button></div>
+      </div>
+      <div class="cb"><div class="tc"><div class="tx">
+        <table><thead><tr>
+          <th>출고일</th><th>주문번호</th><th>거래처</th><th>채널</th>
+          <th>품목</th><th class="r">수량</th><th class="r">판매가</th>
+          <th class="r">원가</th><th class="r">마진율</th><th>담당자</th><th>비고</th>
+        </tr></thead>
+        <tbody id="tb-lms"><tr><td colspan="11"><div class="empty">
+          <div class="emic">📦</div><div class="emt">조회 전입니다</div>
+          <div class="ems">기간을 설정하고 조회 버튼을 눌러주세요</div>
+        </div></td></tr></tbody></table>
+      </div></div></div>
+    </div>
+    <div class="ia" id="ia-lms"></div>
+  </div>
+
+  <!-- ▌ RET -->
+  <div class="panel" id="panel-ret">
+    <div class="ph">
+      <span class="ph-t">반품처리건</span>
+      <span class="ph-n" id="cnt-ret">0건</span>
+      <div class="mode-g">
+        <button class="mbtn on" id="mbv-ret" onclick="setMode('ret','view')">📊 조회</button>
+        <button class="mbtn"    id="mbi-ret" onclick="setMode('ret','input')">✏️ 입력</button>
+      </div>
+      <span class="ph-s"></span>
+      <span class="ph-m" id="ts-ret"></span>
+    </div>
+    <div class="va" id="va-ret">
+      <div class="fb">
+        <span class="fbl">접수일</span>
+        <input type="date" id="ret-f"><span class="fbs">~</span><input type="date" id="ret-t">
+        <select class="fs" id="ret-status" style="width:110px">
+          <option value="">처리상태 전체</option>
+          <option>접수</option><option>처리중</option><option>완료</option><option>보류</option>
+        </select>
+        <input class="fi" placeholder="거래처 검색" id="ret-cust">
+        <button class="btn btn-p" onclick="loadRET()">🔍 조회</button>
+        <div class="fbr"><button class="btn btn-g" onclick="xcsv('ret')">⬇ CSV</button></div>
+      </div>
+      <div class="cb"><div class="tc"><div class="tx">
+        <table><thead><tr>
+          <th>접수일</th><th>주문번호</th><th>거래처</th><th>품목</th>
+          <th class="r">수량</th><th>반품사유</th><th>처리상태</th>
+          <th>담당자</th><th>완료예정일</th><th>비고</th>
+        </tr></thead>
+        <tbody id="tb-ret"><tr><td colspan="10"><div class="empty">
+          <div class="emic">🔄</div><div class="emt">조회 전입니다</div>
+          <div class="ems">기간을 설정하고 조회 버튼을 눌러주세요</div>
+        </div></td></tr></tbody></table>
+      </div></div></div>
+    </div>
+    <div class="ia" id="ia-ret"></div>
+  </div>
+
+  <!-- ▌ CC -->
+  <div class="panel" id="panel-cc">
+    <div class="ph">
+      <span class="ph-t">수주 취소·변경건</span>
+      <span class="ph-n" id="cnt-cc">0건</span>
+      <div class="mode-g">
+        <button class="mbtn on" id="mbv-cc" onclick="setMode('cc','view')">📊 조회</button>
+        <button class="mbtn"    id="mbi-cc" onclick="setMode('cc','input')">✏️ 입력</button>
+      </div>
+      <span class="ph-s"></span>
+      <span class="ph-m" id="ts-cc"></span>
+    </div>
+    <div class="va" id="va-cc">
+      <div class="fb">
+        <span class="fbl">접수일</span>
+        <input type="date" id="cc-f"><span class="fbs">~</span><input type="date" id="cc-t">
+        <select class="fs" id="cc-type" style="width:90px">
+          <option value="">구분 전체</option><option>취소</option><option>변경</option>
+        </select>
+        <select class="fs" id="cc-status" style="width:110px">
+          <option value="">처리상태 전체</option>
+          <option>접수</option><option>처리중</option><option>완료</option>
+        </select>
+        <input class="fi" placeholder="거래처 검색" id="cc-cust">
+        <button class="btn btn-p" onclick="loadCC()">🔍 조회</button>
+        <div class="fbr"><button class="btn btn-g" onclick="xcsv('cc')">⬇ CSV</button></div>
+      </div>
+      <div class="cb"><div class="tc"><div class="tx">
+        <table><thead><tr>
+          <th>접수일</th><th>주문번호</th><th>거래처</th><th>구분</th>
+          <th>사유</th><th class="r">금액</th><th>담당자</th>
+          <th>처리상태</th><th>처리일</th><th>비고</th>
+        </tr></thead>
+        <tbody id="tb-cc"><tr><td colspan="10"><div class="empty">
+          <div class="emic">⚠️</div><div class="emt">조회 전입니다</div>
+          <div class="ems">기간을 설정하고 조회 버튼을 눌러주세요</div>
+        </div></td></tr></tbody></table>
+      </div></div></div>
+    </div>
+    <div class="ia" id="ia-cc"></div>
+  </div>
+
+  <!-- ▌ LMO -->
+  <div class="panel" id="panel-lmo">
+    <div class="ph">
+      <span class="ph-t">10% 미만 마진 수주건</span>
+      <span class="ph-n" id="cnt-lmo">0건</span>
+      <div class="mode-g">
+        <button class="mbtn on" id="mbv-lmo" onclick="setMode('lmo','view')">📊 조회</button>
+        <button class="mbtn"    id="mbi-lmo" onclick="setMode('lmo','input')">✏️ 입력</button>
+      </div>
+      <span class="ph-s"></span>
+      <span class="ph-m" id="ts-lmo"></span>
+    </div>
+    <div class="va" id="va-lmo">
+      <div class="fb">
+        <span class="fbl">수주일</span>
+        <input type="date" id="lmo-f"><span class="fbs">~</span><input type="date" id="lmo-t">
+        <select class="fs" id="lmo-rep" style="width:110px"><option value="">담당자 전체</option></select>
+        <input class="fi" placeholder="거래처 검색" id="lmo-cust">
+        <button class="btn btn-p" onclick="loadLMO()">🔍 조회</button>
+        <div class="fbr"><button class="btn btn-g" onclick="xcsv('lmo')">⬇ CSV</button></div>
+      </div>
+      <div class="cb"><div class="tc"><div class="tx">
+        <table><thead><tr>
+          <th>수주일</th><th>주문번호</th><th>거래처</th><th>채널</th>
+          <th>품목</th><th class="r">수량</th><th class="r">판매가</th>
+          <th class="r">원가</th><th class="r">마진율</th><th>담당자</th><th>비고</th>
+        </tr></thead>
+        <tbody id="tb-lmo"><tr><td colspan="11"><div class="empty">
+          <div class="emic">📋</div><div class="emt">조회 전입니다</div>
+          <div class="ems">기간을 설정하고 조회 버튼을 눌러주세요</div>
+        </div></td></tr></tbody></table>
+      </div></div></div>
+    </div>
+    <div class="ia" id="ia-lmo"></div>
+  </div>
+
+</div><!-- /main -->
+
+<script>
+/* ════════════════════════════════════
+   SUPABASE  ← 이 두 줄만 수정
+════════════════════════════════════ */
+const SB_URL = 'https://fhlowhfqgmjnmzgvmjsi.supabase.co';
+const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZobG93aGZxZ21qbm16Z3ZtanNpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU5ODU2NDgsImV4cCI6MjEwMTU2MTY0OH0.eW5_u_52wxD9UBPo_FzDgs6CqKqzTZPZO_j703gj1ps';
+
+let sb = null;
+try {
+  sb = supabase.createClient(SB_URL, SB_KEY);
+  document.getElementById('connDot').classList.add('on');
+  document.getElementById('connText').textContent = 'Supabase 연결됨';
+} catch(e) { console.warn('[SB]', e); }
+
+/* ════════════════════════════════════
+   TAB META  (컬럼 정의 단일 소스)
+════════════════════════════════════ */
+const M = {
+  lms: {
+    tbl: 'shipments', dk: 'ship_date', computeMG: true,
+    cols: [
+      {k:'ship_date',     lb:'출고일',    t:'date', req:true, w:108},
+      {k:'order_no',      lb:'주문번호',  t:'text',           w:96},
+      {k:'customer_name', lb:'거래처',    t:'text',           w:120},
+      {k:'channel',       lb:'채널',      t:'text',           w:76},
+      {k:'item_name',     lb:'품목',      t:'text',           w:150},
+      {k:'qty',           lb:'수량',      t:'num',            w:68},
+      {k:'sale_price',    lb:'판매가',    t:'num',            w:88},
+      {k:'cost',          lb:'원가',      t:'num',            w:88},
+      {k:'rep',           lb:'담당자',    t:'text',           w:76},
+      {k:'note',          lb:'비고',      t:'text',           w:150},
+    ]
+  },
+  ret: {
+    tbl: 'returns', dk: 'recv_date',
+    cols: [
+      {k:'recv_date',     lb:'접수일',     t:'date', req:true, w:108},
+      {k:'order_no',      lb:'주문번호',   t:'text',           w:96},
+      {k:'customer_name', lb:'거래처',     t:'text',           w:120},
+      {k:'item_name',     lb:'품목',       t:'text',           w:150},
+      {k:'qty',           lb:'수량',       t:'num',            w:68},
+      {k:'reason',        lb:'반품사유',   t:'text',           w:120},
+      {k:'status',        lb:'처리상태',   t:'text',           w:80, def:'접수', hint:'접수/처리중/완료/보류'},
+      {k:'rep',           lb:'담당자',     t:'text',           w:76},
+      {k:'due_date',      lb:'완료예정일', t:'date',           w:108},
+      {k:'note',          lb:'비고',       t:'text',           w:150},
+    ]
+  },
+  cc: {
+    tbl: 'order_issues', dk: 'recv_date',
+    cols: [
+      {k:'recv_date',     lb:'접수일',   t:'date', req:true, w:108},
+      {k:'order_no',      lb:'주문번호', t:'text',           w:96},
+      {k:'customer_name', lb:'거래처',   t:'text',           w:120},
+      {k:'issue_type',    lb:'구분',     t:'text', req:true, w:72, hint:'취소/변경'},
+      {k:'reason',        lb:'사유',     t:'text',           w:120},
+      {k:'amount',        lb:'금액',     t:'num',            w:88},
+      {k:'rep',           lb:'담당자',   t:'text',           w:76},
+      {k:'status',        lb:'처리상태', t:'text',           w:80, def:'접수', hint:'접수/처리중/완료'},
+      {k:'resolved_date', lb:'처리일',   t:'date',           w:108},
+      {k:'note',          lb:'비고',     t:'text',           w:150},
+    ]
+  },
+  lmo: {
+    tbl: 'orders', dk: 'order_date', computeMG: true,
+    cols: [
+      {k:'order_date',    lb:'수주일',   t:'date', req:true, w:108},
+      {k:'order_no',      lb:'주문번호', t:'text',           w:96},
+      {k:'customer_name', lb:'거래처',   t:'text',           w:120},
+      {k:'channel',       lb:'채널',     t:'text',           w:76},
+      {k:'item_name',     lb:'품목',     t:'text',           w:150},
+      {k:'qty',           lb:'수량',     t:'num',            w:68},
+      {k:'sale_price',    lb:'판매가',   t:'num',            w:88},
+      {k:'cost',          lb:'원가',     t:'num',            w:88},
+      {k:'rep',           lb:'담당자',   t:'text',           w:76},
+      {k:'note',          lb:'비고',     t:'text',           w:150},
+    ]
+  },
+};
+
+const TABS = ['lms','ret','cc','lmo'];
+
+/* ════════════════════════════════════
+   INIT
+════════════════════════════════════ */
+(function init(){
+  const pfx = {lms:'lms',ret:'ret',cc:'cc',lmo:'lmo'};
+  TABS.forEach(t => {
+    const p = pfx[t];
+    const ef = document.getElementById(p+'-f');
+    const et = document.getElementById(p+'-t');
+    if(ef) ef.value = monthAgo();
+    if(et) et.value = today();
+  });
+  TABS.forEach(t => buildInputArea(t));
+})();
+
+/* ════════════════════════════════════
+   TAB NAV
+════════════════════════════════════ */
+function go(tab){
+  TABS.forEach(t=>{
+    document.getElementById('panel-'+t).classList.remove('on');
+    document.getElementById('nav-'+t).classList.remove('on');
+  });
+  document.getElementById('panel-'+tab).classList.add('on');
+  document.getElementById('nav-'+tab).classList.add('on');
+}
+
+/* ════════════════════════════════════
+   VIEW / INPUT MODE
+════════════════════════════════════ */
+function setMode(tab, mode){
+  const v = document.getElementById('va-'+tab);
+  const i = document.getElementById('ia-'+tab);
+  const bv= document.getElementById('mbv-'+tab);
+  const bi= document.getElementById('mbi-'+tab);
+  if(mode==='view'){
+    v.style.display=''; i.style.display='none';
+    bv.classList.add('on'); bi.classList.remove('on');
+  } else {
+    v.style.display='none'; i.style.display='flex';
+    bv.classList.remove('on'); bi.classList.add('on');
+  }
+}
+
+/* ════════════════════════════════════
+   HELPERS
+════════════════════════════════════ */
+const L = on => document.getElementById('lb').classList.toggle('on',on);
+function today(){ return new Date().toISOString().slice(0,10); }
+function monthAgo(){ const d=new Date(); d.setMonth(d.getMonth()-1); return d.toISOString().slice(0,10); }
+function fmt(n){ return n!=null ? Number(n).toLocaleString() : '—'; }
+function pct(v){ return v!=null ? (+v).toFixed(1)+'%' : '—'; }
+function mgC(v){ return +v<10 ? 'mlo' : ''; }
+function setTS(tab){ document.getElementById('ts-'+tab).textContent='최근 조회 '+new Date().toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit',second:'2-digit'}); }
+function setCnt(tab,n){
+  document.getElementById('cnt-'+tab).textContent=n+'건';
+  const b=document.getElementById('badge-'+tab);
+  b.textContent=n; b.classList.toggle('z',n===0);
+}
+function emptyR(cols,ic,msg){ return `<tr><td colspan="${cols}"><div class="empty"><div class="emic">${ic}</div><div class="emt">${msg}</div><div class="ems">조건을 확인하거나 Supabase 테이블을 점검해주세요</div></div></td></tr>`; }
+function errR(cols,msg){ return `<tr><td colspan="${cols}"><div class="empty"><div class="emic">❌</div><div class="emt">조회 오류</div><div class="ems">${msg}</div></div></td></tr>`; }
+function guard(){ if(!sb){alert('Supabase 연결 정보를 설정해주세요.\n\nSB_URL / SB_KEY를 스크립트 상단에 입력하세요.');return false;} return true; }
+
+/* ════════════════════════════════════
+   QUERY FUNCTIONS
+════════════════════════════════════ */
+async function loadLMS(){
+  if(!guard()) return; L(true);
+  try {
+    let q=sb.from('shipments').select('*').lt('margin_rate',10)
+      .gte('ship_date',document.getElementById('lms-f').value)
+      .lte('ship_date',document.getElementById('lms-t').value)
+      .order('ship_date',{ascending:false});
+    const c=document.getElementById('lms-cust').value.trim();
+    const r=document.getElementById('lms-rep').value;
+    if(c) q=q.ilike('customer_name','%'+c+'%');
+    if(r) q=q.eq('rep',r);
+    const {data,error}=await q; if(error) throw error;
+    const tb=document.getElementById('tb-lms');
+    if(!data?.length){ tb.innerHTML=emptyR(11,'📦','해당 조건의 출고건이 없습니다'); setCnt('lms',0); }
+    else {
+      tb.innerHTML=data.map(r=>`<tr>
+        <td>${r.ship_date||'—'}</td><td>${r.order_no||'—'}</td><td>${r.customer_name||'—'}</td>
+        <td>${r.channel||'—'}</td><td>${r.item_name||'—'}</td>
+        <td class="r">${fmt(r.qty)}</td><td class="r">${fmt(r.sale_price)}</td>
+        <td class="r">${fmt(r.cost)}</td>
+        <td class="r"><span class="${mgC(r.margin_rate)}">${pct(r.margin_rate)}</span></td>
+        <td>${r.rep||'—'}</td><td class="dm">${r.note||''}</td></tr>`).join('');
+      setCnt('lms',data.length);
+    }
+    setTS('lms');
+  } catch(e){ document.getElementById('tb-lms').innerHTML=errR(11,e.message); }
+  finally{ L(false); }
+}
+
+async function loadRET(){
+  if(!guard()) return; L(true);
+  try {
+    let q=sb.from('returns').select('*')
+      .gte('recv_date',document.getElementById('ret-f').value)
+      .lte('recv_date',document.getElementById('ret-t').value)
+      .order('recv_date',{ascending:false});
+    const st=document.getElementById('ret-status').value;
+    const c=document.getElementById('ret-cust').value.trim();
+    if(st) q=q.eq('status',st);
+    if(c)  q=q.ilike('customer_name','%'+c+'%');
+    const {data,error}=await q; if(error) throw error;
+    const SB={접수:'bb',처리중:'bo',완료:'bg',보류:'bgr'};
+    const tb=document.getElementById('tb-ret');
+    if(!data?.length){ tb.innerHTML=emptyR(10,'🔄','해당 조건의 반품건이 없습니다'); setCnt('ret',0); }
+    else {
+      tb.innerHTML=data.map(r=>`<tr>
+        <td>${r.recv_date||'—'}</td><td>${r.order_no||'—'}</td>
+        <td>${r.customer_name||'—'}</td><td>${r.item_name||'—'}</td>
+        <td class="r">${fmt(r.qty)}</td><td>${r.reason||'—'}</td>
+        <td><span class="badge ${SB[r.status]||'bgr'}">${r.status||'—'}</span></td>
+        <td>${r.rep||'—'}</td><td>${r.due_date||'—'}</td>
+        <td class="dm">${r.note||''}</td></tr>`).join('');
+      setCnt('ret',data.length);
+    }
+    setTS('ret');
+  } catch(e){ document.getElementById('tb-ret').innerHTML=errR(10,e.message); }
+  finally{ L(false); }
+}
+
+async function loadCC(){
+  if(!guard()) return; L(true);
+  try {
+    let q=sb.from('order_issues').select('*')
+      .in('issue_type',['취소','변경'])
+      .gte('recv_date',document.getElementById('cc-f').value)
+      .lte('recv_date',document.getElementById('cc-t').value)
+      .order('recv_date',{ascending:false});
+    const tp=document.getElementById('cc-type').value;
+    const st=document.getElementById('cc-status').value;
+    const c=document.getElementById('cc-cust').value.trim();
+    if(tp) q=q.eq('issue_type',tp);
+    if(st) q=q.eq('status',st);
+    if(c)  q=q.ilike('customer_name','%'+c+'%');
+    const {data,error}=await q; if(error) throw error;
+    const TB={취소:'br',변경:'bo'}; const SB={접수:'bb',처리중:'bo',완료:'bg'};
+    const tb=document.getElementById('tb-cc');
+    if(!data?.length){ tb.innerHTML=emptyR(10,'⚠️','해당 조건의 취소·변경건이 없습니다'); setCnt('cc',0); }
+    else {
+      tb.innerHTML=data.map(r=>`<tr>
+        <td>${r.recv_date||'—'}</td><td>${r.order_no||'—'}</td><td>${r.customer_name||'—'}</td>
+        <td><span class="badge ${TB[r.issue_type]||'bgr'}">${r.issue_type||'—'}</span></td>
+        <td>${r.reason||'—'}</td><td class="r">${fmt(r.amount)}</td>
+        <td>${r.rep||'—'}</td>
+        <td><span class="badge ${SB[r.status]||'bgr'}">${r.status||'—'}</span></td>
+        <td>${r.resolved_date||'—'}</td><td class="dm">${r.note||''}</td></tr>`).join('');
+      setCnt('cc',data.length);
+    }
+    setTS('cc');
+  } catch(e){ document.getElementById('tb-cc').innerHTML=errR(10,e.message); }
+  finally{ L(false); }
+}
+
+async function loadLMO(){
+  if(!guard()) return; L(true);
+  try {
+    let q=sb.from('orders').select('*').lt('margin_rate',10)
+      .gte('order_date',document.getElementById('lmo-f').value)
+      .lte('order_date',document.getElementById('lmo-t').value)
+      .order('order_date',{ascending:false});
+    const c=document.getElementById('lmo-cust').value.trim();
+    const r=document.getElementById('lmo-rep').value;
+    if(c) q=q.ilike('customer_name','%'+c+'%');
+    if(r) q=q.eq('rep',r);
+    const {data,error}=await q; if(error) throw error;
+    const tb=document.getElementById('tb-lmo');
+    if(!data?.length){ tb.innerHTML=emptyR(11,'📋','해당 조건의 수주건이 없습니다'); setCnt('lmo',0); }
+    else {
+      tb.innerHTML=data.map(r=>`<tr>
+        <td>${r.order_date||'—'}</td><td>${r.order_no||'—'}</td><td>${r.customer_name||'—'}</td>
+        <td>${r.channel||'—'}</td><td>${r.item_name||'—'}</td>
+        <td class="r">${fmt(r.qty)}</td><td class="r">${fmt(r.sale_price)}</td>
+        <td class="r">${fmt(r.cost)}</td>
+        <td class="r"><span class="${mgC(r.margin_rate)}">${pct(r.margin_rate)}</span></td>
+        <td>${r.rep||'—'}</td><td class="dm">${r.note||''}</td></tr>`).join('');
+      setCnt('lmo',data.length);
+    }
+    setTS('lmo');
+  } catch(e){ document.getElementById('tb-lmo').innerHTML=errR(11,e.message); }
+  finally{ L(false); }
+}
+
+const LFNS = {lms:loadLMS, ret:loadRET, cc:loadCC, lmo:loadLMO};
+
+/* ════════════════════════════════════
+   BUILD INPUT AREA (동적 생성)
+════════════════════════════════════ */
+function buildInputArea(tab){
+  const meta = M[tab];
+  const colNames = meta.cols.map(c=>c.lb).join(' → ');
+  const el = document.getElementById('ia-'+tab);
+
+  el.innerHTML = `
+    <div class="it-bar">
+      <button class="it-tab on" id="itb-csv-${tab}" onclick="setIT('${tab}','csv')">📂 CSV 업로드</button>
+      <button class="it-tab"   id="itb-grd-${tab}" onclick="setIT('${tab}','grid')">⌨️ 직접 입력</button>
+    </div>
+
+    <!-- CSV 섹션 -->
+    <div class="it-sec on" id="it-csv-${tab}">
+      <div class="cb">
+        <div class="csv-zone" id="czn-${tab}">
+          <div class="csv-ic">📂</div>
+          <div class="csv-t1">CSV / TSV 파일을 드래그하거나 클릭</div>
+          <div class="csv-t2">UTF-8 · UTF-8 BOM 형식 · 첫 행은 헤더 또는 컬럼 순서대로</div>
+        </div>
+        <input type="file" id="cfl-${tab}" accept=".csv,.tsv,.txt" style="display:none"
+               onchange="handleCSV('${tab}',this.files[0]);this.value=''">
+        <div class="col-guide"><b>컬럼 순서</b>${colNames}</div>
+      </div>
+    </div>
+
+    <!-- 그리드 섹션 -->
+    <div class="it-sec" id="it-grd-${tab}">
+      <div class="grid-wrap" id="gw-${tab}">
+        <div class="tc" style="margin:18px 22px 0;overflow:visible">
+          <div class="tx">
+            <table class="grid-table">
+              <thead id="gh-${tab}"></thead>
+              <tbody id="gb-${tab}"></tbody>
+            </table>
+          </div>
+        </div>
+        <div style="height:18px"></div>
+      </div>
+      <div class="grid-act">
+        <button class="btn btn-g" onclick="addRow('${tab}')">＋ 행 추가</button>
+        <button class="btn btn-g" onclick="clearGrid('${tab}')">⌫ 초기화</button>
+        <span class="g-hint">Tab / Enter: 다음 셀 &nbsp;·&nbsp; ↑↓←→: 셀 이동 &nbsp;·&nbsp; Ctrl+V: 엑셀 붙여넣기</span>
+      </div>
+    </div>
+
+    <div class="save-bar">
+      <button class="btn btn-g" onclick="setMode('${tab}','view')">✕ 취소</button>
+      <button class="btn btn-p" onclick="save('${tab}')">💾 저장</button>
+    </div>`;
+
+  // CSV zone 이벤트
+  const zone = document.getElementById('czn-'+tab);
+  zone.addEventListener('click', ()=>document.getElementById('cfl-'+tab).click());
+  zone.addEventListener('dragover', e=>{e.preventDefault(); zone.classList.add('dov');});
+  zone.addEventListener('dragleave', ()=>zone.classList.remove('dov'));
+  zone.addEventListener('drop', e=>{
+    e.preventDefault(); zone.classList.remove('dov');
+    handleCSV(tab, e.dataTransfer.files[0]);
+  });
+
+  // 그리드 헤더 + 초기 행
+  buildHead(tab);
+  for(let i=0; i<8; i++) addRow(tab, false);
+}
+
+function setIT(tab, type){
+  ['csv','grd'].forEach(t=>{
+    document.getElementById('it-'+t+'-'+tab)?.classList.remove('on');
+    document.getElementById('itb-'+t+'-'+tab)?.classList.remove('on');
+  });
+  const sec = type==='csv' ? 'csv' : 'grd';
+  document.getElementById('it-'+sec+'-'+tab)?.classList.add('on');
+  document.getElementById('itb-'+sec+'-'+tab)?.classList.add('on');
+}
+
+/* ════════════════════════════════════
+   GRID ENGINE
+════════════════════════════════════ */
+function buildHead(tab){
+  const meta = M[tab];
+  document.getElementById('gh-'+tab).innerHTML = `<tr>
+    <th class="rn">#</th>
+    ${meta.cols.map(c=>`<th style="width:${c.w||100}px">${c.lb}${c.req?'<span style="color:var(--err)">*</span>':''}${c.hint?'<br><span style="font-size:9.5px;color:var(--t3);font-weight:400">'+c.hint+'</span>':''}</th>`).join('')}
+  </tr>`;
+}
+
+function makeRow(tab, rowNum){
+  const meta = M[tab];
+  const tr = document.createElement('tr');
+  tr.innerHTML = `<td class="rnc">${rowNum}</td>` +
+    meta.cols.map((c,ci)=>{
+      if(c.t==='date'){
+        return `<td class="gdt" data-tab="${tab}" data-ci="${ci}" data-k="${c.k}" data-t="date">
+          <input type="date" data-tab="${tab}" data-ci="${ci}" data-k="${c.k}" data-t="date">
+        </td>`;
+      }
+      return `<td contenteditable="true" data-tab="${tab}" data-ci="${ci}" data-k="${c.k}" data-t="${c.t||'text'}">${c.def||''}</td>`;
+    }).join('');
+  tr.querySelectorAll('td[contenteditable]').forEach(td=>{
+    td.addEventListener('keydown', onKey);
+    td.addEventListener('paste', onPaste);
+  });
+  tr.querySelectorAll('td.gdt input').forEach(inp=>{
+    inp.addEventListener('keydown', onKey);
+  });
+  return tr;
+}
+
+function addRow(tab, scroll=true){
+  const tbody = document.getElementById('gb-'+tab);
+  const rn = tbody.querySelectorAll('tr').length + 1;
+  tbody.appendChild(makeRow(tab, rn));
+  if(scroll){
+    const gw = document.getElementById('gw-'+tab);
+    if(gw) gw.scrollTop = gw.scrollHeight;
+  }
+}
+
+function clearGrid(tab){
+  if(!confirm('그리드를 모두 지울까요?')) return;
+  document.getElementById('gb-'+tab).innerHTML='';
+  for(let i=0;i<8;i++) addRow(tab,false);
+}
+
+function updRNs(tbody){
+  [...tbody.querySelectorAll('tr')].forEach((tr,i)=>{
+    const c=tr.querySelector('.rnc'); if(c) c.textContent=i+1;
+  });
+}
+
+/* ════════════════════════════════════
+   KEYBOARD NAVIGATION
+════════════════════════════════════ */
+function onKey(e){
+  const el  = e.currentTarget;
+  const isDate = el.tagName==='INPUT' && el.type==='date';
+  const td  = isDate ? el.closest('td') : el;
+  const tr  = td.closest('tr');
+  const tb  = tr.closest('tbody');
+  const rows  = [...tb.querySelectorAll('tr')];
+  const cells = [...tr.querySelectorAll('td[contenteditable], td.gdt')];
+  const ri = rows.indexOf(tr);
+  const ci = cells.indexOf(td);
+  const tab = td.dataset.tab;
+
+  function focusCell(cell){
+    if(!cell) return;
+    if(cell.classList.contains('gdt')){ cell.querySelector('input')?.focus(); }
+    else {
+      cell.focus();
+      const rng=document.createRange();
+      rng.selectNodeContents(cell); rng.collapse(false);
+      const sel=window.getSelection(); sel.removeAllRanges(); sel.addRange(rng);
+    }
+  }
+
+  function move(dr, dc){
+    const nr=ri+dr, nc=ci+dc;
+    if(nc<0||nc>=cells.length) return;
+    if(dr<0&&nr<0) return;
+    if(nr>=rows.length){ addRow(tab,false); updRNs(tb); }
+    const trows=tb.querySelectorAll('tr');
+    const trow=trows[Math.max(0,Math.min(nr,trows.length-1))];
+    const tcells=[...trow.querySelectorAll('td[contenteditable], td.gdt')];
+    e.preventDefault();
+    focusCell(tcells[nc]);
+  }
+
+  switch(e.key){
+    case 'Tab':    e.preventDefault(); e.shiftKey?move(0,-1):move(0,1); break;
+    case 'Enter':  e.preventDefault(); move(1,0); break;
+    case 'ArrowUp':    if(!isDate){e.preventDefault(); move(-1,0);} break;
+    case 'ArrowDown':  if(!isDate){e.preventDefault(); move(1,0);}  break;
+    case 'ArrowLeft':
+      if(!isDate){const s=window.getSelection(); if(s.rangeCount&&s.getRangeAt(0).startOffset===0) move(0,-1);}
+      break;
+    case 'ArrowRight':
+      if(!isDate){const s=window.getSelection(); if(s.rangeCount){const r=s.getRangeAt(0); if(r.endOffset>=el.textContent.length) move(0,1);}}
+      break;
+    case 'Escape': el.blur(); break;
+  }
+}
+
+/* ════════════════════════════════════
+   PASTE (엑셀 붙여넣기)
+════════════════════════════════════ */
+function onPaste(e){
+  e.preventDefault();
+  const text=(e.clipboardData||window.clipboardData).getData('text/plain');
+  if(!text) return;
+
+  const td   = e.currentTarget;
+  const tr   = td.closest('tr');
+  const tb   = tr.closest('tbody');
+  const tab  = td.dataset.tab;
+  let rows   = [...tb.querySelectorAll('tr')];
+  const cells= [...tr.querySelectorAll('td[contenteditable]')];
+  const sr   = rows.indexOf(tr);
+  const sc   = cells.indexOf(td);
+
+  const pdata = text.split(/\r?\n/).filter(l=>l!=='').map(l=>l.split('\t'));
+
+  pdata.forEach((rdata, ri)=>{
+    while(rows.length <= sr+ri){
+      addRow(tab,false);
+      rows=[...tb.querySelectorAll('tr')];
+    }
+    const tcs=[...rows[sr+ri].querySelectorAll('td[contenteditable], td.gdt')];
+    rdata.forEach((val,ci)=>{
+      const cell=tcs[sc+ci];
+      if(!cell) return;
+      if(cell.classList.contains('gdt')){
+        const inp=cell.querySelector('input');
+        if(inp) inp.value = parseDate(val.trim());
+      } else {
+        cell.textContent=val.trim();
+      }
+    });
+  });
+  updRNs(tb);
+}
+
+/* ════════════════════════════════════
+   CSV UPLOAD
+════════════════════════════════════ */
+function handleCSV(tab, file){
+  if(!file) return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    let txt=e.target.result;
+    if(txt.charCodeAt(0)===0xFEFF) txt=txt.slice(1);
+    const sep=txt.includes('\t')?'\t':',';
+    const lines=txt.split(/\r?\n/).filter(l=>l.trim());
+    if(lines.length<2){alert('데이터가 없습니다.');return;}
+
+    const hdrs=csvLine(lines[0],sep);
+    const meta=M[tab];
+    const tbody=document.getElementById('gb-'+tab);
+    tbody.innerHTML='';
+
+    lines.slice(1).forEach((line,ri)=>{
+      const vals=csvLine(line,sep);
+      const tr=makeRow(tab,ri+1);
+      // makeRow가 이미 기본값 세팅, 여기서 덮어씀
+      const tcs=[...tr.querySelectorAll('td[contenteditable]')];
+      meta.cols.forEach((c,ci)=>{
+        const hi=hdrs.findIndex(h=>h===c.k||h===c.lb);
+        tcs[ci].textContent = hi>=0 ? (vals[hi]||'') : (vals[ci]||'');
+      });
+      tbody.appendChild(tr);
+    });
+
+    setIT(tab,'grid');
+    alert(`✅ ${lines.length-1}행 불러왔습니다.\n내용 확인 후 저장 버튼을 눌러주세요.`);
+  };
+  reader.readAsText(file,'UTF-8');
+}
+
+function csvLine(line, sep){
+  if(sep==='\t') return line.split('\t').map(v=>v.replace(/^"|"$/g,'').trim());
+  const res=[]; let cur=''; let inQ=false;
+  for(let i=0;i<line.length;i++){
+    if(line[i]==='"'){ inQ=!inQ; }
+    else if(line[i]===sep&&!inQ){ res.push(cur.trim()); cur=''; }
+    else cur+=line[i];
+  }
+  res.push(cur.trim()); return res;
+}
+
+/* ════════════════════════════════════
+   SAVE → SUPABASE
+════════════════════════════════════ */
+async function save(tab){
+  if(!guard()) return;
+  const meta=M[tab];
+  const tbody=document.getElementById('gb-'+tab);
+  const rows=[...tbody.querySelectorAll('tr')];
+  const records=[]; let hasErr=false;
+
+  rows.forEach(tr=>{
+    const cells=[...tr.querySelectorAll('td[contenteditable], td.gdt')];
+    const isEmpty=cells.every(td=>{
+      if(td.classList.contains('gdt')) return !td.querySelector('input')?.value;
+      return !td.textContent.trim();
+    });
+    if(isEmpty) return;
+
+    const rec={};
+    cells.forEach(td=>{
+      td.classList.remove('ec');
+      let val;
+      if(td.classList.contains('gdt')){ val = td.querySelector('input')?.value||''; }
+      else { val = td.textContent.trim(); }
+      rec[td.dataset.k]=parseVal(val, td.dataset.t);
+    });
+
+    // required 검사
+    meta.cols.filter(c=>c.req).forEach(c=>{
+      if(!rec[c.k]){
+        tr.querySelector(`[data-k="${c.k}"]`)?.classList.add('ec');
+        hasErr=true;
+      }
+    });
+
+    // margin_rate 자동 계산 (sale_price, cost 입력 시)
+    if(meta.computeMG && rec.sale_price && rec.cost){
+      rec.margin_rate=((rec.sale_price-rec.cost)/rec.sale_price*100);
+    }
+
+    records.push(rec);
+  });
+
+  if(hasErr){alert('❗ 빨간 셀(필수 항목)을 확인해주세요.'); return;}
+  if(!records.length){alert('저장할 데이터가 없습니다.'); return;}
+  if(!confirm(`${records.length}건을 Supabase에 저장할까요?`)) return;
+
+  L(true);
+  try {
+    const {error}=await sb.from(meta.tbl).insert(records);
+    if(error) throw error;
+    alert(`✅ ${records.length}건 저장 완료!`);
+    setMode(tab,'view');
+    LFNS[tab]();
+  } catch(e){
+    alert('저장 실패: '+e.message);
+    console.error(e);
+  } finally{ L(false); }
+}
+
+function parseVal(v,t){
+  if(!v||v==='—'||v==='') return null;
+  if(t==='num') return parseFloat(String(v).replace(/,/g,''))||null;
+  if(t==='date') return parseDate(String(v).trim());
+  return v;
+}
+function parseDate(v){
+  if(!v) return null;
+  if(/^\d{4}-\d{2}-\d{2}$/.test(v)) return v;                                        // 2026-07-01
+  if(/^\d{8}$/.test(v)) return `${v.slice(0,4)}-${v.slice(4,6)}-${v.slice(6,8)}`;    // 20260701
+  if(/^\d{6}$/.test(v)) return `20${v.slice(0,2)}-${v.slice(2,4)}-${v.slice(4,6)}`; // 260701
+  v=v.replace(/[./]/g,'-');
+  if(/^\d{4}-\d{2}-\d{2}$/.test(v)) return v;                                        // 2026.07.01
+  if(/^\d{2}-\d{2}-\d{2}$/.test(v)) return `20${v}`;                                 // 26.07.01
+  return v;
+}
+
+/* ════════════════════════════════════
+   VIEW CSV EXPORT
+════════════════════════════════════ */
+function xcsv(tab){
+  const tbl=document.querySelector('#panel-'+tab+' .va table');
+  if(!tbl) return;
+  const rows=[...tbl.querySelectorAll('tr')];
+  if(rows.length<=1){alert('내보낼 데이터가 없습니다.'); return;}
+  const csv=rows.map(r=>[...r.querySelectorAll('th,td')]
+    .map(c=>'"'+c.textContent.trim().replace(/"/g,'""')+'"').join(',')).join('\n');
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8;'}));
+  a.download='issue_'+tab+'_'+today()+'.csv';
+  a.click();
+}
+</script>
+</body>
+</html>
