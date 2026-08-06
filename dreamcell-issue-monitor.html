@@ -866,11 +866,21 @@ function handleXLSX(tab,file){
     try{
       const wb=XLSX.read(new Uint8Array(e.target.result),{type:'array',cellDates:true});
       const ws=wb.Sheets[wb.SheetNames[0]];
-      const arr=XLSX.utils.sheet_to_json(ws,{header:1,raw:false,dateNF:'yyyy-mm-dd',defval:''});
-      const rows=arr.filter(r=>r.some(c=>String(c).trim()!==''));
+      // raw:true 로 받아서 Date 객체를 직접 처리 (미국식 날짜포맷 문제 회피)
+      const arr=XLSX.utils.sheet_to_json(ws,{header:1,raw:true,defval:''});
+      const rows=arr.filter(r=>r.some(c=>c!==null&&c!==undefined&&String(c).trim()!==''));
       if(rows.length<2){alert('데이터가 없습니다.');return;}
       const hdrs=rows[0].map(h=>String(h).trim());
-      fillGrid(tab,hdrs,rows.slice(1).map(r=>r.map(c=>String(c).trim())));
+      const body=rows.slice(1).map(r=>r.map(c=>{
+        if(c instanceof Date&&!isNaN(c)){
+          const y=c.getFullYear();
+          const m=String(c.getMonth()+1).padStart(2,'0');
+          const d=String(c.getDate()).padStart(2,'0');
+          return y+'-'+m+'-'+d;
+        }
+        return c==null?'':String(c).trim();
+      }));
+      fillGrid(tab,hdrs,body);
     }catch(err){alert('엑셀 읽기 실패: '+err.message);console.error(err);}
   };
   reader.readAsArrayBuffer(file);
