@@ -188,6 +188,11 @@ tbody td.dm{color:var(--t3);font-size:12px}
 .gdt:focus-within{background:#FFFBEB;outline:2px solid var(--gold);
   outline-offset:-2px;position:relative;z-index:1}
 .gdt.ec{background:#FFF1F1;outline:2px solid var(--err);outline-offset:-2px}
+.grid-table td.gsel{padding:0}
+.gsel select{width:100%;height:28px;border:none;outline:none;padding:3px 6px;
+  font-size:12.5px;font-family:inherit;background:transparent;cursor:pointer;color:var(--text)}
+.gsel:focus-within{background:#FFFBEB;outline:2px solid var(--gold);
+  outline-offset:-2px;position:relative;z-index:1}
 .grid-act{padding:10px 18px;background:var(--card);border-top:1px solid var(--border);
           display:flex;align-items:center;gap:8px;flex-shrink:0}
 .g-hint{font-size:11px;color:var(--t3);margin-left:6px}
@@ -268,18 +273,18 @@ tbody td.dm{color:var(--t3);font-size:12px}
       <div class="fb">
         <span class="fbl">출고일</span>
         <input type="date" id="lms-f"><span class="fbs">~</span><input type="date" id="lms-t">
-        <select class="fs" id="lms-rep" style="width:110px"><option value="">담당자 전체</option></select>
+        <input class="fi" id="lms-rep" placeholder="담당자" style="width:90px">
         <input class="fi" placeholder="거래처 검색" id="lms-cust">
         <button class="btn btn-p" onclick="loadLMS()">🔍 조회</button>
         <div class="fbr"><button class="btn btn-g" onclick="xcsv('lms')">⬇ CSV</button></div>
       </div>
       <div class="tbl-card"><div class="tx">
         <table><thead><tr>
-          <th>출고일</th><th>주문번호</th><th>거래처</th><th>채널</th>
-          <th>품목</th><th class="r">수량</th><th class="r">판매가</th>
-          <th class="r">원가</th><th class="r">마진율</th><th>담당자</th><th>비고</th>
+          <th>출고일</th><th>거래처</th><th>담당자</th><th>카달로그번호</th>
+          <th>품명</th><th>브랜드</th><th class="r">입고가</th>
+          <th class="r">출고가</th><th class="r">마진율</th><th>사유</th>
         </tr></thead>
-        <tbody id="tb-lms"><tr><td colspan="11"><div class="empty">
+        <tbody id="tb-lms"><tr><td colspan="10"><div class="empty">
           <div class="emic">📦</div><div class="emt">조회 전입니다</div>
           <div class="ems">기간을 설정하고 조회 버튼을 눌러주세요</div>
         </div></td></tr></tbody></table>
@@ -306,9 +311,9 @@ tbody td.dm{color:var(--t3);font-size:12px}
       </button>
       <div class="kpi-grid" id="kpi-grid-ret">
         <div class="kpi-card"><div class="kpi-lbl">총 건수</div><div class="kpi-val" id="kv-ret-cnt">—</div></div>
-        <div class="kpi-card"><div class="kpi-lbl">접수</div><div class="kpi-val" id="kv-ret-접수">—</div></div>
-        <div class="kpi-card"><div class="kpi-lbl">처리중</div><div class="kpi-val warn" id="kv-ret-처리중">—</div></div>
-        <div class="kpi-card"><div class="kpi-lbl">완료</div><div class="kpi-val ok" id="kv-ret-완료">—</div></div>
+        <div class="kpi-card"><div class="kpi-lbl">처리중</div><div class="kpi-val warn" id="kv-ret-접수">—</div></div>
+        <div class="kpi-card"><div class="kpi-lbl">악성재고</div><div class="kpi-val warn" id="kv-ret-처리중">—</div></div>
+        <div class="kpi-card"><div class="kpi-lbl">반품완료</div><div class="kpi-val ok" id="kv-ret-완료">—</div></div>
       </div>
     </div>
     <div class="va" id="va-ret">
@@ -316,8 +321,8 @@ tbody td.dm{color:var(--t3);font-size:12px}
         <span class="fbl">접수일</span>
         <input type="date" id="ret-f"><span class="fbs">~</span><input type="date" id="ret-t">
         <select class="fs" id="ret-status" style="width:110px">
-          <option value="">처리상태 전체</option>
-          <option>접수</option><option>처리중</option><option>완료</option><option>보류</option>
+          <option value="">처리내용 전체</option>
+          <option>반품완료</option><option>악성재고</option><option>재고사용</option><option>처리중</option><option>클레임</option><option>폐기</option>
         </select>
         <input class="fi" placeholder="거래처 검색" id="ret-cust">
         <button class="btn btn-p" onclick="loadRET()">🔍 조회</button>
@@ -325,11 +330,11 @@ tbody td.dm{color:var(--t3);font-size:12px}
       </div>
       <div class="tbl-card"><div class="tx">
         <table><thead><tr>
-          <th>접수일</th><th>주문번호</th><th>거래처</th><th>품목</th>
-          <th class="r">수량</th><th>반품사유</th><th>처리상태</th>
-          <th>담당자</th><th>완료예정일</th><th>비고</th>
+          <th>반품일</th><th>담당자</th><th>코드</th><th>품명</th>
+          <th class="r">수량</th><th>매입처</th><th>수주처</th>
+          <th>사유</th><th>처리내용</th><th class="r">단가</th><th class="r">합계</th>
         </tr></thead>
-        <tbody id="tb-ret"><tr><td colspan="10"><div class="empty">
+        <tbody id="tb-ret"><tr><td colspan="11"><div class="empty">
           <div class="emic">🔄</div><div class="emt">조회 전입니다</div>
           <div class="ems">기간을 설정하고 조회 버튼을 눌러주세요</div>
         </div></td></tr></tbody></table>
@@ -357,27 +362,26 @@ tbody td.dm{color:var(--t3);font-size:12px}
       <div class="kpi-grid" id="kpi-grid-cc">
         <div class="kpi-card"><div class="kpi-lbl">총 건수</div><div class="kpi-val" id="kv-cc-cnt">—</div></div>
         <div class="kpi-card"><div class="kpi-lbl">취소</div><div class="kpi-val warn" id="kv-cc-cancel">—</div></div>
-        <div class="kpi-card"><div class="kpi-lbl">변경</div><div class="kpi-val" id="kv-cc-change">—</div></div>
-        <div class="kpi-card"><div class="kpi-lbl">총 금액</div><div class="kpi-val" id="kv-cc-sum">—</div></div>
+        <div class="kpi-card"><div class="kpi-lbl">금액조정</div><div class="kpi-val" id="kv-cc-change">—</div></div>
+        <div class="kpi-card"><div class="kpi-lbl">총 차액</div><div class="kpi-val" id="kv-cc-sum">—</div></div>
       </div>
     </div>
     <div class="va" id="va-cc">
       <div class="fb">
         <span class="fbl">접수일</span>
         <input type="date" id="cc-f"><span class="fbs">~</span><input type="date" id="cc-t">
-        <select class="fs" id="cc-type" style="width:90px"><option value="">구분 전체</option><option>취소</option><option>변경</option></select>
-        <select class="fs" id="cc-status" style="width:110px"><option value="">처리상태 전체</option><option>접수</option><option>처리중</option><option>완료</option></select>
+        <select class="fs" id="cc-type" style="width:100px"><option value="">변경사유 전체</option><option>취소</option><option>금액조정</option></select>
         <input class="fi" placeholder="거래처 검색" id="cc-cust">
         <button class="btn btn-p" onclick="loadCC()">🔍 조회</button>
         <div class="fbr"><button class="btn btn-g" onclick="xcsv('cc')">⬇ CSV</button></div>
       </div>
       <div class="tbl-card"><div class="tx">
         <table><thead><tr>
-          <th>접수일</th><th>주문번호</th><th>거래처</th><th>구분</th>
-          <th>사유</th><th class="r">금액</th><th>담당자</th>
-          <th>처리상태</th><th>처리일</th><th>비고</th>
+          <th>기존수주일</th><th>거래처</th><th>담당자</th><th>브랜드</th>
+          <th>카달로그번호</th><th>품명</th><th>변경사유</th>
+          <th>사유</th><th class="r">차액</th>
         </tr></thead>
-        <tbody id="tb-cc"><tr><td colspan="10"><div class="empty">
+        <tbody id="tb-cc"><tr><td colspan="9"><div class="empty">
           <div class="emic">⚠️</div><div class="emt">조회 전입니다</div>
           <div class="ems">기간을 설정하고 조회 버튼을 눌러주세요</div>
         </div></td></tr></tbody></table>
@@ -413,18 +417,19 @@ tbody td.dm{color:var(--t3);font-size:12px}
       <div class="fb">
         <span class="fbl">수주일</span>
         <input type="date" id="lmo-f"><span class="fbs">~</span><input type="date" id="lmo-t">
-        <select class="fs" id="lmo-rep" style="width:110px"><option value="">담당자 전체</option></select>
+        <input class="fi" id="lmo-rep" placeholder="수주자" style="width:90px">
         <input class="fi" placeholder="거래처 검색" id="lmo-cust">
         <button class="btn btn-p" onclick="loadLMO()">🔍 조회</button>
         <div class="fbr"><button class="btn btn-g" onclick="xcsv('lmo')">⬇ CSV</button></div>
       </div>
       <div class="tbl-card"><div class="tx">
         <table><thead><tr>
-          <th>수주일</th><th>주문번호</th><th>거래처</th><th>채널</th>
-          <th>품목</th><th class="r">수량</th><th class="r">판매가</th>
-          <th class="r">원가</th><th class="r">마진율</th><th>담당자</th><th>비고</th>
+          <th>수주자</th><th>수주일</th><th>수주처</th><th>품명코드</th>
+          <th>품명</th><th class="r">수주량</th><th class="r">수주단가</th>
+          <th>제조업체</th><th>발주처</th><th class="r">발주단가</th>
+          <th class="r">마진율</th><th>사유</th>
         </tr></thead>
-        <tbody id="tb-lmo"><tr><td colspan="11"><div class="empty">
+        <tbody id="tb-lmo"><tr><td colspan="12"><div class="empty">
           <div class="emic">📋</div><div class="emt">조회 전입니다</div>
           <div class="ems">기간을 설정하고 조회 버튼을 눌러주세요</div>
         </div></td></tr></tbody></table>
@@ -444,50 +449,49 @@ try{sb=supabase.createClient(SB_URL,SB_KEY);
 }catch(e){console.warn('[SB]',e)}
 
 const M={
-  lms:{tbl:'shipments',dk:'ship_date',computeMG:true,cols:[
+  lms:{tbl:'shipments',dk:'ship_date',computeMG:{sale:'sale_price',cost:'cost_price',out:'margin_rate'},cols:[
     {k:'ship_date',lb:'출고일',t:'date',req:true,w:108},
-    {k:'order_no',lb:'주문번호',t:'text',w:96},
     {k:'customer_name',lb:'거래처',t:'text',w:120},
-    {k:'channel',lb:'채널',t:'text',w:76},
-    {k:'item_name',lb:'품목',t:'text',w:150},
-    {k:'qty',lb:'수량',t:'num',w:68},
-    {k:'sale_price',lb:'판매가',t:'num',w:88},
-    {k:'cost',lb:'원가',t:'num',w:88},
     {k:'rep',lb:'담당자',t:'text',w:76},
-    {k:'note',lb:'비고',t:'text',w:150}]},
-  ret:{tbl:'returns',dk:'recv_date',cols:[
-    {k:'recv_date',lb:'접수일',t:'date',req:true,w:108},
-    {k:'order_no',lb:'주문번호',t:'text',w:96},
-    {k:'customer_name',lb:'거래처',t:'text',w:120},
-    {k:'item_name',lb:'품목',t:'text',w:150},
-    {k:'qty',lb:'수량',t:'num',w:68},
-    {k:'reason',lb:'반품사유',t:'text',w:120},
-    {k:'status',lb:'처리상태',t:'text',w:80,def:'접수',hint:'접수/처리중/완료/보류'},
+    {k:'catalog_no',lb:'카달로그번호',t:'text',w:110},
+    {k:'item_name',lb:'품명',t:'text',w:150},
+    {k:'brand',lb:'브랜드',t:'text',w:90},
+    {k:'cost_price',lb:'입고가',t:'num',w:88},
+    {k:'sale_price',lb:'출고가',t:'num',w:88},
+    {k:'reason',lb:'사유',t:'text',w:140}]},
+  ret:{tbl:'returns',dk:'return_date',computeTotal:{qty:'qty',price:'unit_price',out:'total'},cols:[
+    {k:'return_date',lb:'반품일',t:'date',req:true,w:108},
     {k:'rep',lb:'담당자',t:'text',w:76},
-    {k:'due_date',lb:'완료예정일',t:'date',w:108},
-    {k:'note',lb:'비고',t:'text',w:150}]},
-  cc:{tbl:'order_issues',dk:'recv_date',cols:[
-    {k:'recv_date',lb:'접수일',t:'date',req:true,w:108},
-    {k:'order_no',lb:'주문번호',t:'text',w:96},
-    {k:'customer_name',lb:'거래처',t:'text',w:120},
-    {k:'issue_type',lb:'구분',t:'text',req:true,w:72,hint:'취소/변경'},
+    {k:'code',lb:'코드',t:'text',w:96},
+    {k:'item_name',lb:'품명',t:'text',w:150},
+    {k:'qty',lb:'수량',t:'num',w:68},
+    {k:'supplier',lb:'매입처',t:'text',w:110},
+    {k:'customer_name',lb:'수주처',t:'text',w:110},
     {k:'reason',lb:'사유',t:'text',w:120},
-    {k:'amount',lb:'금액',t:'num',w:88},
-    {k:'rep',lb:'담당자',t:'text',w:76},
-    {k:'status',lb:'처리상태',t:'text',w:80,def:'접수',hint:'접수/처리중/완료'},
-    {k:'resolved_date',lb:'처리일',t:'date',w:108},
-    {k:'note',lb:'비고',t:'text',w:150}]},
-  lmo:{tbl:'orders',dk:'order_date',computeMG:true,cols:[
-    {k:'order_date',lb:'수주일',t:'date',req:true,w:108},
-    {k:'order_no',lb:'주문번호',t:'text',w:96},
+    {k:'process',lb:'처리내용',t:'select',w:100,def:'처리중',opts:['반품완료','악성재고','재고사용','처리중','클레임','폐기']},
+    {k:'unit_price',lb:'단가',t:'num',w:88}]},
+  cc:{tbl:'order_issues',dk:'order_date',cols:[
+    {k:'order_date',lb:'기존수주일',t:'date',req:true,w:108},
     {k:'customer_name',lb:'거래처',t:'text',w:120},
-    {k:'channel',lb:'채널',t:'text',w:76},
-    {k:'item_name',lb:'품목',t:'text',w:150},
-    {k:'qty',lb:'수량',t:'num',w:68},
-    {k:'sale_price',lb:'판매가',t:'num',w:88},
-    {k:'cost',lb:'원가',t:'num',w:88},
     {k:'rep',lb:'담당자',t:'text',w:76},
-    {k:'note',lb:'비고',t:'text',w:150}]}
+    {k:'brand',lb:'브랜드',t:'text',w:90},
+    {k:'catalog_no',lb:'카달로그번호',t:'text',w:110},
+    {k:'item_name',lb:'품명',t:'text',w:150},
+    {k:'change_type',lb:'변경사유',t:'select',w:90,opts:['취소','금액조정']},
+    {k:'reason',lb:'사유',t:'text',w:130},
+    {k:'diff_amount',lb:'차액',t:'num',w:88}]},
+  lmo:{tbl:'orders',dk:'order_date',computeMG:{sale:'order_price',cost:'po_price',out:'margin_rate'},cols:[
+    {k:'orderer',lb:'수주자',t:'text',w:76},
+    {k:'order_date',lb:'수주일',t:'date',req:true,w:108},
+    {k:'customer_name',lb:'수주처',t:'text',w:110},
+    {k:'item_code',lb:'품명코드',t:'text',w:100},
+    {k:'item_name',lb:'품명',t:'text',w:150},
+    {k:'order_qty',lb:'수주량',t:'num',w:70},
+    {k:'order_price',lb:'수주단가',t:'num',w:88},
+    {k:'maker',lb:'제조업체',t:'text',w:100},
+    {k:'po_vendor',lb:'발주처',t:'text',w:100},
+    {k:'po_price',lb:'발주단가',t:'num',w:88},
+    {k:'reason',lb:'사유',t:'text',w:120}]}
 };
 const TABS=['lms','ret','cc','lmo'];
 
@@ -530,23 +534,25 @@ function toggleKPI(tab){
   txt.textContent=isOpen?'닫기':'펼치기';
 }
 function setKV(id,val){const el=document.getElementById(id);if(el)el.textContent=val;}
-function updKPI_margin(tab,data){
+function updKPI_margin(tab,data,saleField){
   const cnt=data.length;
   const avg=cnt?(data.reduce((a,r)=>a+(+r.margin_rate||0),0)/cnt).toFixed(1)+'%':'—';
   const min=cnt?Math.min(...data.map(r=>+r.margin_rate||0)).toFixed(1)+'%':'—';
-  const sum=cnt?Math.round(data.reduce((a,r)=>a+(+r.sale_price||0),0)).toLocaleString()+'원':'—';
+  const sum=cnt?Math.round(data.reduce((a,r)=>a+(+r[saleField]||0),0)).toLocaleString()+'원':'—';
   setKV('kv-'+tab+'-cnt',cnt+'건');setKV('kv-'+tab+'-avg',avg);
   setKV('kv-'+tab+'-min',min);setKV('kv-'+tab+'-sum',sum);
 }
 function updKPI_ret(data){
   setKV('kv-ret-cnt',data.length+'건');
-  ['접수','처리중','완료'].forEach(s=>setKV('kv-ret-'+s,data.filter(r=>r.status===s).length+'건'));
+  setKV('kv-ret-접수',data.filter(r=>r.process==='처리중').length+'건');
+  setKV('kv-ret-처리중',data.filter(r=>r.process==='악성재고').length+'건');
+  setKV('kv-ret-완료',data.filter(r=>r.process==='반품완료').length+'건');
 }
 function updKPI_cc(data){
   setKV('kv-cc-cnt',data.length+'건');
-  setKV('kv-cc-cancel',data.filter(r=>r.issue_type==='취소').length+'건');
-  setKV('kv-cc-change',data.filter(r=>r.issue_type==='변경').length+'건');
-  const sum=Math.round(data.reduce((a,r)=>a+(+r.amount||0),0)).toLocaleString();
+  setKV('kv-cc-cancel',data.filter(r=>r.change_type==='취소').length+'건');
+  setKV('kv-cc-change',data.filter(r=>r.change_type==='금액조정').length+'건');
+  const sum=Math.round(data.reduce((a,r)=>a+(+r.diff_amount||0),0)).toLocaleString();
   setKV('kv-cc-sum',sum+'원');
 }
 
@@ -576,18 +582,18 @@ async function loadLMS(){
       .lte('ship_date',document.getElementById('lms-t').value)
       .order('ship_date',{ascending:false});
     const c=document.getElementById('lms-cust').value.trim();
-    const r=document.getElementById('lms-rep').value;
+    const r=document.getElementById('lms-rep').value.trim();
     if(c)q=q.ilike('customer_name','%'+c+'%');
-    if(r)q=q.eq('rep',r);
+    if(r)q=q.ilike('rep','%'+r+'%');
     const{data,error}=await q;if(error)throw error;
     const tb=document.getElementById('tb-lms');
-    if(!data?.length){tb.innerHTML=emptyR(11,'📦','해당 조건의 출고건이 없습니다');setCnt('lms',0);}
+    if(!data?.length){tb.innerHTML=emptyR(10,'📦','해당 조건의 출고건이 없습니다');setCnt('lms',0);}
     else{
-      tb.innerHTML=data.map(r=>'<tr><td>'+( r.ship_date||'—')+'</td><td>'+(r.order_no||'—')+'</td><td>'+(r.customer_name||'—')+'</td><td>'+(r.channel||'—')+'</td><td>'+(r.item_name||'—')+'</td><td class="r">'+fmt(r.qty)+'</td><td class="r">'+fmt(r.sale_price)+'</td><td class="r">'+fmt(r.cost)+'</td><td class="r"><span class="'+mgC(r.margin_rate)+'">'+pct(r.margin_rate)+'</span></td><td>'+(r.rep||'—')+'</td><td class="dm">'+(r.note||'')+'</td></tr>').join('');
-      setCnt('lms',data.length);updKPI_margin('lms',data);
+      tb.innerHTML=data.map(r=>'<tr><td>'+(r.ship_date||'—')+'</td><td>'+(r.customer_name||'—')+'</td><td>'+(r.rep||'—')+'</td><td>'+(r.catalog_no||'—')+'</td><td>'+(r.item_name||'—')+'</td><td>'+(r.brand||'—')+'</td><td class="r">'+fmt(r.cost_price)+'</td><td class="r">'+fmt(r.sale_price)+'</td><td class="r"><span class="'+mgC(r.margin_rate)+'">'+pct(r.margin_rate)+'</span></td><td class="dm">'+(r.reason||'')+'</td></tr>').join('');
+      setCnt('lms',data.length);updKPI_margin('lms',data,'sale_price');
     }
     setTS('lms');
-  }catch(e){document.getElementById('tb-lms').innerHTML=errR(11,e.message);}
+  }catch(e){document.getElementById('tb-lms').innerHTML=errR(10,e.message);}
   finally{L(false);}
 }
 
@@ -595,46 +601,45 @@ async function loadRET(){
   if(!guard())return;L(true);
   try{
     let q=sb.from('returns').select('*')
-      .gte('recv_date',document.getElementById('ret-f').value)
-      .lte('recv_date',document.getElementById('ret-t').value)
-      .order('recv_date',{ascending:false});
+      .gte('return_date',document.getElementById('ret-f').value)
+      .lte('return_date',document.getElementById('ret-t').value)
+      .order('return_date',{ascending:false});
     const st=document.getElementById('ret-status').value;
     const c=document.getElementById('ret-cust').value.trim();
-    if(st)q=q.eq('status',st);if(c)q=q.ilike('customer_name','%'+c+'%');
+    if(st)q=q.eq('process',st);if(c)q=q.ilike('customer_name','%'+c+'%');
     const{data,error}=await q;if(error)throw error;
-    const SB={접수:'bb',처리중:'bo',완료:'bg',보류:'bgr'};
+    const PB={반품완료:'bg',악성재고:'br',재고사용:'bb',처리중:'bo',클레임:'br',폐기:'bgr'};
     const tb=document.getElementById('tb-ret');
-    if(!data?.length){tb.innerHTML=emptyR(10,'🔄','해당 조건의 반품건이 없습니다');setCnt('ret',0);}
+    if(!data?.length){tb.innerHTML=emptyR(11,'🔄','해당 조건의 반품건이 없습니다');setCnt('ret',0);}
     else{
-      tb.innerHTML=data.map(r=>'<tr><td>'+(r.recv_date||'—')+'</td><td>'+(r.order_no||'—')+'</td><td>'+(r.customer_name||'—')+'</td><td>'+(r.item_name||'—')+'</td><td class="r">'+fmt(r.qty)+'</td><td>'+(r.reason||'—')+'</td><td><span class="badge '+(SB[r.status]||'bgr')+'">'+(r.status||'—')+'</span></td><td>'+(r.rep||'—')+'</td><td>'+(r.due_date||'—')+'</td><td class="dm">'+(r.note||'')+'</td></tr>').join('');
+      tb.innerHTML=data.map(r=>'<tr><td>'+(r.return_date||'—')+'</td><td>'+(r.rep||'—')+'</td><td>'+(r.code||'—')+'</td><td>'+(r.item_name||'—')+'</td><td class="r">'+fmt(r.qty)+'</td><td>'+(r.supplier||'—')+'</td><td>'+(r.customer_name||'—')+'</td><td>'+(r.reason||'—')+'</td><td><span class="badge '+(PB[r.process]||'bgr')+'">'+(r.process||'—')+'</span></td><td class="r">'+fmt(r.unit_price)+'</td><td class="r">'+fmt(r.total)+'</td></tr>').join('');
       setCnt('ret',data.length);updKPI_ret(data);
     }
     setTS('ret');
-  }catch(e){document.getElementById('tb-ret').innerHTML=errR(10,e.message);}
+  }catch(e){document.getElementById('tb-ret').innerHTML=errR(11,e.message);}
   finally{L(false);}
 }
 
 async function loadCC(){
   if(!guard())return;L(true);
   try{
-    let q=sb.from('order_issues').select('*').in('issue_type',['취소','변경'])
-      .gte('recv_date',document.getElementById('cc-f').value)
-      .lte('recv_date',document.getElementById('cc-t').value)
-      .order('recv_date',{ascending:false});
+    let q=sb.from('order_issues').select('*')
+      .gte('order_date',document.getElementById('cc-f').value)
+      .lte('order_date',document.getElementById('cc-t').value)
+      .order('order_date',{ascending:false});
     const tp=document.getElementById('cc-type').value;
-    const st=document.getElementById('cc-status').value;
     const c=document.getElementById('cc-cust').value.trim();
-    if(tp)q=q.eq('issue_type',tp);if(st)q=q.eq('status',st);if(c)q=q.ilike('customer_name','%'+c+'%');
+    if(tp)q=q.eq('change_type',tp);if(c)q=q.ilike('customer_name','%'+c+'%');
     const{data,error}=await q;if(error)throw error;
-    const TB={취소:'br',변경:'bo'};const SB={접수:'bb',처리중:'bo',완료:'bg'};
+    const TB={취소:'br',금액조정:'bo'};
     const tb=document.getElementById('tb-cc');
-    if(!data?.length){tb.innerHTML=emptyR(10,'⚠️','해당 조건의 취소·변경건이 없습니다');setCnt('cc',0);}
+    if(!data?.length){tb.innerHTML=emptyR(9,'⚠️','해당 조건의 취소·변경건이 없습니다');setCnt('cc',0);}
     else{
-      tb.innerHTML=data.map(r=>'<tr><td>'+(r.recv_date||'—')+'</td><td>'+(r.order_no||'—')+'</td><td>'+(r.customer_name||'—')+'</td><td><span class="badge '+(TB[r.issue_type]||'bgr')+'">'+(r.issue_type||'—')+'</span></td><td>'+(r.reason||'—')+'</td><td class="r">'+fmt(r.amount)+'</td><td>'+(r.rep||'—')+'</td><td><span class="badge '+(SB[r.status]||'bgr')+'">'+(r.status||'—')+'</span></td><td>'+(r.resolved_date||'—')+'</td><td class="dm">'+(r.note||'')+'</td></tr>').join('');
+      tb.innerHTML=data.map(r=>'<tr><td>'+(r.order_date||'—')+'</td><td>'+(r.customer_name||'—')+'</td><td>'+(r.rep||'—')+'</td><td>'+(r.brand||'—')+'</td><td>'+(r.catalog_no||'—')+'</td><td>'+(r.item_name||'—')+'</td><td><span class="badge '+(TB[r.change_type]||'bgr')+'">'+(r.change_type||'—')+'</span></td><td>'+(r.reason||'—')+'</td><td class="r">'+fmt(r.diff_amount)+'</td></tr>').join('');
       setCnt('cc',data.length);updKPI_cc(data);
     }
     setTS('cc');
-  }catch(e){document.getElementById('tb-cc').innerHTML=errR(10,e.message);}
+  }catch(e){document.getElementById('tb-cc').innerHTML=errR(9,e.message);}
   finally{L(false);}
 }
 
@@ -646,17 +651,17 @@ async function loadLMO(){
       .lte('order_date',document.getElementById('lmo-t').value)
       .order('order_date',{ascending:false});
     const c=document.getElementById('lmo-cust').value.trim();
-    const r=document.getElementById('lmo-rep').value;
-    if(c)q=q.ilike('customer_name','%'+c+'%');if(r)q=q.eq('rep',r);
+    const r=document.getElementById('lmo-rep').value.trim();
+    if(c)q=q.ilike('customer_name','%'+c+'%');if(r)q=q.eq('orderer',r);
     const{data,error}=await q;if(error)throw error;
     const tb=document.getElementById('tb-lmo');
-    if(!data?.length){tb.innerHTML=emptyR(11,'📋','해당 조건의 수주건이 없습니다');setCnt('lmo',0);}
+    if(!data?.length){tb.innerHTML=emptyR(12,'📋','해당 조건의 수주건이 없습니다');setCnt('lmo',0);}
     else{
-      tb.innerHTML=data.map(r=>'<tr><td>'+(r.order_date||'—')+'</td><td>'+(r.order_no||'—')+'</td><td>'+(r.customer_name||'—')+'</td><td>'+(r.channel||'—')+'</td><td>'+(r.item_name||'—')+'</td><td class="r">'+fmt(r.qty)+'</td><td class="r">'+fmt(r.sale_price)+'</td><td class="r">'+fmt(r.cost)+'</td><td class="r"><span class="'+mgC(r.margin_rate)+'">'+pct(r.margin_rate)+'</span></td><td>'+(r.rep||'—')+'</td><td class="dm">'+(r.note||'')+'</td></tr>').join('');
-      setCnt('lmo',data.length);updKPI_margin('lmo',data);
+      tb.innerHTML=data.map(r=>'<tr><td>'+(r.orderer||'—')+'</td><td>'+(r.order_date||'—')+'</td><td>'+(r.customer_name||'—')+'</td><td>'+(r.item_code||'—')+'</td><td>'+(r.item_name||'—')+'</td><td class="r">'+fmt(r.order_qty)+'</td><td class="r">'+fmt(r.order_price)+'</td><td>'+(r.maker||'—')+'</td><td>'+(r.po_vendor||'—')+'</td><td class="r">'+fmt(r.po_price)+'</td><td class="r"><span class="'+mgC(r.margin_rate)+'">'+pct(r.margin_rate)+'</span></td><td class="dm">'+(r.reason||'')+'</td></tr>').join('');
+      setCnt('lmo',data.length);updKPI_margin('lmo',data,'order_price');
     }
     setTS('lmo');
-  }catch(e){document.getElementById('tb-lmo').innerHTML=errR(11,e.message);}
+  }catch(e){document.getElementById('tb-lmo').innerHTML=errR(12,e.message);}
   finally{L(false);}
 }
 
@@ -752,10 +757,15 @@ function makeRow(tab,rowNum){
   const tr=document.createElement('tr');
   tr.innerHTML='<td class="rnc">'+rowNum+'</td>'+meta.cols.map((c,ci)=>{
     if(c.t==='date')return '<td class="gdt" data-tab="'+tab+'" data-ci="'+ci+'" data-k="'+c.k+'" data-t="date"><input type="date" data-tab="'+tab+'" data-ci="'+ci+'" data-k="'+c.k+'" data-t="date"></td>';
+    if(c.t==='select'){
+      const opts=(c.opts||[]).map(o=>'<option'+(o===c.def?' selected':'')+'>'+o+'</option>').join('');
+      return '<td class="gsel" data-tab="'+tab+'" data-ci="'+ci+'" data-k="'+c.k+'" data-t="select"><select data-tab="'+tab+'" data-ci="'+ci+'" data-k="'+c.k+'" data-t="select">'+opts+'</select></td>';
+    }
     return '<td contenteditable="true" data-tab="'+tab+'" data-ci="'+ci+'" data-k="'+c.k+'" data-t="'+(c.t||'text')+'">'+(c.def||'')+'</td>';
   }).join('');
   tr.querySelectorAll('td[contenteditable]').forEach(td=>{td.addEventListener('keydown',onKey);td.addEventListener('paste',onPaste);});
   tr.querySelectorAll('td.gdt input').forEach(inp=>inp.addEventListener('keydown',onKey));
+  tr.querySelectorAll('td.gsel select').forEach(sel=>sel.addEventListener('keydown',onKey));
   return tr;
 }
 function addRow(tab,scroll=true){
@@ -775,14 +785,16 @@ function updRNs(tbody){[...tbody.querySelectorAll('tr')].forEach((tr,i)=>{const 
 function onKey(e){
   const el=e.currentTarget;
   const isDate=el.tagName==='INPUT'&&el.type==='date';
-  const td=isDate?el.closest('td'):el;
+  const isSel=el.tagName==='SELECT';
+  const td=(isDate||isSel)?el.closest('td'):el;
   const tr=td.closest('tr');const tb=tr.closest('tbody');
   const rows=[...tb.querySelectorAll('tr')];
-  const cells=[...tr.querySelectorAll('td[contenteditable],td.gdt')];
+  const cells=[...tr.querySelectorAll('td[contenteditable],td.gdt,td.gsel')];
   const ri=rows.indexOf(tr);const ci=cells.indexOf(td);const tab=td.dataset.tab;
   function focusCell(cell){
     if(!cell)return;
     if(cell.classList.contains('gdt')){cell.querySelector('input')?.focus();}
+    else if(cell.classList.contains('gsel')){cell.querySelector('select')?.focus();}
     else{cell.focus();const rng=document.createRange();rng.selectNodeContents(cell);rng.collapse(false);const sel=window.getSelection();sel.removeAllRanges();sel.addRange(rng);}
   }
   function move(dr,dc){
@@ -791,16 +803,16 @@ function onKey(e){
     if(nr>=rows.length){addRow(tab,false);updRNs(tb);}
     const trows=tb.querySelectorAll('tr');
     const trow=trows[Math.max(0,Math.min(nr,trows.length-1))];
-    const tcells=[...trow.querySelectorAll('td[contenteditable],td.gdt')];
+    const tcells=[...trow.querySelectorAll('td[contenteditable],td.gdt,td.gsel')];
     e.preventDefault();focusCell(tcells[nc]);
   }
   switch(e.key){
     case 'Tab':e.preventDefault();e.shiftKey?move(0,-1):move(0,1);break;
     case 'Enter':e.preventDefault();move(1,0);break;
-    case 'ArrowUp':if(!isDate){e.preventDefault();move(-1,0);}break;
-    case 'ArrowDown':if(!isDate){e.preventDefault();move(1,0);}break;
-    case 'ArrowLeft':{if(!isDate){const s=window.getSelection();if(s.rangeCount&&s.getRangeAt(0).startOffset===0)move(0,-1);}}break;
-    case 'ArrowRight':{if(!isDate){const s=window.getSelection();if(s.rangeCount){const r=s.getRangeAt(0);if(r.endOffset>=el.textContent.length)move(0,1);}}}break;
+    case 'ArrowUp':if(!isDate&&!isSel){e.preventDefault();move(-1,0);}break;
+    case 'ArrowDown':if(!isDate&&!isSel){e.preventDefault();move(1,0);}break;
+    case 'ArrowLeft':{if(!isDate&&!isSel){const s=window.getSelection();if(s.rangeCount&&s.getRangeAt(0).startOffset===0)move(0,-1);}}break;
+    case 'ArrowRight':{if(!isDate&&!isSel){const s=window.getSelection();if(s.rangeCount){const r=s.getRangeAt(0);if(r.endOffset>=el.textContent.length)move(0,1);}}}break;
     case 'Escape':el.blur();break;
   }
 }
@@ -812,15 +824,16 @@ function onPaste(e){
   if(!text)return;
   const td=e.currentTarget;const tr=td.closest('tr');const tb=tr.closest('tbody');const tab=td.dataset.tab;
   let rows=[...tb.querySelectorAll('tr')];
-  const cells=[...tr.querySelectorAll('td[contenteditable],td.gdt')];
+  const cells=[...tr.querySelectorAll('td[contenteditable],td.gdt,td.gsel')];
   const sr=rows.indexOf(tr);const sc=cells.indexOf(td);
   const pdata=text.split(/\r?\n/).filter(l=>l!=='').map(l=>l.split('\t'));
   pdata.forEach((rdata,ri)=>{
     while(rows.length<=sr+ri){addRow(tab,false);rows=[...tb.querySelectorAll('tr')];}
-    const tcs=[...rows[sr+ri].querySelectorAll('td[contenteditable],td.gdt')];
+    const tcs=[...rows[sr+ri].querySelectorAll('td[contenteditable],td.gdt,td.gsel')];
     rdata.forEach((val,ci)=>{
       const cell=tcs[sc+ci];if(!cell)return;
       if(cell.classList.contains('gdt')){const inp=cell.querySelector('input');if(inp)inp.value=parseDate(val.trim());}
+      else if(cell.classList.contains('gsel')){const sel=cell.querySelector('select');if(sel&&val.trim())sel.value=val.trim();}
       else cell.textContent=val.trim();
     });
   });
@@ -842,11 +855,14 @@ function handleCSV(tab,file){
     lines.slice(1).forEach((line,ri)=>{
       const vals=csvLine(line,sep);
       const tr=makeRow(tab,ri+1);
-      const tcs=[...tr.querySelectorAll('td[contenteditable],td.gdt')];
+      const tcs=[...tr.querySelectorAll('td[contenteditable],td.gdt,td.gsel')];
       meta.cols.forEach((c,ci)=>{
         const hi=hdrs.findIndex(h=>h===c.k||h===c.lb);
         const val=hi>=0?(vals[hi]||''):(vals[ci]||'');
-        if(tcs[ci]){if(tcs[ci].classList.contains('gdt')){const inp=tcs[ci].querySelector('input');if(inp)inp.value=parseDate(val);}else tcs[ci].textContent=val;}
+        if(!tcs[ci])return;
+        if(tcs[ci].classList.contains('gdt')){const inp=tcs[ci].querySelector('input');if(inp)inp.value=parseDate(val);}
+        else if(tcs[ci].classList.contains('gsel')){const sel=tcs[ci].querySelector('select');if(sel&&val)sel.value=val;}
+        else tcs[ci].textContent=val;
       });
       tbody.appendChild(tr);
     });
@@ -868,7 +884,7 @@ async function save(tab){
   const rows=[...tbody.querySelectorAll('tr')];
   const records=[];let hasErr=false;
   rows.forEach(tr=>{
-    const cells=[...tr.querySelectorAll('td[contenteditable],td.gdt')];
+    const cells=[...tr.querySelectorAll('td[contenteditable],td.gdt,td.gsel')];
     const reqKeys=meta.cols.filter(c=>c.req).map(c=>c.k);
     const hasData=reqKeys.some(k=>{
       const cell=tr.querySelector('[data-k="'+k+'"]');if(!cell)return false;
@@ -881,14 +897,23 @@ async function save(tab){
       td.classList.remove('ec');
       let val;
       if(td.classList.contains('gdt')){val=td.querySelector('input')?.value||'';}
+      else if(td.classList.contains('gsel')){val=td.querySelector('select')?.value||'';}
       else val=td.textContent.trim();
       rec[td.dataset.k]=parseVal(val,td.dataset.t);
     });
     meta.cols.filter(c=>c.req).forEach(c=>{
       if(!rec[c.k]){tr.querySelector('[data-k="'+c.k+'"]')?.classList.add('ec');hasErr=true;}
     });
-    if(meta.computeMG&&rec.sale_price&&rec.cost)
-      rec.margin_rate=((rec.sale_price-rec.cost)/rec.sale_price*100);
+    // 마진율 자동계산
+    if(meta.computeMG){
+      const s=rec[meta.computeMG.sale], c=rec[meta.computeMG.cost];
+      if(s&&c)rec[meta.computeMG.out]=((s-c)/s*100);
+    }
+    // 합계 자동계산
+    if(meta.computeTotal){
+      const q=rec[meta.computeTotal.qty], p=rec[meta.computeTotal.price];
+      if(q&&p)rec[meta.computeTotal.out]=(q*p);
+    }
     records.push(rec);
   });
   if(hasErr){alert('❗ 빨간 셀(필수 항목)을 확인해주세요.');return;}
