@@ -615,7 +615,7 @@ async function loadLMS(){
     let q=sb.from('shipments').select('*')
       .gte('ship_date',document.getElementById('lms-f').value)
       .lte('ship_date',document.getElementById('lms-t').value)
-      .order('ship_date',{ascending:false});
+      .order('ship_date',{ascending:true});
     const c=document.getElementById('lms-cust').value.trim();
     const r=document.getElementById('lms-rep').value.trim();
     if(c)q=q.ilike('customer_name','%'+c+'%');
@@ -638,7 +638,7 @@ async function loadRET(){
     let q=sb.from('returns').select('*')
       .gte('return_date',document.getElementById('ret-f').value)
       .lte('return_date',document.getElementById('ret-t').value)
-      .order('return_date',{ascending:false});
+      .order('return_date',{ascending:true});
     const st=document.getElementById('ret-status').value;
     const c=document.getElementById('ret-cust').value.trim();
     if(st)q=q.eq('process',st);if(c)q=q.ilike('customer_name','%'+c+'%');
