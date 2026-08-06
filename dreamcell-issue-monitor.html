@@ -535,10 +535,12 @@ window._d=window._d||{lms:[],ret:[],cc:[],lmo:[]};
   TABS.forEach(t=>{
     const ef=document.getElementById(pfx[t]+'-f');
     const et=document.getElementById(pfx[t]+'-t');
-    if(ef)ef.value=monthAgo();if(et)et.value=today();
+    if(ef)ef.value=yearStart();if(et)et.value=today();
   });
   TABS.forEach(t=>buildInputArea(t));
   initYMFilters();
+  // 페이지 로드 시 기본 탭(lms) 자동 조회
+  if(sb)loadLMS();
 })();
 
 function go(tab){
@@ -548,6 +550,7 @@ function go(tab){
   });
   document.getElementById('panel-'+tab).classList.add('on');
   document.getElementById('nav-'+tab).classList.add('on');
+  if(sb)LFNS[tab]();
 }
 
 function setMode(tab,mode){
@@ -594,6 +597,7 @@ function updKPI_cc(data){
 /* HELPERS */
 const L=on=>document.getElementById('lb').classList.toggle('on',on);
 function today(){return new Date().toISOString().slice(0,10);}
+function yearStart(){return new Date().getFullYear()+'-01-01';}
 function monthAgo(){const d=new Date();d.setMonth(d.getMonth()-1);return d.toISOString().slice(0,10);}
 function fmt(n){return n!=null?Number(n).toLocaleString():'—';}
 function pct(v){return v!=null?(+v).toFixed(1)+'%':'—';}
@@ -791,8 +795,6 @@ function initYMFilters(){
     wrap.style.cssText='display:flex;align-items:center;gap:5px;padding-right:12px;border-right:1px solid var(--border);margin-right:4px;flex-shrink:0';
     wrap.innerHTML=`<span class="fbl">빠른선택</span><select class="fs" id="ym-yr-${tab}" style="width:82px">${yOpts}</select><select class="fs" id="ym-mo-${tab}" style="width:70px">${mOpts}</select><button class="btn btn-g" style="height:29px" data-tab="${tab}" onclick="applyYM(this.dataset.tab)">적용</button>`;
     fb.insertBefore(wrap,fb.firstChild);
-    document.getElementById('ym-yr-'+tab).addEventListener('change',()=>applyYM(tab));
-    document.getElementById('ym-mo-'+tab).addEventListener('change',()=>applyYM(tab));
   });
 }
 function applyYM(tab){
