@@ -210,6 +210,23 @@ tbody td.dm{color:var(--t3);font-size:12px}
 .btn-p:hover{background:#9A5E0A}
 .btn-g{background:#F0F2F8;color:var(--t2);border:1px solid var(--border)}
 .btn-g:hover{background:#E6E9F2}
+
+/* 작업 컬럼 */
+thead th.ac{text-align:center;width:90px}
+.act-cell{text-align:center;white-space:nowrap}
+.act-btn{border:none;background:transparent;cursor:pointer;font-size:13px;padding:3px 6px;
+  border-radius:5px;transition:background .1s}
+.act-btn.edit{color:var(--info)}
+.act-btn.edit:hover{background:#EFF6FF}
+.act-btn.del{color:var(--err)}
+.act-btn.del:hover{background:#FFF1F1}
+/* 편집 모달 필드 */
+.ef{display:flex;flex-direction:column;gap:5px}
+.ef label{font-size:11.5px;font-weight:700;color:var(--t2)}
+.ef input,.ef select{height:34px;border:1px solid var(--border);border-radius:8px;
+  font-size:13px;font-family:inherit;padding:0 11px;outline:none;background:#F8F9FC;color:var(--text)}
+.ef input:focus,.ef select:focus{border-color:var(--gold);background:#FFFBF0}
+.ef .calc{font-size:11px;color:var(--t3)}
 </style>
 </head>
 <body>
@@ -283,9 +300,9 @@ tbody td.dm{color:var(--t3);font-size:12px}
         <table><thead><tr>
           <th>출고일</th><th>거래처</th><th>담당자</th><th>카달로그번호</th>
           <th>품명</th><th>브랜드</th><th class="r">입고가</th>
-          <th class="r">출고가</th><th class="r">마진율</th><th>사유</th>
+          <th class="r">출고가</th><th class="r">마진율</th><th>사유</th><th class="ac">작업</th>
         </tr></thead>
-        <tbody id="tb-lms"><tr><td colspan="10"><div class="empty">
+        <tbody id="tb-lms"><tr><td colspan="11"><div class="empty">
           <div class="emic">📦</div><div class="emt">조회 전입니다</div>
           <div class="ems">기간을 설정하고 조회 버튼을 눌러주세요</div>
         </div></td></tr></tbody></table>
@@ -333,9 +350,9 @@ tbody td.dm{color:var(--t3);font-size:12px}
         <table><thead><tr>
           <th>반품일</th><th>담당자</th><th>코드</th><th>품명</th>
           <th class="r">수량</th><th>매입처</th><th>수주처</th>
-          <th>사유</th><th>처리내용</th><th class="r">단가</th><th class="r">합계</th>
+          <th>사유</th><th>처리내용</th><th class="r">단가</th><th class="r">합계</th><th class="ac">작업</th>
         </tr></thead>
-        <tbody id="tb-ret"><tr><td colspan="11"><div class="empty">
+        <tbody id="tb-ret"><tr><td colspan="12"><div class="empty">
           <div class="emic">🔄</div><div class="emt">조회 전입니다</div>
           <div class="ems">기간을 설정하고 조회 버튼을 눌러주세요</div>
         </div></td></tr></tbody></table>
@@ -380,9 +397,9 @@ tbody td.dm{color:var(--t3);font-size:12px}
         <table><thead><tr>
           <th>기존수주일</th><th>거래처</th><th>담당자</th><th>브랜드</th>
           <th>카달로그번호</th><th>품명</th><th>변경사유</th>
-          <th>사유</th><th class="r">차액</th>
+          <th>사유</th><th class="r">차액</th><th class="ac">작업</th>
         </tr></thead>
-        <tbody id="tb-cc"><tr><td colspan="9"><div class="empty">
+        <tbody id="tb-cc"><tr><td colspan="10"><div class="empty">
           <div class="emic">⚠️</div><div class="emt">조회 전입니다</div>
           <div class="ems">기간을 설정하고 조회 버튼을 눌러주세요</div>
         </div></td></tr></tbody></table>
@@ -428,9 +445,9 @@ tbody td.dm{color:var(--t3);font-size:12px}
           <th>수주자</th><th>수주일</th><th>수주처</th><th>품명코드</th>
           <th>품명</th><th class="r">수주량</th><th class="r">수주단가</th>
           <th>제조업체</th><th>발주처</th><th class="r">발주단가</th>
-          <th class="r">마진율</th><th>사유</th>
+          <th class="r">마진율</th><th>사유</th><th class="ac">작업</th>
         </tr></thead>
-        <tbody id="tb-lmo"><tr><td colspan="12"><div class="empty">
+        <tbody id="tb-lmo"><tr><td colspan="13"><div class="empty">
           <div class="emic">📋</div><div class="emt">조회 전입니다</div>
           <div class="ems">기간을 설정하고 조회 버튼을 눌러주세요</div>
         </div></td></tr></tbody></table>
@@ -440,6 +457,21 @@ tbody td.dm{color:var(--t3);font-size:12px}
   </div>
 
 </div>
+<!-- 편집 모달 -->
+<div id="editOverlay" style="display:none;position:fixed;inset:0;background:rgba(11,11,11,.55);z-index:10000;align-items:center;justify-content:center;padding:20px">
+  <div style="background:var(--card);border-radius:16px;width:520px;max-width:100%;max-height:88vh;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,.35)">
+    <div style="padding:16px 22px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">
+      <span style="font-size:15px;font-weight:800" id="editTitle">항목 수정</span>
+      <span style="cursor:pointer;font-size:20px;color:var(--t3);line-height:1" onclick="closeEdit()">×</span>
+    </div>
+    <div id="editBody" style="padding:18px 22px;overflow-y:auto;display:flex;flex-direction:column;gap:12px"></div>
+    <div style="padding:14px 22px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px">
+      <button class="btn btn-g" onclick="closeEdit()">취소</button>
+      <button class="btn btn-p" onclick="submitEdit()">💾 수정 저장</button>
+    </div>
+  </div>
+</div>
+
 <script>
 const SB_URL='https://fhlowhfqgmjnmzgvmjsi.supabase.co';
 const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZobG93aGZxZ21qbm16Z3ZtanNpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU5ODU2NDgsImV4cCI6MjEwMTU2MTY0OH0.eW5_u_52wxD9UBPo_FzDgs6CqKqzTZPZO_j703gj1ps';
@@ -496,6 +528,7 @@ const M={
 };
 const TABS=['lms','ret','cc','lmo'];
 
+window._d=window._d||{lms:[],ret:[],cc:[],lmo:[]};
 (function init(){
   const pfx={lms:'lms',ret:'ret',cc:'cc',lmo:'lmo'};
   TABS.forEach(t=>{
@@ -590,7 +623,7 @@ async function loadLMS(){
     const tb=document.getElementById('tb-lms');
     if(!data?.length){tb.innerHTML=emptyR(10,'📦','해당 조건의 출고건이 없습니다');setCnt('lms',0);}
     else{
-      tb.innerHTML=data.map(r=>'<tr><td>'+(r.ship_date||'—')+'</td><td>'+(r.customer_name||'—')+'</td><td>'+(r.rep||'—')+'</td><td>'+(r.catalog_no||'—')+'</td><td>'+(r.item_name||'—')+'</td><td>'+(r.brand||'—')+'</td><td class="r">'+fmt(r.cost_price)+'</td><td class="r">'+fmt(r.sale_price)+'</td><td class="r"><span class="'+mgC(r.margin_rate)+'">'+pct(r.margin_rate)+'</span></td><td class="dm">'+(r.reason||'')+'</td></tr>').join('');
+      tb.innerHTML=data.map(r=>'<tr data-id="'+r.id+'"><td>'+(r.ship_date||'—')+'</td><td>'+(r.customer_name||'—')+'</td><td>'+(r.rep||'—')+'</td><td>'+(r.catalog_no||'—')+'</td><td>'+(r.item_name||'—')+'</td><td>'+(r.brand||'—')+'</td><td class="r">'+fmt(r.cost_price)+'</td><td class="r">'+fmt(r.sale_price)+'</td><td class="r"><span class="'+mgC(r.margin_rate)+'">'+pct(r.margin_rate)+'</span></td><td class="dm">'+(r.reason||'')+'</td>'+actCell('lms',r.id)+'</tr>').join('');window._d.lms=data;
       setCnt('lms',data.length);updKPI_margin('lms',data,'sale_price');
     }
     setTS('lms');
@@ -613,7 +646,7 @@ async function loadRET(){
     const tb=document.getElementById('tb-ret');
     if(!data?.length){tb.innerHTML=emptyR(11,'🔄','해당 조건의 반품건이 없습니다');setCnt('ret',0);}
     else{
-      tb.innerHTML=data.map(r=>'<tr><td>'+(r.return_date||'—')+'</td><td>'+(r.rep||'—')+'</td><td>'+(r.code||'—')+'</td><td>'+(r.item_name||'—')+'</td><td class="r">'+fmt(r.qty)+'</td><td>'+(r.supplier||'—')+'</td><td>'+(r.customer_name||'—')+'</td><td>'+(r.reason||'—')+'</td><td><span class="badge '+(PB[r.process]||'bgr')+'">'+(r.process||'—')+'</span></td><td class="r">'+fmt(r.unit_price)+'</td><td class="r">'+fmt(r.total)+'</td></tr>').join('');
+      tb.innerHTML=data.map(r=>'<tr data-id="'+r.id+'"><td>'+(r.return_date||'—')+'</td><td>'+(r.rep||'—')+'</td><td>'+(r.code||'—')+'</td><td>'+(r.item_name||'—')+'</td><td class="r">'+fmt(r.qty)+'</td><td>'+(r.supplier||'—')+'</td><td>'+(r.customer_name||'—')+'</td><td>'+(r.reason||'—')+'</td><td><span class="badge '+(PB[r.process]||'bgr')+'">'+(r.process||'—')+'</span></td><td class="r">'+fmt(r.unit_price)+'</td><td class="r">'+fmt(r.total)+'</td>'+actCell('ret',r.id)+'</tr>').join('');window._d.ret=data;
       setCnt('ret',data.length);updKPI_ret(data);
     }
     setTS('ret');
@@ -636,7 +669,7 @@ async function loadCC(){
     const tb=document.getElementById('tb-cc');
     if(!data?.length){tb.innerHTML=emptyR(9,'⚠️','해당 조건의 취소·변경건이 없습니다');setCnt('cc',0);}
     else{
-      tb.innerHTML=data.map(r=>'<tr><td>'+(r.order_date||'—')+'</td><td>'+(r.customer_name||'—')+'</td><td>'+(r.rep||'—')+'</td><td>'+(r.brand||'—')+'</td><td>'+(r.catalog_no||'—')+'</td><td>'+(r.item_name||'—')+'</td><td><span class="badge '+(TB[r.change_type]||'bgr')+'">'+(r.change_type||'—')+'</span></td><td>'+(r.reason||'—')+'</td><td class="r">'+fmt(r.diff_amount)+'</td></tr>').join('');
+      tb.innerHTML=data.map(r=>'<tr data-id="'+r.id+'"><td>'+(r.order_date||'—')+'</td><td>'+(r.customer_name||'—')+'</td><td>'+(r.rep||'—')+'</td><td>'+(r.brand||'—')+'</td><td>'+(r.catalog_no||'—')+'</td><td>'+(r.item_name||'—')+'</td><td><span class="badge '+(TB[r.change_type]||'bgr')+'">'+(r.change_type||'—')+'</span></td><td>'+(r.reason||'—')+'</td><td class="r">'+fmt(r.diff_amount)+'</td>'+actCell('cc',r.id)+'</tr>').join('');window._d.cc=data;
       setCnt('cc',data.length);updKPI_cc(data);
     }
     setTS('cc');
@@ -658,7 +691,7 @@ async function loadLMO(){
     const tb=document.getElementById('tb-lmo');
     if(!data?.length){tb.innerHTML=emptyR(12,'📋','해당 조건의 수주건이 없습니다');setCnt('lmo',0);}
     else{
-      tb.innerHTML=data.map(r=>'<tr><td>'+(r.orderer||'—')+'</td><td>'+(r.order_date||'—')+'</td><td>'+(r.customer_name||'—')+'</td><td>'+(r.item_code||'—')+'</td><td>'+(r.item_name||'—')+'</td><td class="r">'+fmt(r.order_qty)+'</td><td class="r">'+fmt(r.order_price)+'</td><td>'+(r.maker||'—')+'</td><td>'+(r.po_vendor||'—')+'</td><td class="r">'+fmt(r.po_price)+'</td><td class="r"><span class="'+mgC(r.margin_rate)+'">'+pct(r.margin_rate)+'</span></td><td class="dm">'+(r.reason||'')+'</td></tr>').join('');
+      tb.innerHTML=data.map(r=>'<tr data-id="'+r.id+'"><td>'+(r.orderer||'—')+'</td><td>'+(r.order_date||'—')+'</td><td>'+(r.customer_name||'—')+'</td><td>'+(r.item_code||'—')+'</td><td>'+(r.item_name||'—')+'</td><td class="r">'+fmt(r.order_qty)+'</td><td class="r">'+fmt(r.order_price)+'</td><td>'+(r.maker||'—')+'</td><td>'+(r.po_vendor||'—')+'</td><td class="r">'+fmt(r.po_price)+'</td><td class="r"><span class="'+mgC(r.margin_rate)+'">'+pct(r.margin_rate)+'</span></td><td class="dm">'+(r.reason||'')+'</td>'+actCell('lmo',r.id)+'</tr>').join('');window._d.lmo=data;
       setCnt('lmo',data.length);updKPI_margin('lmo',data,'order_price');
     }
     setTS('lmo');
@@ -667,6 +700,82 @@ async function loadLMO(){
 }
 
 const LFNS={lms:loadLMS,ret:loadRET,cc:loadCC,lmo:loadLMO};
+
+/* ========== 수정 / 삭제 ========== */
+window._d={lms:[],ret:[],cc:[],lmo:[]};
+let _editTab=null,_editId=null;
+
+// 각 행의 작업 셀 (수정·삭제 버튼)
+function actCell(tab,id){
+  return '<td class="act-cell">'
+    +'<button class="act-btn edit" title="수정" onclick="openEdit(\''+tab+'\',\''+id+'\')">✏️</button>'
+    +'<button class="act-btn del" title="삭제" onclick="delRow(\''+tab+'\',\''+id+'\')">🗑️</button>'
+    +'</td>';
+}
+
+// 삭제
+async function delRow(tab,id){
+  if(!guard())return;
+  if(!confirm('이 항목을 삭제할까요?\n삭제 후 되돌릴 수 없습니다.'))return;
+  L(true);
+  try{
+    const{error}=await sb.from(M[tab].tbl).delete().eq('id',id);
+    if(error)throw error;
+    LFNS[tab]();
+  }catch(e){alert('삭제 실패: '+e.message);}
+  finally{L(false);}
+}
+
+// 수정 모달 열기
+function openEdit(tab,id){
+  const rec=(window._d[tab]||[]).find(r=>String(r.id)===String(id));
+  if(!rec){alert('데이터를 찾을 수 없습니다. 다시 조회해주세요.');return;}
+  _editTab=tab;_editId=id;
+  const meta=M[tab];
+  document.getElementById('editTitle').textContent=document.querySelector('#panel-'+tab+' .ph-t').textContent+' 수정';
+  const body=document.getElementById('editBody');
+  body.innerHTML=meta.cols.map(c=>{
+    const v=rec[c.k]!=null?rec[c.k]:'';
+    if(c.t==='date')
+      return '<div class="ef"><label>'+c.lb+(c.req?' *':'')+'</label><input type="date" data-k="'+c.k+'" data-t="date" value="'+v+'"></div>';
+    if(c.t==='select'){
+      const opts=(c.opts||[]).map(o=>'<option'+(o===v?' selected':'')+'>'+o+'</option>').join('');
+      return '<div class="ef"><label>'+c.lb+'</label><select data-k="'+c.k+'" data-t="select">'+opts+'</select></div>';
+    }
+    return '<div class="ef"><label>'+c.lb+(c.req?' *':'')+'</label><input type="text" data-k="'+c.k+'" data-t="'+(c.t||'text')+'" value="'+String(v).replace(/"/g,'&quot;')+'"></div>';
+  }).join('')
+  +((meta.computeMG||meta.computeTotal)?'<div class="ef calc">💡 판매가·원가(또는 수량·단가) 수정 시 마진율·합계는 저장 시 자동 재계산됩니다.</div>':'');
+  document.getElementById('editOverlay').style.display='flex';
+}
+
+function closeEdit(){document.getElementById('editOverlay').style.display='none';_editTab=null;_editId=null;}
+
+// 수정 저장
+async function submitEdit(){
+  if(!guard()||!_editTab)return;
+  const tab=_editTab,id=_editId,meta=M[tab];
+  const rec={};let err=false;
+  document.querySelectorAll('#editBody [data-k]').forEach(el=>{
+    el.style.borderColor='';
+    rec[el.dataset.k]=parseVal((el.value||'').trim(),el.dataset.t);
+  });
+  meta.cols.filter(c=>c.req).forEach(c=>{
+    if(!rec[c.k]){const el=document.querySelector('#editBody [data-k="'+c.k+'"]');if(el)el.style.borderColor='var(--err)';err=true;}
+  });
+  if(err){alert('❗ 필수 항목(*)을 확인해주세요.');return;}
+  // 자동계산
+  if(meta.computeMG){const s=rec[meta.computeMG.sale],c=rec[meta.computeMG.cost];rec[meta.computeMG.out]=(s&&c)?((s-c)/s*100):null;}
+  if(meta.computeTotal){const q=rec[meta.computeTotal.qty],p=rec[meta.computeTotal.price];rec[meta.computeTotal.out]=(q&&p)?(q*p):null;}
+  L(true);
+  try{
+    const{error}=await sb.from(meta.tbl).update(rec).eq('id',id);
+    if(error)throw error;
+    closeEdit();LFNS[tab]();
+    alert('✅ 수정 완료!');
+  }catch(e){alert('수정 실패: '+e.message);}
+  finally{L(false);}
+}
+
 
 /* YM FILTER */
 const DATE_PREFIX={lms:'lms',ret:'ret',cc:'cc',lmo:'lmo'};
@@ -997,7 +1106,10 @@ function xcsv(tab){
   const tbl=document.querySelector('#panel-'+tab+' .va table');if(!tbl)return;
   const rows=[...tbl.querySelectorAll('tr')];
   if(rows.length<=1){alert('내보낼 데이터가 없습니다.');return;}
-  const csv=rows.map(r=>[...r.querySelectorAll('th,td')].map(c=>'"'+c.textContent.trim().replace(/"/g,'""')+'"').join(',')).join('\n');
+  const csv=rows.map(r=>{
+    const cells=[...r.querySelectorAll('th,td')].filter(c=>!c.classList.contains('ac')&&!c.classList.contains('act-cell'));
+    return cells.map(c=>'"'+c.textContent.trim().replace(/"/g,'""')+'"').join(',');
+  }).join('\n');
   const a=document.createElement('a');
   a.href=URL.createObjectURL(new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8;'}));
   a.download='report_'+tab+'_'+today()+'.csv';a.click();
