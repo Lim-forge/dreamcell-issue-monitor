@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>드림셀 Report</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
@@ -708,10 +709,10 @@ function buildInputArea(tab){
     </div>
     <div class="it-sec on" id="it-csv-${tab}"><div class="cb-wrap">
       <div class="csv-zone" id="czn-${tab}"><div class="csv-ic">📂</div>
-        <div class="csv-t1">CSV / TSV 파일을 드래그하거나 클릭</div>
-        <div class="csv-t2">UTF-8 형식 · 첫 행은 헤더</div>
+        <div class="csv-t1">엑셀(.xlsx) / CSV 파일을 드래그하거나 클릭</div>
+        <div class="csv-t2">첫 행은 헤더 · 컬럼 순서대로</div>
       </div>
-      <input type="file" id="cfl-${tab}" accept=".csv,.tsv,.txt" style="display:none" data-tab="${tab}" onchange="handleCSV(this.dataset.tab,this.files[0])">
+      <input type="file" id="cfl-${tab}" accept=".csv,.tsv,.txt,.xlsx,.xls" style="display:none" data-tab="${tab}" onchange="handleCSV(this.dataset.tab,this.files[0])">
       <div class="col-guide"><b>컬럼 순서</b>${colNames}</div>
     </div></div>
     <div class="it-sec" id="it-grd-${tab}"><div class="grid-outer">
@@ -840,9 +841,11 @@ function onPaste(e){
   updRNs(tb);
 }
 
-/* CSV */
+/* FILE UPLOAD (xlsx + csv) */
 function handleCSV(tab,file){
   if(!file)return;
+  const ext=file.name.split('.').pop().toLowerCase();
+  if(ext==='xlsx'||ext==='xls'){ handleXLSX(tab,file); return; }
   const reader=new FileReader();
   reader.onload=e=>{
     let txt=e.target.result;
@@ -850,26 +853,49 @@ function handleCSV(tab,file){
     const sep=txt.includes('\t')?'\t':',';
     const lines=txt.split(/\r?\n/).filter(l=>l.trim());
     if(lines.length<2){alert('데이터가 없습니다.');return;}
-    const hdrs=csvLine(lines[0],sep);const meta=M[tab];
-    const tbody=document.getElementById('gb-'+tab);tbody.innerHTML='';
-    lines.slice(1).forEach((line,ri)=>{
-      const vals=csvLine(line,sep);
-      const tr=makeRow(tab,ri+1);
-      const tcs=[...tr.querySelectorAll('td[contenteditable],td.gdt,td.gsel')];
-      meta.cols.forEach((c,ci)=>{
-        const hi=hdrs.findIndex(h=>h===c.k||h===c.lb);
-        const val=hi>=0?(vals[hi]||''):(vals[ci]||'');
-        if(!tcs[ci])return;
-        if(tcs[ci].classList.contains('gdt')){const inp=tcs[ci].querySelector('input');if(inp)inp.value=parseDate(val);}
-        else if(tcs[ci].classList.contains('gsel')){const sel=tcs[ci].querySelector('select');if(sel&&val)sel.value=val;}
-        else tcs[ci].textContent=val;
-      });
-      tbody.appendChild(tr);
-    });
-    setIT(tab,'grid');alert('✅ '+(lines.length-1)+'행 불러왔습니다.\n확인 후 저장하세요.');
+    const hdrs=csvLine(lines[0],sep);
+    const rows=lines.slice(1).map(l=>csvLine(l,sep));
+    fillGrid(tab,hdrs,rows);
   };
   reader.readAsText(file,'UTF-8');
 }
+
+function handleXLSX(tab,file){
+  const reader=new FileReader();
+  reader.onload=e=>{
+    try{
+      const wb=XLSX.read(new Uint8Array(e.target.result),{type:'array',cellDates:true});
+      const ws=wb.Sheets[wb.SheetNames[0]];
+      const arr=XLSX.utils.sheet_to_json(ws,{header:1,raw:false,dateNF:'yyyy-mm-dd',defval:''});
+      const rows=arr.filter(r=>r.some(c=>String(c).trim()!==''));
+      if(rows.length<2){alert('데이터가 없습니다.');return;}
+      const hdrs=rows[0].map(h=>String(h).trim());
+      fillGrid(tab,hdrs,rows.slice(1).map(r=>r.map(c=>String(c).trim())));
+    }catch(err){alert('엑셀 읽기 실패: '+err.message);console.error(err);}
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function fillGrid(tab,hdrs,rows){
+  const meta=M[tab];
+  const tbody=document.getElementById('gb-'+tab);tbody.innerHTML='';
+  rows.forEach((vals,ri)=>{
+    const tr=makeRow(tab,ri+1);
+    const tcs=[...tr.querySelectorAll('td[contenteditable],td.gdt,td.gsel')];
+    meta.cols.forEach((c,ci)=>{
+      const hi=hdrs.findIndex(h=>h===c.k||h===c.lb);
+      const val=hi>=0?(vals[hi]||''):(vals[ci]||'');
+      if(!tcs[ci])return;
+      if(tcs[ci].classList.contains('gdt')){const inp=tcs[ci].querySelector('input');if(inp)inp.value=parseDate(val);}
+      else if(tcs[ci].classList.contains('gsel')){const sel=tcs[ci].querySelector('select');if(sel&&val)sel.value=val;}
+      else tcs[ci].textContent=val;
+    });
+    tbody.appendChild(tr);
+  });
+  setIT(tab,'grid');
+  alert('✅ '+rows.length+'행 불러왔습니다.\n확인 후 저장하세요.');
+}
+
 function csvLine(line,sep){
   if(sep==='\t')return line.split('\t').map(v=>v.replace(/^"|"$/g,'').trim());
   const res=[];let cur='';let inQ=false;
