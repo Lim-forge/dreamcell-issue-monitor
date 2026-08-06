@@ -673,7 +673,7 @@ function initYMFilters(){
     if(!fb)return;
     const wrap=document.createElement('span');
     wrap.style.cssText='display:flex;align-items:center;gap:5px;padding-right:12px;border-right:1px solid var(--border);margin-right:4px;flex-shrink:0';
-    wrap.innerHTML='<span class="fbl">빠른선택</span><select class="fs" id="ym-yr-'+tab+'" style="width:82px">'+yOpts+'</select><select class="fs" id="ym-mo-'+tab+'" style="width:70px">'+mOpts+'</select><button class="btn btn-g" style="height:29px" onclick="applyYM(''+tab+'')">적용</button>';
+    wrap.innerHTML='<span class="fbl">빠른선택</span><select class="fs" id="ym-yr-'+tab+'" style="width:82px">'+yOpts+'</select><select class="fs" id="ym-mo-'+tab+'" style="width:70px">'+mOpts+'</select><button class="btn btn-g" style="height:29px" data-tab="'+tab+'" onclick="applyYM(this.dataset.tab)">적용</button>';
     fb.insertBefore(wrap,fb.firstChild);
   });
 }
@@ -705,7 +705,7 @@ function buildInputArea(tab){
     +'<div class="csv-zone" id="czn-'+tab+'"><div class="csv-ic">📂</div>'
     +'<div class="csv-t1">CSV / TSV 파일을 드래그하거나 클릭</div>'
     +'<div class="csv-t2">UTF-8 형식 · 첫 행은 헤더</div></div>'
-    +'<input type="file" id="cfl-'+tab+'" accept=".csv,.tsv,.txt" style="display:none" data-tab="'+tab+'" onchange="handleCSV(this.dataset.tab,this.files[0]);this.value='';"><div class="col-guide"><b>컬럼 순서</b>'+colNames+'</div>'
+    +'<input type="file" id="cfl-'+tab+'" accept=".csv,.tsv,.txt" style="display:none" data-tab="'+tab+'" onchange="handleCSV(this.dataset.tab,this.files[0]);"><div class="col-guide"><b>컬럼 순서</b>'+colNames+'</div>'
     +'</div></div>'
     +'<div class="it-sec" id="it-grd-'+tab+'"><div class="grid-outer">'
     +'<div class="grid-wrap" id="gw-'+tab+'"><table class="grid-table"><thead id="gh-'+tab+'"></thead><tbody id="gb-'+tab+'"></tbody></table></div>'
