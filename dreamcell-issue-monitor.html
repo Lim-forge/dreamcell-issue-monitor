@@ -789,7 +789,7 @@ function initYMFilters(){
     if(!fb)return;
     const wrap=document.createElement('span');
     wrap.style.cssText='display:flex;align-items:center;gap:5px;padding-right:12px;border-right:1px solid var(--border);margin-right:4px;flex-shrink:0';
-    wrap.innerHTML=`<span class="fbl">빠른선택</span><select class="fs" id="ym-yr-${tab}" style="width:82px">${yOpts}</select><select class="fs" id="ym-mo-${tab}" style="width:70px">${mOpts}</select><button class="btn btn-g" style="height:29px" data-tab="${tab}" onclick="applyYM(this.dataset.tab)">적용</button>`;
+    wrap.innerHTML=`<span class="fbl">빠른선택</span><select class="fs" id="ym-yr-${tab}" style="width:82px" onchange="applyYM('${tab}')">${yOpts}</select><select class="fs" id="ym-mo-${tab}" style="width:70px" onchange="applyYM('${tab}')">${mOpts}</select><button class="btn btn-g" style="height:29px" data-tab="${tab}" onclick="applyYM(this.dataset.tab)">적용</button>`;
     fb.insertBefore(wrap,fb.firstChild);
   });
 }
