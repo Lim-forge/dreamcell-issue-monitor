@@ -578,7 +578,7 @@ function guard(){if(!sb){alert('Supabase 연결 정보를 설정해주세요.');
 async function loadLMS(){
   if(!guard())return;L(true);
   try{
-    let q=sb.from('shipments').select('*').lt('margin_rate',10)
+    let q=sb.from('shipments').select('*')
       .gte('ship_date',document.getElementById('lms-f').value)
       .lte('ship_date',document.getElementById('lms-t').value)
       .order('ship_date',{ascending:false});
@@ -647,7 +647,7 @@ async function loadCC(){
 async function loadLMO(){
   if(!guard())return;L(true);
   try{
-    let q=sb.from('orders').select('*').lt('margin_rate',10)
+    let q=sb.from('orders').select('*')
       .gte('order_date',document.getElementById('lmo-f').value)
       .lte('order_date',document.getElementById('lmo-t').value)
       .order('order_date',{ascending:false});
@@ -873,9 +873,9 @@ function handleXLSX(tab,file){
       const hdrs=rows[0].map(h=>String(h).trim());
       const body=rows.slice(1).map(r=>r.map(c=>{
         if(c instanceof Date&&!isNaN(c)){
-          const y=c.getFullYear();
-          const m=String(c.getMonth()+1).padStart(2,'0');
-          const d=String(c.getDate()).padStart(2,'0');
+          const y=c.getUTCFullYear();
+          const m=String(c.getUTCMonth()+1).padStart(2,'0');
+          const d=String(c.getUTCDate()).padStart(2,'0');
           return y+'-'+m+'-'+d;
         }
         return c==null?'':String(c).trim();
@@ -959,7 +959,19 @@ async function save(tab){
   try{
     const{error}=await sb.from(meta.tbl).insert(records);if(error)throw error;
     alert('✅ '+records.length+'건 저장 완료!');
-    setMode(tab,'view');LFNS[tab]();
+    setMode(tab,'view');
+    // 저장된 데이터가 조회에 바로 보이도록 날짜범위를 넓게(올해 전체) 설정
+    const dp={lms:'lms',ret:'ret',cc:'cc',lmo:'lmo'}[tab];
+    const yr=new Date().getFullYear();
+    const ef=document.getElementById(dp+'-f'), et=document.getElementById(dp+'-t');
+    // 저장 레코드 중 최소/최대 날짜 산출
+    const dk=meta.dk;
+    const dates=records.map(r=>r[dk]).filter(Boolean).sort();
+    if(dates.length){
+      if(ef&&dates[0]<ef.value)ef.value=dates[0];
+      if(et&&dates[dates.length-1]>et.value)et.value=dates[dates.length-1];
+    }
+    LFNS[tab]();
   }catch(e){alert('저장 실패: '+e.message);console.error(e);}
   finally{L(false);}
 }
