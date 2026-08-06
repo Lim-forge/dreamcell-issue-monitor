@@ -39,11 +39,12 @@ body{font-family:'Pretendard',-apple-system,BlinkMacSystemFont,'Segoe UI','Malgu
 .sb-author{font-size:13px;font-weight:700;color:var(--gold);margin-top:10px;letter-spacing:.03em}
 .sb-grp{padding:20px 20px 5px;font-size:9px;font-weight:700;letter-spacing:.16em;
         text-transform:uppercase;color:rgba(255,255,255,.18)}
-.ni{display:flex;align-items:center;gap:10px;padding:11px 20px 11px 17px;
+.sb-grp-sp{height:14px}
+.ni{display:flex;align-items:center;gap:11px;padding:13px 20px 13px 17px;
     cursor:pointer;border-left:2px solid transparent;transition:background .12s,border-color .12s}
 .ni:hover{background:var(--gold-dim)}
 .ni.on{background:rgba(201,162,42,.13);border-left-color:var(--gold)}
-.nic{font-size:13px;width:18px;text-align:center;flex-shrink:0;color:rgba(201,162,42,.4)}
+.nic{font-size:15px;width:20px;text-align:center;flex-shrink:0;color:rgba(255,255,255,.5)}
 .ni.on .nic{color:var(--gold-hi)}
 .nl{font-size:12px;color:rgba(255,255,255,.42);white-space:nowrap;flex:1}
 .ni.on .nl{color:#FEF3C7;font-weight:600}
@@ -238,7 +239,7 @@ thead th.ac{text-align:center;width:90px}
     <div class="sb-title">Report</div>
     <div class="sb-author">제작: 임영재</div>
   </div>
-  <div class="sb-grp">출고 이슈</div>
+  <div class="sb-grp-sp"></div>
   <div class="ni on" id="nav-lms" onclick="go('lms')">
     <span class="nic">↑</span><span class="nl">10% 미만 마진 출고건</span>
     <span class="nb z" id="badge-lms">—</span>
@@ -247,7 +248,7 @@ thead th.ac{text-align:center;width:90px}
     <span class="nic">↩</span><span class="nl">반품처리건</span>
     <span class="nb z" id="badge-ret">—</span>
   </div>
-  <div class="sb-grp">수주 이슈</div>
+  <div class="sb-grp-sp"></div>
   <div class="ni" id="nav-cc" onclick="go('cc')">
     <span class="nic">△</span><span class="nl">수주 취소·변경건</span>
     <span class="nb z" id="badge-cc">—</span>
