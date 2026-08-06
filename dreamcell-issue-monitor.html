@@ -715,7 +715,7 @@ function buildInputArea(tab){
     +'<span class="g-hint">Tab/Enter: 다음 셀 · ↑↓←→: 셀 이동 · Ctrl+V: 엑셀 붙여넣기</span>'
     +'</div></div></div>'
     +'<div class="save-bar">'
-    +'<button class="btn btn-g" data-tab="'+tab+'" onclick="setMode(this.dataset.tab,'view')">✕ 취소</button>'
+    +'<button class="btn btn-g" data-tab="'+tab+'" data-mode="view" onclick="setMode(this.dataset.tab,this.dataset.mode)">✕ 취소</button>'
     +'<button class="btn btn-p" data-tab="'+tab+'" onclick="save(this.dataset.tab)">💾 저장</button>'
     +'</div>';
   const zone=document.getElementById('czn-'+tab);
