@@ -523,8 +523,8 @@ thead th.ac{text-align:center;width:90px}
     </div>
     <div class="va" id="va-ush">
       <div class="fb">
-        <span class="fbl">수주일</span>
-        <input type="date" id="ush-f"><span class="fbs">~</span><input type="date" id="ush-t">
+        <span class="fbl">보고서 월</span>
+        <input type="date" id="ush-f" style="display:none"><input type="date" id="ush-t" style="display:none">
         <input class="fi" id="ush-rep" placeholder="담당자" style="width:90px">
         <select class="fs" id="ush-status" style="width:100px">
           <option value="">출고여부 전체</option>
@@ -825,9 +825,18 @@ async function loadUSH(){
   if(!guard())return;L(true);
   try{
     let q=sb.from('unshipped').select('*')
-      .gte('order_date',document.getElementById('ush-f').value)
-      .lte('order_date',document.getElementById('ush-t').value)
       .order('rep',{ascending:true}).order('order_date',{ascending:true});
+
+    // 빠른선택 년+월 → report_month 기준 필터
+    const yr = document.getElementById('ym-yr-ush')?.value;
+    const mo = document.getElementById('ym-mo-ush')?.value;
+    if(yr && mo) {
+      const rm = yr+'-'+String(mo).padStart(2,'0');
+      q = q.eq('report_month', rm);
+    } else if(yr) {
+      q = q.like('report_month', yr+'-%');
+    }
+
     const st=document.getElementById('ush-status').value;
     const c=document.getElementById('ush-cust').value.trim();
     const r=document.getElementById('ush-rep').value.trim();
