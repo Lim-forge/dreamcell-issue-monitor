@@ -219,19 +219,19 @@ tbody td.dm{color:var(--t3);font-size:12px}
 .btn-g:hover{background:#E6E9F2}
 
 /* 작업열 토글 버튼 */
-.act-toggle-btn{border:1px solid var(--gold);background:var(--gold-dim);
-  color:var(--gold);font-size:11px;padding:3px 10px;border-radius:20px;
-  cursor:pointer;transition:background .15s;white-space:nowrap;margin-right:8px;}
-.act-toggle-btn:hover{background:rgba(201,162,42,.25);color:var(--gold-hi);}
+.act-toggle-btn{border:1px solid rgba(0,0,0,.2);background:rgba(255,255,255,.9);
+  color:#333;font-size:11px;padding:3px 10px;border-radius:20px;
+  cursor:pointer;transition:background .15s;white-space:nowrap;margin-right:8px;font-weight:600;}
+.act-toggle-btn:hover{background:#fff;color:#000;}
 
-/* KPI 토글 헤더 골드 */
-.kpi-toggle{width:100%;background:rgba(201,162,42,.08);border:1px solid rgba(201,162,42,.25);border-radius:var(--r);
+/* KPI 토글 헤더 골드 배경 */
+.kpi-toggle{width:100%;background:var(--gold);border:none;border-radius:var(--r);
   cursor:pointer;display:flex;justify-content:space-between;align-items:center;
   padding:11px 15px;margin-bottom:0;transition:background .15s;}
-.kpi-toggle:hover{background:rgba(201,162,42,.15);}
-.kpi-tl{font-size:12.5px;font-weight:700;color:var(--gold);display:flex;align-items:center;gap:7px;}
-.kpi-tr{font-size:11px;color:var(--gold);display:flex;align-items:center;gap:5px;}
-.kpi-arr{transition:transform .2s;display:inline-block;color:var(--gold);}
+.kpi-toggle:hover{background:var(--gold-hi);}
+.kpi-tl{font-size:12.5px;font-weight:700;color:#fff;display:flex;align-items:center;gap:7px;}
+.kpi-tr{font-size:11px;color:#fff;display:flex;align-items:center;gap:5px;}
+.kpi-arr{transition:transform .2s;display:inline-block;color:#fff;}
 .kpi-arr.open{transform:rotate(180deg);}
 
 /* 작업 컬럼 */
