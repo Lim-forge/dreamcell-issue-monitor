@@ -580,11 +580,11 @@ const M={
     {k:'order_qty',lb:'수주량',t:'num',w:68},
     {k:'received_qty',lb:'입고',t:'num',w:68},
     {k:'unshipped_qty',lb:'미출고량',t:'num',w:80},
-    {k:'sale_price',lb:'출고가',t:'num',w:88},
+    {k:'sale_price',lb:'출고가',alias:['*출고가(원)'],t:'num',w:88},
     {k:'manufacturer',lb:'제조업체',t:'text',w:100},
-    {k:'reason',lb:'사유',t:'text',w:130},
-    {k:'expected_date',lb:'출고예정일',t:'text',w:120},
-    {k:'changed_date',lb:'변경출고예정일',t:'text',w:130},
+    {k:'reason',lb:'사유',alias:['사유(영업사원기재)'],t:'text',w:130},
+    {k:'expected_date',lb:'출고예정일',alias:['출고예정일/비고'],t:'text',w:120},
+    {k:'changed_date',lb:'변경출고예정일',t:'text',w:130,noFallback:true},
     {k:'ship_status',lb:'출고여부',t:'select',w:90,def:'진행중',opts:['출고완료','진행중','미입고','기간변경']}]},
   lmo:{tbl:'orders',dk:'order_date',computeMG:{sale:'order_price',cost:'po_price',out:'margin_rate'},cols:[
     {k:'orderer',lb:'수주자',t:'text',w:76},
@@ -791,20 +791,14 @@ async function loadUSH(){
     const{data,error}=await q;if(error)throw error;
     const PB={출고완료:'bg',진행중:'bo',미입고:'br',기간변경:'bb'};
     const tb=document.getElementById('tb-ush');
-    if(!data?.length){tb.innerHTML=emptyR(14,'📦','해당 조건의 미출고건이 없습니다');setCnt('ush',0);}
+    if(!data?.length){tb.innerHTML=emptyR(15,'📦','해당 조건의 미출고건이 없습니다');setCnt('ush',0);}
     else{
       tb.innerHTML=data.map(r=>'<tr data-id="'+r.id+'">'
-        +'<td>'+(r.order_date||'—')+'</td>'
-        +'<td>'+(r.rep||'—')+'</td>'
-        +'<td>'+(r.customer_name||'—')+'</td>'
-        +'<td>'+(r.item_code||'—')+'</td>'
-        +'<td>'+(r.item_name||'—')+'</td>'
-        +'<td class="r">'+fmt(r.order_qty)+'</td>'
-        +'<td class="r">'+fmt(r.received_qty)+'</td>'
-        +'<td class="r">'+fmt(r.unshipped_qty)+'</td>'
-        +'<td class="r">'+fmt(r.sale_price)+'</td>'
-        +'<td>'+(r.manufacturer||'—')+'</td>'
-        +'<td class="dm">'+(r.reason||'')+'</td>'
+        +'<td>'+(r.order_date||'—')+'</td><td>'+(r.rep||'—')+'</td><td>'+(r.customer_name||'—')+'</td>'
+        +'<td>'+(r.item_code||'—')+'</td><td>'+(r.item_name||'—')+'</td>'
+        +'<td class="r">'+fmt(r.order_qty)+'</td><td class="r">'+fmt(r.received_qty)+'</td>'
+        +'<td class="r">'+fmt(r.unshipped_qty)+'</td><td class="r">'+fmt(r.sale_price)+'</td>'
+        +'<td>'+(r.manufacturer||'—')+'</td><td class="dm">'+(r.reason||'')+'</td>'
         +'<td>'+(r.expected_date||'—')+'</td>'
         +'<td>'+(r.changed_date?'<span class="badge bb">'+r.changed_date+'</span>':'—')+'</td>'
         +'<td><span class="badge '+(PB[r.ship_status]||'bgr')+'">'+(r.ship_status||'—')+'</span></td>'
@@ -817,7 +811,7 @@ async function loadUSH(){
       setKV('kv-ush-done',data.filter(r=>r.ship_status==='출고완료').length+'건');
     }
     setTS('ush');
-  }catch(e){document.getElementById('tb-ush').innerHTML=errR(14,e.message);}
+  }catch(e){document.getElementById('tb-ush').innerHTML=errR(15,e.message);}
   finally{L(false);}
 }
 
@@ -1096,13 +1090,7 @@ function handleXLSX(tab,file){
   reader.onload=e=>{
     try{
       const wb=XLSX.read(new Uint8Array(e.target.result),{type:'array',cellDates:true});
-      const ws=wb.Sheets[wb.SheetNames[0]];
-      // raw:true 로 받아서 Date 객체를 직접 처리 (미국식 날짜포맷 문제 회피)
-      const arr=XLSX.utils.sheet_to_json(ws,{header:1,raw:true,defval:''});
-      const rows=arr.filter(r=>r.some(c=>c!==null&&c!==undefined&&String(c).trim()!==''));
-      if(rows.length<2){alert('데이터가 없습니다.');return;}
-      const hdrs=rows[0].map(h=>String(h).trim());
-      const body=rows.slice(1).map(r=>r.map(c=>{
+      const toBody=r=>r.map(c=>{
         if(c instanceof Date&&!isNaN(c)){
           const y=c.getUTCFullYear();
           const m=String(c.getUTCMonth()+1).padStart(2,'0');
@@ -1110,7 +1098,34 @@ function handleXLSX(tab,file){
           return y+'-'+m+'-'+d;
         }
         return c==null?'':String(c).trim();
-      }));
+      });
+      // ush 탭: 전체 시트 병합 (담당자별 시트 구조 대응)
+      if(tab==='ush'){
+        let allHdrs=null,allRows=[];
+        wb.SheetNames.forEach(sn=>{
+          const ws=wb.Sheets[sn];
+          const arr=XLSX.utils.sheet_to_json(ws,{header:1,raw:true,defval:''});
+          const cleaned=arr.filter(r=>r.some(c=>c!==null&&c!==undefined&&String(c).trim()!==''));
+          const hIdx=cleaned.findIndex(r=>r.some(c=>String(c).trim()==='수주일'));
+          if(hIdx<0)return;
+          const hdrs=cleaned[hIdx].map(h=>String(h).trim());
+          if(!allHdrs)allHdrs=hdrs;
+          const dateCol=hdrs.findIndex(h=>h==='수주일');
+          cleaned.slice(hIdx+1)
+            .filter(r=>r[dateCol]!=null&&String(r[dateCol]).trim()!=='')
+            .forEach(r=>allRows.push(toBody(r)));
+        });
+        if(!allHdrs||!allRows.length){alert('데이터가 없습니다.');return;}
+        fillGrid(tab,allHdrs,allRows);
+        return;
+      }
+      // 기존: 첫 번째 시트만
+      const ws=wb.Sheets[wb.SheetNames[0]];
+      const arr=XLSX.utils.sheet_to_json(ws,{header:1,raw:true,defval:''});
+      const rows=arr.filter(r=>r.some(c=>c!==null&&c!==undefined&&String(c).trim()!==''));
+      if(rows.length<2){alert('데이터가 없습니다.');return;}
+      const hdrs=rows[0].map(h=>String(h).trim());
+      const body=rows.slice(1).map(r=>toBody(r));
       fillGrid(tab,hdrs,body);
     }catch(err){alert('엑셀 읽기 실패: '+err.message);console.error(err);}
   };
@@ -1124,8 +1139,8 @@ function fillGrid(tab,hdrs,rows){
     const tr=makeRow(tab,ri+1);
     const tcs=[...tr.querySelectorAll('td[contenteditable],td.gdt,td.gsel')];
     meta.cols.forEach((c,ci)=>{
-      const hi=hdrs.findIndex(h=>h===c.k||h===c.lb);
-      const val=hi>=0?(vals[hi]||''):(vals[ci]||'');
+      const hi=hdrs.findIndex(h=>h===c.k||h===c.lb||(c.alias&&c.alias.includes(h)));
+      const val=hi>=0?(vals[hi]||''):(c.noFallback?'':(vals[ci]||''));
       if(!tcs[ci])return;
       if(tcs[ci].classList.contains('gdt')){const inp=tcs[ci].querySelector('input');if(inp)inp.value=parseDate(val);}
       else if(tcs[ci].classList.contains('gsel')){const sel=tcs[ci].querySelector('select');if(sel&&val)sel.value=val;}
