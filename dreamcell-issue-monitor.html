@@ -218,6 +218,12 @@ tbody td.dm{color:var(--t3);font-size:12px}
 .btn-g{background:#F0F2F8;color:var(--t2);border:1px solid var(--border)}
 .btn-g:hover{background:#E6E9F2}
 
+/* 작업열 토글 버튼 */
+.act-toggle-btn{border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.08);
+  color:rgba(255,255,255,.7);font-size:11px;padding:3px 10px;border-radius:20px;
+  cursor:pointer;transition:background .15s;white-space:nowrap;margin-right:8px;}
+.act-toggle-btn:hover{background:rgba(255,255,255,.18);color:#fff;}
+
 /* 작업 컬럼 */
 thead th.ac{text-align:center;width:90px}
 .act-cell{text-align:center;white-space:nowrap}
@@ -250,6 +256,7 @@ thead th.ac{text-align:center;width:90px}
     <span class="nic">↑</span><span class="nl">10% 미만 마진 출고건</span>
     <span class="nb z" id="badge-lms">—</span>
   </div>
+  <div class="sb-grp-sp"></div>
   <div class="ni" id="nav-ret" onclick="go('ret')">
     <span class="nic">↩</span><span class="nl">반품처리건</span>
     <span class="nb z" id="badge-ret">—</span>
@@ -259,6 +266,7 @@ thead th.ac{text-align:center;width:90px}
     <span class="nic">△</span><span class="nl">수주 취소·변경건</span>
     <span class="nb z" id="badge-cc">—</span>
   </div>
+  <div class="sb-grp-sp"></div>
   <div class="ni" id="nav-lmo" onclick="go('lmo')">
     <span class="nic">↓</span><span class="nl">10% 미만 마진 수주건</span>
     <span class="nb z" id="badge-lmo">—</span>
@@ -290,7 +298,10 @@ thead th.ac{text-align:center;width:90px}
     <div class="kpi-wrap">
       <button class="kpi-toggle" onclick="toggleKPI('lms')">
         <span class="kpi-tl">📊 KPI 요약</span>
-        <span class="kpi-tr"><span id="kpi-txt-lms">펼치기</span><span class="kpi-arr" id="kpi-arr-lms">▼</span></span>
+        <span class="kpi-tr">
+          <button class="act-toggle-btn" id="act-btn-lms" onclick="event.stopPropagation();toggleActCol('lms')">작업 숨기기</button>
+          <span id="kpi-txt-lms">펼치기</span><span class="kpi-arr" id="kpi-arr-lms">▼</span>
+        </span>
       </button>
       <div class="kpi-grid" id="kpi-grid-lms">
         <div class="kpi-card"><div class="kpi-lbl">총 건수</div><div class="kpi-val" id="kv-lms-cnt">—</div></div>
@@ -337,12 +348,16 @@ thead th.ac{text-align:center;width:90px}
     <div class="kpi-wrap">
       <button class="kpi-toggle" onclick="toggleKPI('ret')">
         <span class="kpi-tl">📊 KPI 요약</span>
-        <span class="kpi-tr"><span id="kpi-txt-ret">펼치기</span><span class="kpi-arr" id="kpi-arr-ret">▼</span></span>
+        <span class="kpi-tr">
+          <button class="act-toggle-btn" id="act-btn-ret" onclick="event.stopPropagation();toggleActCol('ret')">작업 숨기기</button>
+          <span id="kpi-txt-ret">펼치기</span><span class="kpi-arr" id="kpi-arr-ret">▼</span>
+        </span>
       </button>
       <div class="kpi-grid" id="kpi-grid-ret">
         <div class="kpi-card"><div class="kpi-lbl">총 건수</div><div class="kpi-val" id="kv-ret-cnt">—</div></div>
         <div class="kpi-card"><div class="kpi-lbl">처리중</div><div class="kpi-val warn" id="kv-ret-접수">—</div></div>
         <div class="kpi-card"><div class="kpi-lbl">악성재고</div><div class="kpi-val warn" id="kv-ret-처리중">—</div></div>
+        <div class="kpi-card"><div class="kpi-lbl">재고사용</div><div class="kpi-val" id="kv-ret-재고사용">—</div></div>
         <div class="kpi-card"><div class="kpi-lbl">반품완료</div><div class="kpi-val ok" id="kv-ret-완료">—</div></div>
       </div>
     </div>
@@ -387,7 +402,10 @@ thead th.ac{text-align:center;width:90px}
     <div class="kpi-wrap">
       <button class="kpi-toggle" onclick="toggleKPI('cc')">
         <span class="kpi-tl">📊 KPI 요약</span>
-        <span class="kpi-tr"><span id="kpi-txt-cc">펼치기</span><span class="kpi-arr" id="kpi-arr-cc">▼</span></span>
+        <span class="kpi-tr">
+          <button class="act-toggle-btn" id="act-btn-cc" onclick="event.stopPropagation();toggleActCol('cc')">작업 숨기기</button>
+          <span id="kpi-txt-cc">펼치기</span><span class="kpi-arr" id="kpi-arr-cc">▼</span>
+        </span>
       </button>
       <div class="kpi-grid" id="kpi-grid-cc">
         <div class="kpi-card"><div class="kpi-lbl">총 건수</div><div class="kpi-val" id="kv-cc-cnt">—</div></div>
@@ -434,7 +452,10 @@ thead th.ac{text-align:center;width:90px}
     <div class="kpi-wrap">
       <button class="kpi-toggle" onclick="toggleKPI('lmo')">
         <span class="kpi-tl">📊 KPI 요약</span>
-        <span class="kpi-tr"><span id="kpi-txt-lmo">펼치기</span><span class="kpi-arr" id="kpi-arr-lmo">▼</span></span>
+        <span class="kpi-tr">
+          <button class="act-toggle-btn" id="act-btn-lmo" onclick="event.stopPropagation();toggleActCol('lmo')">작업 숨기기</button>
+          <span id="kpi-txt-lmo">펼치기</span><span class="kpi-arr" id="kpi-arr-lmo">▼</span>
+        </span>
       </button>
       <div class="kpi-grid" id="kpi-grid-lmo">
         <div class="kpi-card"><div class="kpi-lbl">총 건수</div><div class="kpi-val" id="kv-lmo-cnt">—</div></div>
@@ -482,7 +503,10 @@ thead th.ac{text-align:center;width:90px}
     <div class="kpi-wrap">
       <button class="kpi-toggle" onclick="toggleKPI('ush')">
         <span class="kpi-tl">📊 KPI 요약</span>
-        <span class="kpi-tr"><span id="kpi-txt-ush">펼치기</span><span class="kpi-arr" id="kpi-arr-ush">▼</span></span>
+        <span class="kpi-tr">
+          <button class="act-toggle-btn" id="act-btn-ush" onclick="event.stopPropagation();toggleActCol('ush')">작업 숨기기</button>
+          <span id="kpi-txt-ush">펼치기</span><span class="kpi-arr" id="kpi-arr-ush">▼</span>
+        </span>
       </button>
       <div class="kpi-grid" id="kpi-grid-ush">
         <div class="kpi-card"><div class="kpi-lbl">총 건수</div><div class="kpi-val" id="kv-ush-cnt">—</div></div>
@@ -661,6 +685,7 @@ function updKPI_ret(data){
   setKV('kv-ret-cnt',data.length+'건');
   setKV('kv-ret-접수',data.filter(r=>r.process==='처리중').length+'건');
   setKV('kv-ret-처리중',data.filter(r=>r.process==='악성재고').length+'건');
+  setKV('kv-ret-재고사용',data.filter(r=>r.process==='재고사용').length+'건');
   setKV('kv-ret-완료',data.filter(r=>r.process==='반품완료').length+'건');
 }
 function updKPI_cc(data){
@@ -839,12 +864,13 @@ async function loadUSH(){
 
 
 const LFNS={lms:loadLMS,ret:loadRET,cc:loadCC,lmo:loadLMO,ush:loadUSH};
-function toggleUSHAct(){
-  const hidden=document.querySelectorAll('#panel-ush .act-col-hidden');
-  const show=document.querySelectorAll('#panel-ush .act-col-hidden[style*=none], #panel-ush th.act-col-hidden');
-  const isHidden=document.querySelector('#panel-ush th.act-col-hidden')?.style.display!=='none';
-  document.querySelectorAll('#panel-ush .act-col-hidden').forEach(el=>el.style.display=isHidden?'':'none');
-  document.getElementById('ush-act-btn').textContent=isHidden?'✏️ 작업표시':'✏️ 작업숨김';
+function toggleActCol(tab){
+  const panel = document.getElementById('panel-'+tab);
+  const btn   = document.getElementById('act-btn-'+tab);
+  const thAc  = panel.querySelector('thead th.ac');
+  const isNowVisible = !thAc || thAc.style.display !== 'none';
+  panel.querySelectorAll('th.ac, td.act-cell').forEach(el => el.style.display = isNowVisible ? 'none' : '');
+  if (btn) btn.textContent = isNowVisible ? '작업 보이기' : '작업 숨기기';
 }
 
 /* ========== 수정 / 삭제 ========== */
