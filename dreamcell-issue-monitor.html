@@ -827,15 +827,14 @@ async function loadUSH(){
     let q=sb.from('unshipped').select('*')
       .order('rep',{ascending:true}).order('order_date',{ascending:true});
 
-    // 빠른선택 년+월 → report_month 기준 필터
+    // 빠른선택 년+월 → report_month 기준 필터 (월 선택 시에만)
     const yr = document.getElementById('ym-yr-ush')?.value;
     const mo = document.getElementById('ym-mo-ush')?.value;
     if(yr && mo) {
       const rm = yr+'-'+String(mo).padStart(2,'0');
       q = q.eq('report_month', rm);
-    } else if(yr) {
-      q = q.like('report_month', yr+'-%');
     }
+    // 전체월이면 필터 없이 전체 조회
 
     const st=document.getElementById('ush-status').value;
     const c=document.getElementById('ush-cust').value.trim();
