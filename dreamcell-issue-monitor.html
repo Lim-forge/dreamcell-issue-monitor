@@ -257,6 +257,11 @@ thead th.ac{text-align:center;width:90px}
     <span class="nic">↓</span><span class="nl">10% 미만 마진 수주건</span>
     <span class="nb z" id="badge-lmo">—</span>
   </div>
+  <div class="sb-grp-sp"></div>
+  <div class="ni" id="nav-ush" onclick="go('ush')">
+    <span class="nic">📦</span><span class="nl">미출고내역</span>
+    <span class="nb z" id="badge-ush">—</span>
+  </div>
   <div class="sb-ft">
     <div class="cd" id="connDot"></div>
     <span class="ct" id="connText">Supabase 미연결</span>
@@ -457,6 +462,58 @@ thead th.ac{text-align:center;width:90px}
     <div class="ia" id="ia-lmo"></div>
   </div>
 
+  <!-- USH -->
+  <div class="panel" id="panel-ush">
+    <div class="ph">
+      <span class="ph-t">미출고내역</span>
+      <span class="ph-n" id="cnt-ush">0건</span>
+      <div class="mode-g">
+        <button class="mbtn on" id="mbv-ush" onclick="setMode('ush','view')">📊 조회</button>
+        <button class="mbtn"    id="mbi-ush" onclick="setMode('ush','input')">✏️ 입력</button>
+      </div>
+      <span class="ph-s"></span><span class="ph-m" id="ts-ush"></span>
+    </div>
+    <div class="kpi-wrap">
+      <button class="kpi-toggle" onclick="toggleKPI('ush')">
+        <span class="kpi-tl">📊 KPI 요약</span>
+        <span class="kpi-tr"><span id="kpi-txt-ush">펼치기</span><span class="kpi-arr" id="kpi-arr-ush">▼</span></span>
+      </button>
+      <div class="kpi-grid" id="kpi-grid-ush">
+        <div class="kpi-card"><div class="kpi-lbl">총 건수</div><div class="kpi-val" id="kv-ush-cnt">—</div></div>
+        <div class="kpi-card"><div class="kpi-lbl">미출고 진행중</div><div class="kpi-val warn" id="kv-ush-ing">—</div></div>
+        <div class="kpi-card"><div class="kpi-lbl">기간변경</div><div class="kpi-val warn" id="kv-ush-chg">—</div></div>
+        <div class="kpi-card"><div class="kpi-lbl">출고완료</div><div class="kpi-val ok" id="kv-ush-done">—</div></div>
+      </div>
+    </div>
+    <div class="va" id="va-ush">
+      <div class="fb">
+        <span class="fbl">수주일</span>
+        <input type="date" id="ush-f"><span class="fbs">~</span><input type="date" id="ush-t">
+        <input class="fi" id="ush-rep" placeholder="담당자" style="width:90px">
+        <select class="fs" id="ush-status" style="width:100px">
+          <option value="">출고여부 전체</option>
+          <option>출고완료</option><option>진행중</option><option>미입고</option><option>기간변경</option>
+        </select>
+        <input class="fi" placeholder="수주처 검색" id="ush-cust">
+        <button class="btn btn-p" onclick="loadUSH()">🔍 조회</button>
+        <div class="fbr"><button class="btn btn-g" onclick="xcsv('ush')">⬇ CSV</button></div>
+      </div>
+      <div class="tbl-card"><div class="tx">
+        <table><thead><tr>
+          <th>수주일</th><th>담당자</th><th>수주처</th><th>품명코드</th>
+          <th>품명</th><th class="r">수주량</th><th class="r">입고</th><th class="r">미출고량</th>
+          <th class="r">출고가</th><th>제조업체</th><th>사유</th>
+          <th>출고예정일</th><th>변경출고예정일</th><th>출고여부</th><th class="ac">작업</th>
+        </tr></thead>
+        <tbody id="tb-ush"><tr><td colspan="15"><div class="empty">
+          <div class="emic">📦</div><div class="emt">조회 전입니다</div>
+          <div class="ems">기간을 설정하고 조회 버튼을 눌러주세요</div>
+        </div></td></tr></tbody></table>
+      </div></div>
+    </div>
+    <div class="ia" id="ia-ush"></div>
+  </div>
+
 </div>
 <!-- 편집 모달 -->
 <div id="editOverlay" style="display:none;position:fixed;inset:0;background:rgba(11,11,11,.55);z-index:10000;align-items:center;justify-content:center;padding:20px">
@@ -514,6 +571,21 @@ const M={
     {k:'change_type',lb:'변경사유',t:'select',w:90,opts:['취소','금액조정']},
     {k:'reason',lb:'사유',t:'text',w:130},
     {k:'diff_amount',lb:'차액',t:'num',w:88}]},
+  ush:{tbl:'unshipped',dk:'order_date',cols:[
+    {k:'order_date',lb:'수주일',t:'date',req:true,w:108},
+    {k:'rep',lb:'담당자',t:'text',w:76},
+    {k:'customer_name',lb:'수주처',t:'text',w:120},
+    {k:'item_code',lb:'품명코드',t:'text',w:100},
+    {k:'item_name',lb:'품명',t:'text',w:150},
+    {k:'order_qty',lb:'수주량',t:'num',w:68},
+    {k:'received_qty',lb:'입고',t:'num',w:68},
+    {k:'unshipped_qty',lb:'미출고량',t:'num',w:80},
+    {k:'sale_price',lb:'출고가',t:'num',w:88},
+    {k:'manufacturer',lb:'제조업체',t:'text',w:100},
+    {k:'reason',lb:'사유',t:'text',w:130},
+    {k:'expected_date',lb:'출고예정일',t:'text',w:120},
+    {k:'changed_date',lb:'변경출고예정일',t:'text',w:130},
+    {k:'ship_status',lb:'출고여부',t:'select',w:90,def:'진행중',opts:['출고완료','진행중','미입고','기간변경']}]},
   lmo:{tbl:'orders',dk:'order_date',computeMG:{sale:'order_price',cost:'po_price',out:'margin_rate'},cols:[
     {k:'orderer',lb:'수주자',t:'text',w:76},
     {k:'order_date',lb:'수주일',t:'date',req:true,w:108},
@@ -527,7 +599,7 @@ const M={
     {k:'po_price',lb:'발주단가',t:'num',w:88},
     {k:'reason',lb:'사유',t:'text',w:120}]}
 };
-const TABS=['lms','ret','cc','lmo'];
+const TABS=['lms','ret','cc','lmo','ush'];
 
 window._d=window._d||{lms:[],ret:[],cc:[],lmo:[]};
 (function init(){
@@ -703,10 +775,56 @@ async function loadLMO(){
   finally{L(false);}
 }
 
-const LFNS={lms:loadLMS,ret:loadRET,cc:loadCC,lmo:loadLMO};
+async function loadUSH(){
+  if(!guard())return;L(true);
+  try{
+    let q=sb.from('unshipped').select('*')
+      .gte('order_date',document.getElementById('ush-f').value)
+      .lte('order_date',document.getElementById('ush-t').value)
+      .order('order_date',{ascending:true});
+    const st=document.getElementById('ush-status').value;
+    const c=document.getElementById('ush-cust').value.trim();
+    const r=document.getElementById('ush-rep').value.trim();
+    if(st)q=q.eq('ship_status',st);
+    if(c)q=q.ilike('customer_name','%'+c+'%');
+    if(r)q=q.ilike('rep','%'+r+'%');
+    const{data,error}=await q;if(error)throw error;
+    const PB={출고완료:'bg',진행중:'bo',미입고:'br',기간변경:'bb'};
+    const tb=document.getElementById('tb-ush');
+    if(!data?.length){tb.innerHTML=emptyR(14,'📦','해당 조건의 미출고건이 없습니다');setCnt('ush',0);}
+    else{
+      tb.innerHTML=data.map(r=>'<tr data-id="'+r.id+'">'
+        +'<td>'+(r.order_date||'—')+'</td>'
+        +'<td>'+(r.rep||'—')+'</td>'
+        +'<td>'+(r.customer_name||'—')+'</td>'
+        +'<td>'+(r.item_code||'—')+'</td>'
+        +'<td>'+(r.item_name||'—')+'</td>'
+        +'<td class="r">'+fmt(r.order_qty)+'</td>'
+        +'<td class="r">'+fmt(r.received_qty)+'</td>'
+        +'<td class="r">'+fmt(r.unshipped_qty)+'</td>'
+        +'<td class="r">'+fmt(r.sale_price)+'</td>'
+        +'<td>'+(r.manufacturer||'—')+'</td>'
+        +'<td class="dm">'+(r.reason||'')+'</td>'
+        +'<td>'+(r.expected_date||'—')+'</td>'
+        +'<td>'+(r.changed_date?'<span class="badge bb">'+r.changed_date+'</span>':'—')+'</td>'
+        +'<td><span class="badge '+(PB[r.ship_status]||'bgr')+'">'+(r.ship_status||'—')+'</span></td>'
+        +actCell('ush',r.id)+'</tr>').join('');
+      window._d.ush=data;
+      setCnt('ush',data.length);
+      setKV('kv-ush-cnt',data.length+'건');
+      setKV('kv-ush-ing',data.filter(r=>r.ship_status==='진행중').length+'건');
+      setKV('kv-ush-chg',data.filter(r=>r.ship_status==='기간변경').length+'건');
+      setKV('kv-ush-done',data.filter(r=>r.ship_status==='출고완료').length+'건');
+    }
+    setTS('ush');
+  }catch(e){document.getElementById('tb-ush').innerHTML=errR(14,e.message);}
+  finally{L(false);}
+}
+
+const LFNS={lms:loadLMS,ret:loadRET,cc:loadCC,lmo:loadLMO,ush:loadUSH};
 
 /* ========== 수정 / 삭제 ========== */
-window._d={lms:[],ret:[],cc:[],lmo:[]};
+window._d={lms:[],ret:[],cc:[],lmo:[],ush:[]};
 let _editTab=null,_editId=null;
 
 // 각 행의 작업 셀 (수정·삭제 버튼)
@@ -782,7 +900,7 @@ async function submitEdit(){
 
 
 /* YM FILTER */
-const DATE_PREFIX={lms:'lms',ret:'ret',cc:'cc',lmo:'lmo'};
+const DATE_PREFIX={lms:'lms',ret:'ret',cc:'cc',lmo:'lmo',ush:'ush'};
 function initYMFilters(){
   const cy=new Date().getFullYear();
   const yOpts=[cy-1,cy,cy+1].map(y=>'<option value="'+y+'"'+(y===cy?' selected':'')+'>'+y+'년</option>').join('');
