@@ -132,6 +132,11 @@ tbody td{padding:9px 13px;vertical-align:middle;white-space:nowrap}
 tbody td.r{text-align:right}
 tbody td.dm{color:var(--t3);font-size:12px}
 .ush-grp-hdr td{background:#F2F4FB;font-weight:700;font-size:11.5px;padding:8px 13px;color:var(--t2);border-top:2px solid var(--border);letter-spacing:.02em}
+#panel-ush tbody td{color:var(--text)}
+#panel-ush tbody td.dm{color:var(--text)}
+.ush-reason{display:block;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:default}
+.ush-date{display:block;max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#panel-ush .act-col-hidden{display:none}
 .badge{display:inline-block;padding:2px 8px;border-radius:5px;font-size:11px;font-weight:700}
 .br{background:#FFF1F1;color:#B91C1C}
 .bo{background:#FFFBEB;color:#92400E}
@@ -497,14 +502,14 @@ thead th.ac{text-align:center;width:90px}
         </select>
         <input class="fi" placeholder="수주처 검색" id="ush-cust">
         <button class="btn btn-p" onclick="loadUSH()">🔍 조회</button>
-        <div class="fbr"><button class="btn btn-g" onclick="xcsv('ush')">⬇ CSV</button></div>
+        <div class="fbr"><button class="btn btn-g" onclick="xcsv('ush')">⬇ CSV</button><button class="btn btn-g" id="ush-act-btn" onclick="toggleUSHAct()" style="margin-left:4px">✏️ 작업숨김</button></div>
       </div>
       <div class="tbl-card"><div class="tx">
         <table><thead><tr>
           <th>수주일</th><th>수주처</th><th>품명코드</th>
           <th>품명</th><th class="r">수주량</th><th class="r">입고</th><th class="r">미출고량</th>
           <th class="r">출고가</th><th>제조업체</th><th>사유</th>
-          <th>출고예정일</th><th>변경출고예정일</th><th>출고여부</th><th class="ac">작업</th>
+          <th>출고예정일</th><th>변경출고예정일</th><th>출고여부</th><th class="ac act-col-hidden">작업</th>
         </tr></thead>
         <tbody id="tb-ush"><tr><td colspan="14"><div class="empty">
           <div class="emic">📦</div><div class="emt">조회 전입니다</div>
@@ -813,11 +818,11 @@ async function loadUSH(){
           +'<td class="r">'+fmt(r.unshipped_qty)+'</td>'
           +'<td class="r">'+fmt(r.sale_price)+'</td>'
           +'<td>'+(r.manufacturer||'—')+'</td>'
-          +'<td class="dm">'+(r.reason||'')+'</td>'
-          +'<td>'+(r.expected_date||'—')+'</td>'
-          +'<td>'+(r.changed_date?'<span class="badge bb">'+r.changed_date+'</span>':'—')+'</td>'
+          +'<td><span class="ush-reason" title="'+(r.reason||'')+'">'+( r.reason||'—')+'</span></td>'
+          +'<td><span class="ush-date" title="'+(r.expected_date||'')+'">'+( r.expected_date||'—')+'</span></td>'
+          +'<td><span class="ush-date" title="'+(r.changed_date||'')+'">'+( r.changed_date?'<span class="badge bb">'+r.changed_date+'</span>':'—')+'</span></td>'
           +'<td><span class="badge '+(PB[r.ship_status]||'bgr')+'">'+(r.ship_status||'—')+'</span></td>'
-          +actCell('ush',r.id)+'</tr>').join('');
+          +'<td class="act-cell act-col-hidden"><button class="act-btn edit" title="수정" onclick="openEdit(\'ush\',\''+r.id+'\')">✏️</button><button class="act-btn del" title="삭제" onclick="delRow(\'ush\',\''+r.id+'\')">🗑️</button></td>'+'</tr>').join('');
       });
       tb.innerHTML=rows;
       window._d.ush=data;
@@ -834,6 +839,13 @@ async function loadUSH(){
 
 
 const LFNS={lms:loadLMS,ret:loadRET,cc:loadCC,lmo:loadLMO,ush:loadUSH};
+function toggleUSHAct(){
+  const hidden=document.querySelectorAll('#panel-ush .act-col-hidden');
+  const show=document.querySelectorAll('#panel-ush .act-col-hidden[style*=none], #panel-ush th.act-col-hidden');
+  const isHidden=document.querySelector('#panel-ush th.act-col-hidden')?.style.display!=='none';
+  document.querySelectorAll('#panel-ush .act-col-hidden').forEach(el=>el.style.display=isHidden?'':'none');
+  document.getElementById('ush-act-btn').textContent=isHidden?'✏️ 작업표시':'✏️ 작업숨김';
+}
 
 /* ========== 수정 / 삭제 ========== */
 window._d={lms:[],ret:[],cc:[],lmo:[],ush:[]};
