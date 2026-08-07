@@ -658,7 +658,7 @@ window._d=window._d||{lms:[],ret:[],cc:[],lmo:[]};
     const btn=document.getElementById('act-btn-'+t);
     if(btn) btn.textContent='작업 보이기';
   });
-  if(sb)loadLMS();
+  if(sb) setTimeout(()=>go('lms'), 300);
 })();
 
 function go(tab){
