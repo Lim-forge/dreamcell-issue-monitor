@@ -219,10 +219,20 @@ tbody td.dm{color:var(--t3);font-size:12px}
 .btn-g:hover{background:#E6E9F2}
 
 /* 작업열 토글 버튼 */
-.act-toggle-btn{border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.08);
-  color:rgba(255,255,255,.7);font-size:11px;padding:3px 10px;border-radius:20px;
+.act-toggle-btn{border:1px solid var(--gold);background:var(--gold-dim);
+  color:var(--gold);font-size:11px;padding:3px 10px;border-radius:20px;
   cursor:pointer;transition:background .15s;white-space:nowrap;margin-right:8px;}
-.act-toggle-btn:hover{background:rgba(255,255,255,.18);color:#fff;}
+.act-toggle-btn:hover{background:rgba(201,162,42,.25);color:var(--gold-hi);}
+
+/* KPI 토글 헤더 골드 */
+.kpi-toggle{width:100%;background:rgba(201,162,42,.08);border:1px solid rgba(201,162,42,.25);border-radius:var(--r);
+  cursor:pointer;display:flex;justify-content:space-between;align-items:center;
+  padding:11px 15px;margin-bottom:0;transition:background .15s;}
+.kpi-toggle:hover{background:rgba(201,162,42,.15);}
+.kpi-tl{font-size:12.5px;font-weight:700;color:var(--gold);display:flex;align-items:center;gap:7px;}
+.kpi-tr{font-size:11px;color:var(--gold);display:flex;align-items:center;gap:5px;}
+.kpi-arr{transition:transform .2s;display:inline-block;color:var(--gold);}
+.kpi-arr.open{transform:rotate(180deg);}
 
 /* 작업 컬럼 */
 thead th.ac{text-align:center;width:90px}
@@ -641,6 +651,13 @@ window._d=window._d||{lms:[],ret:[],cc:[],lmo:[]};
   });
   TABS.forEach(t=>buildInputArea(t));
   initYMFilters();
+  // 모든 탭 작업열 기본 숨김
+  TABS.forEach(t=>{
+    const panel=document.getElementById('panel-'+t);
+    if(panel) panel.querySelectorAll('th.ac, td.act-cell').forEach(el=>el.style.display='none');
+    const btn=document.getElementById('act-btn-'+t);
+    if(btn) btn.textContent='작업 보이기';
+  });
   if(sb)loadLMS();
 })();
 
@@ -731,7 +748,7 @@ async function loadLMS(){
     if(!data?.length){tb.innerHTML=emptyR(10,'📦','해당 조건의 출고건이 없습니다');setCnt('lms',0);}
     else{
       tb.innerHTML=data.map(r=>'<tr data-id="'+r.id+'"><td>'+(r.ship_date||'—')+'</td><td>'+(r.customer_name||'—')+'</td><td>'+(r.rep||'—')+'</td><td>'+(r.catalog_no||'—')+'</td><td>'+(r.item_name||'—')+'</td><td>'+(r.brand||'—')+'</td><td class="r">'+fmt(r.cost_price)+'</td><td class="r">'+fmt(r.sale_price)+'</td><td class="r"><span class="'+mgC(r.margin_rate)+'">'+pct(r.margin_rate)+'</span></td><td class="dm">'+(r.reason||'')+'</td>'+actCell('lms',r.id)+'</tr>').join('');window._d.lms=data;
-      setCnt('lms',data.length);updKPI_margin('lms',data,'sale_price');
+      setCnt('lms',data.length);updKPI_margin('lms',data,'sale_price');restoreActCol('lms');
     }
     setTS('lms');
   }catch(e){document.getElementById('tb-lms').innerHTML=errR(10,e.message);}
@@ -753,7 +770,7 @@ async function loadRET(){
     const tb=document.getElementById('tb-ret');
     if(!data?.length){tb.innerHTML=emptyR(11,'🔄','해당 조건의 반품건이 없습니다');setCnt('ret',0);}
     else{
-      tb.innerHTML=data.map(r=>'<tr data-id="'+r.id+'"><td>'+(r.return_date||'—')+'</td><td>'+(r.rep||'—')+'</td><td>'+(r.code||'—')+'</td><td>'+(r.item_name||'—')+'</td><td class="r">'+fmt(r.qty)+'</td><td>'+(r.supplier||'—')+'</td><td>'+(r.customer_name||'—')+'</td><td>'+(r.reason||'—')+'</td><td><span class="badge '+(PB[r.process]||'bgr')+'">'+(r.process||'—')+'</span></td><td class="r">'+fmt(r.unit_price)+'</td><td class="r">'+fmt(r.total)+'</td>'+actCell('ret',r.id)+'</tr>').join('');window._d.ret=data;
+      tb.innerHTML=data.map(r=>'<tr data-id="'+r.id+'"><td>'+(r.return_date||'—')+'</td><td>'+(r.rep||'—')+'</td><td>'+(r.code||'—')+'</td><td>'+(r.item_name||'—')+'</td><td class="r">'+fmt(r.qty)+'</td><td>'+(r.supplier||'—')+'</td><td>'+(r.customer_name||'—')+'</td><td>'+(r.reason||'—')+'</td><td><span class="badge '+(PB[r.process]||'bgr')+'">'+(r.process||'—')+'</span></td><td class="r">'+fmt(r.unit_price)+'</td><td class="r">'+fmt(r.total)+'</td>'+actCell('ret',r.id)+'</tr>').join('');window._d.ret=data;restoreActCol('ret');
       setCnt('ret',data.length);updKPI_ret(data);
     }
     setTS('ret');
@@ -776,7 +793,7 @@ async function loadCC(){
     const tb=document.getElementById('tb-cc');
     if(!data?.length){tb.innerHTML=emptyR(9,'⚠️','해당 조건의 취소·변경건이 없습니다');setCnt('cc',0);}
     else{
-      tb.innerHTML=data.map(r=>'<tr data-id="'+r.id+'"><td>'+(r.order_date||'—')+'</td><td>'+(r.customer_name||'—')+'</td><td>'+(r.rep||'—')+'</td><td>'+(r.brand||'—')+'</td><td>'+(r.catalog_no||'—')+'</td><td>'+(r.item_name||'—')+'</td><td><span class="badge '+(TB[r.change_type]||'bgr')+'">'+(r.change_type||'—')+'</span></td><td>'+(r.reason||'—')+'</td><td class="r">'+fmt(r.diff_amount)+'</td>'+actCell('cc',r.id)+'</tr>').join('');window._d.cc=data;
+      tb.innerHTML=data.map(r=>'<tr data-id="'+r.id+'"><td>'+(r.order_date||'—')+'</td><td>'+(r.customer_name||'—')+'</td><td>'+(r.rep||'—')+'</td><td>'+(r.brand||'—')+'</td><td>'+(r.catalog_no||'—')+'</td><td>'+(r.item_name||'—')+'</td><td><span class="badge '+(TB[r.change_type]||'bgr')+'">'+(r.change_type||'—')+'</span></td><td>'+(r.reason||'—')+'</td><td class="r">'+fmt(r.diff_amount)+'</td>'+actCell('cc',r.id)+'</tr>').join('');window._d.cc=data;restoreActCol('cc');
       setCnt('cc',data.length);updKPI_cc(data);
     }
     setTS('cc');
@@ -798,7 +815,7 @@ async function loadLMO(){
     const tb=document.getElementById('tb-lmo');
     if(!data?.length){tb.innerHTML=emptyR(12,'📋','해당 조건의 수주건이 없습니다');setCnt('lmo',0);}
     else{
-      tb.innerHTML=data.map(r=>'<tr data-id="'+r.id+'"><td>'+(r.orderer||'—')+'</td><td>'+(r.order_date||'—')+'</td><td>'+(r.customer_name||'—')+'</td><td>'+(r.item_code||'—')+'</td><td>'+(r.item_name||'—')+'</td><td class="r">'+fmt(r.order_qty)+'</td><td class="r">'+fmt(r.order_price)+'</td><td>'+(r.maker||'—')+'</td><td>'+(r.po_vendor||'—')+'</td><td class="r">'+fmt(r.po_price)+'</td><td class="r"><span class="'+mgC(r.margin_rate)+'">'+pct(r.margin_rate)+'</span></td><td class="dm">'+(r.reason||'')+'</td>'+actCell('lmo',r.id)+'</tr>').join('');window._d.lmo=data;
+      tb.innerHTML=data.map(r=>'<tr data-id="'+r.id+'"><td>'+(r.orderer||'—')+'</td><td>'+(r.order_date||'—')+'</td><td>'+(r.customer_name||'—')+'</td><td>'+(r.item_code||'—')+'</td><td>'+(r.item_name||'—')+'</td><td class="r">'+fmt(r.order_qty)+'</td><td class="r">'+fmt(r.order_price)+'</td><td>'+(r.maker||'—')+'</td><td>'+(r.po_vendor||'—')+'</td><td class="r">'+fmt(r.po_price)+'</td><td class="r"><span class="'+mgC(r.margin_rate)+'">'+pct(r.margin_rate)+'</span></td><td class="dm">'+(r.reason||'')+'</td>'+actCell('lmo',r.id)+'</tr>').join('');window._d.lmo=data;restoreActCol('lmo');
       setCnt('lmo',data.length);updKPI_margin('lmo',data,'order_price');
     }
     setTS('lmo');
@@ -850,7 +867,7 @@ async function loadUSH(){
           +'<td class="act-cell act-col-hidden"><button class="act-btn edit" title="수정" onclick="openEdit(\'ush\',\''+r.id+'\')">✏️</button><button class="act-btn del" title="삭제" onclick="delRow(\'ush\',\''+r.id+'\')">🗑️</button></td>'+'</tr>').join('');
       });
       tb.innerHTML=rows;
-      window._d.ush=data;
+      window._d.ush=data;restoreActCol('ush');
       setCnt('ush',data.length);
       setKV('kv-ush-cnt',data.length+'건');
       setKV('kv-ush-ing',data.filter(r=>r.ship_status==='진행중').length+'건');
@@ -868,9 +885,19 @@ function toggleActCol(tab){
   const panel = document.getElementById('panel-'+tab);
   const btn   = document.getElementById('act-btn-'+tab);
   const thAc  = panel.querySelector('thead th.ac');
-  const isNowVisible = !thAc || thAc.style.display !== 'none';
+  const isNowVisible = thAc && thAc.style.display !== 'none';
   panel.querySelectorAll('th.ac, td.act-cell').forEach(el => el.style.display = isNowVisible ? 'none' : '');
   if (btn) btn.textContent = isNowVisible ? '작업 보이기' : '작업 숨기기';
+  // 상태 저장 (동적 행 추가 후에도 유지)
+  panel.dataset.actHidden = isNowVisible ? 'true' : 'false';
+}
+
+// 동적 행 추가 후 작업열 상태 복원
+function restoreActCol(tab){
+  const panel = document.getElementById('panel-'+tab);
+  if(panel && panel.dataset.actHidden === 'true'){
+    panel.querySelectorAll('th.ac, td.act-cell').forEach(el => el.style.display = 'none');
+  }
 }
 
 /* ========== 수정 / 삭제 ========== */
