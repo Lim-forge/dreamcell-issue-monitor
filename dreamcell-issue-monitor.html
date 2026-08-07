@@ -218,11 +218,12 @@ tbody td.dm{color:var(--t3);font-size:12px}
 .btn-g{background:#F0F2F8;color:var(--t2);border:1px solid var(--border)}
 .btn-g:hover{background:#E6E9F2}
 
-/* 작업열 토글 버튼 */
-.act-toggle-btn{border:1px solid rgba(0,0,0,.2);background:rgba(255,255,255,.9);
-  color:#333;font-size:11px;padding:3px 10px;border-radius:20px;
-  cursor:pointer;transition:background .15s;white-space:nowrap;margin-right:8px;font-weight:600;}
-.act-toggle-btn:hover{background:#fff;color:#000;}
+/* 작업열 토글 버튼 - 기본 숨김, KPI 열릴 때만 표시 */
+.act-toggle-btn{display:none;border:none;background:#dbeafe;
+  color:#1e40af;font-size:11px;padding:3px 10px;border-radius:20px;
+  cursor:pointer;transition:background .15s;white-space:nowrap;margin-left:6px;font-weight:600;}
+.act-toggle-btn:hover{background:#bfdbfe;}
+.kpi-desc{font-size:11px;font-weight:400;color:rgba(255,255,255,.55);margin-left:8px;letter-spacing:0;}
 
 /* KPI 토글 헤더 골드 배경 */
 .kpi-toggle{width:100%;background:var(--gold);border:none;border-radius:var(--r);
@@ -231,7 +232,7 @@ tbody td.dm{color:var(--t3);font-size:12px}
 .kpi-toggle:hover{background:var(--gold-hi);}
 .kpi-tl{font-size:12.5px;font-weight:700;color:#fff;display:flex;align-items:center;gap:7px;}
 .kpi-tr{font-size:11px;color:#fff;display:flex;align-items:center;gap:5px;}
-.kpi-arr{transition:transform .2s;display:inline-block;color:#fff;}
+.kpi-arr{transition:transform .2s;display:inline-block;color:#000;font-size:10px;}
 .kpi-arr.open{transform:rotate(180deg);}
 
 /* 작업 컬럼 */
@@ -307,10 +308,9 @@ thead th.ac{text-align:center;width:90px}
     </div>
     <div class="kpi-wrap">
       <button class="kpi-toggle" onclick="toggleKPI('lms')">
-        <span class="kpi-tl">📊 KPI 요약</span>
+        <span class="kpi-tl">📊 KPI 요약 <span class="kpi-desc">클릭하면 요약 정보가 나타납니다</span></span>
         <span class="kpi-tr">
-          <button class="act-toggle-btn" id="act-btn-lms" onclick="event.stopPropagation();toggleActCol('lms')">작업 숨기기</button>
-          <span id="kpi-txt-lms">펼치기</span><span class="kpi-arr" id="kpi-arr-lms">▼</span>
+          <span id="kpi-txt-lms">펼치기</span><span class="kpi-arr" id="kpi-arr-lms">▼</span><button class="act-toggle-btn" id="act-btn-lms" onclick="event.stopPropagation();toggleActCol('lms')" style="display:none">작업 보이기</button>
         </span>
       </button>
       <div class="kpi-grid" id="kpi-grid-lms">
@@ -357,10 +357,9 @@ thead th.ac{text-align:center;width:90px}
     </div>
     <div class="kpi-wrap">
       <button class="kpi-toggle" onclick="toggleKPI('ret')">
-        <span class="kpi-tl">📊 KPI 요약</span>
+        <span class="kpi-tl">📊 KPI 요약 <span class="kpi-desc">클릭하면 요약 정보가 나타납니다</span></span>
         <span class="kpi-tr">
-          <button class="act-toggle-btn" id="act-btn-ret" onclick="event.stopPropagation();toggleActCol('ret')">작업 숨기기</button>
-          <span id="kpi-txt-ret">펼치기</span><span class="kpi-arr" id="kpi-arr-ret">▼</span>
+          <span id="kpi-txt-ret">펼치기</span><span class="kpi-arr" id="kpi-arr-ret">▼</span><button class="act-toggle-btn" id="act-btn-ret" onclick="event.stopPropagation();toggleActCol('ret')" style="display:none">작업 보이기</button>
         </span>
       </button>
       <div class="kpi-grid" id="kpi-grid-ret">
@@ -411,10 +410,9 @@ thead th.ac{text-align:center;width:90px}
     </div>
     <div class="kpi-wrap">
       <button class="kpi-toggle" onclick="toggleKPI('cc')">
-        <span class="kpi-tl">📊 KPI 요약</span>
+        <span class="kpi-tl">📊 KPI 요약 <span class="kpi-desc">클릭하면 요약 정보가 나타납니다</span></span>
         <span class="kpi-tr">
-          <button class="act-toggle-btn" id="act-btn-cc" onclick="event.stopPropagation();toggleActCol('cc')">작업 숨기기</button>
-          <span id="kpi-txt-cc">펼치기</span><span class="kpi-arr" id="kpi-arr-cc">▼</span>
+          <span id="kpi-txt-cc">펼치기</span><span class="kpi-arr" id="kpi-arr-cc">▼</span><button class="act-toggle-btn" id="act-btn-cc" onclick="event.stopPropagation();toggleActCol('cc')" style="display:none">작업 보이기</button>
         </span>
       </button>
       <div class="kpi-grid" id="kpi-grid-cc">
@@ -461,10 +459,9 @@ thead th.ac{text-align:center;width:90px}
     </div>
     <div class="kpi-wrap">
       <button class="kpi-toggle" onclick="toggleKPI('lmo')">
-        <span class="kpi-tl">📊 KPI 요약</span>
+        <span class="kpi-tl">📊 KPI 요약 <span class="kpi-desc">클릭하면 요약 정보가 나타납니다</span></span>
         <span class="kpi-tr">
-          <button class="act-toggle-btn" id="act-btn-lmo" onclick="event.stopPropagation();toggleActCol('lmo')">작업 숨기기</button>
-          <span id="kpi-txt-lmo">펼치기</span><span class="kpi-arr" id="kpi-arr-lmo">▼</span>
+          <span id="kpi-txt-lmo">펼치기</span><span class="kpi-arr" id="kpi-arr-lmo">▼</span><button class="act-toggle-btn" id="act-btn-lmo" onclick="event.stopPropagation();toggleActCol('lmo')" style="display:none">작업 보이기</button>
         </span>
       </button>
       <div class="kpi-grid" id="kpi-grid-lmo">
@@ -512,10 +509,9 @@ thead th.ac{text-align:center;width:90px}
     </div>
     <div class="kpi-wrap">
       <button class="kpi-toggle" onclick="toggleKPI('ush')">
-        <span class="kpi-tl">📊 KPI 요약</span>
+        <span class="kpi-tl">📊 KPI 요약 <span class="kpi-desc">클릭하면 요약 정보가 나타납니다</span></span>
         <span class="kpi-tr">
-          <button class="act-toggle-btn" id="act-btn-ush" onclick="event.stopPropagation();toggleActCol('ush')">작업 숨기기</button>
-          <span id="kpi-txt-ush">펼치기</span><span class="kpi-arr" id="kpi-arr-ush">▼</span>
+          <span id="kpi-txt-ush">펼치기</span><span class="kpi-arr" id="kpi-arr-ush">▼</span><button class="act-toggle-btn" id="act-btn-ush" onclick="event.stopPropagation();toggleActCol('ush')" style="display:none">작업 보이기</button>
         </span>
       </button>
       <div class="kpi-grid" id="kpi-grid-ush">
@@ -685,9 +681,11 @@ function toggleKPI(tab){
   const grid=document.getElementById('kpi-grid-'+tab);
   const arr=document.getElementById('kpi-arr-'+tab);
   const txt=document.getElementById('kpi-txt-'+tab);
+  const actBtn=document.getElementById('act-btn-'+tab);
   const isOpen=grid.classList.toggle('open');
   arr.classList.toggle('open',isOpen);
   txt.textContent=isOpen?'닫기':'펼치기';
+  if(actBtn) actBtn.style.display=isOpen?'inline-flex':'none';
 }
 function setKV(id,val){const el=document.getElementById(id);if(el)el.textContent=val;}
 function updKPI_margin(tab,data,saleField){
