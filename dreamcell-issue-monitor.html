@@ -824,25 +824,49 @@ async function loadLMO(){
 async function loadUSH(){
   if(!guard())return;L(true);
   try{
-    let q=sb.from('unshipped').select('*')
+    // 전체 데이터 조회
+    const{data:allData,error}=await sb.from('unshipped').select('*')
       .order('rep',{ascending:true}).order('order_date',{ascending:true});
+    if(error)throw error;
 
-    // 빠른선택 년+월 → report_month 기준 필터 (월 선택 시에만)
     const yr = document.getElementById('ym-yr-ush')?.value;
     const mo = document.getElementById('ym-mo-ush')?.value;
-    if(yr && mo) {
-      const rm = yr+'-'+String(mo).padStart(2,'0');
-      q = q.eq('report_month', rm);
+
+    let data;
+    if(yr && mo){
+      // 특정 월: active_months에 해당 월 포함된 건 전부 (완료/취소도 표시)
+      const selectedMonth = yr+'-'+String(mo).padStart(2,'0');
+      data = (allData||[]).filter(r=>{
+        try{ return JSON.parse(r.active_months||'[]').includes(selectedMonth); }
+        catch(e){ return false; }
+      });
+    } else {
+      // 전체월 = 최신 현황
+      // 1. active_months 중 가장 최신 월 찾기
+      const allMonths = new Set();
+      (allData||[]).forEach(r=>{
+        try{ JSON.parse(r.active_months||'[]').forEach(m=>allMonths.add(m)); }catch(e){}
+      });
+      const latestMonth = [...allMonths].sort().pop() || '';
+
+      // 2. 최신 월에 active한 건 (출고완료/취소 중 completed_at 있는 건 제외)
+      data = (allData||[]).filter(r=>{
+        try{
+          const months = JSON.parse(r.active_months||'[]');
+          if(!months.includes(latestMonth)) return false;
+          // 출고완료/취소이면서 completed_at이 있으면 숨김
+          if((r.ship_status==='출고완료'||r.progress==='취소') && r.completed_at) return false;
+          return true;
+        }catch(e){ return false; }
+      });
     }
-    // 전체월이면 필터 없이 전체 조회
 
     const st=document.getElementById('ush-status').value;
     const c=document.getElementById('ush-cust').value.trim();
-    const r=document.getElementById('ush-rep').value.trim();
-    if(st)q=q.eq('ship_status',st);
-    if(c)q=q.ilike('customer_name','%'+c+'%');
-    if(r)q=q.ilike('rep','%'+r+'%');
-    const{data,error}=await q;if(error)throw error;
+    const r2=document.getElementById('ush-rep').value.trim();
+    if(st) data=data.filter(r=>r.ship_status===st);
+    if(c)  data=data.filter(r=>(r.customer_name||'').toLowerCase().includes(c.toLowerCase()));
+    if(r2) data=data.filter(r=>(r.rep||'').includes(r2));
     const PB={출고완료:'bg',진행중:'bo',미입고:'br',기간변경:'bb'};
     const tb=document.getElementById('tb-ush');
     if(!data?.length){tb.innerHTML=emptyR(14,'📦','해당 조건의 미출고건이 없습니다');setCnt('ush',0);}
