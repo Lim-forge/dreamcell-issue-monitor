@@ -1504,6 +1504,123 @@ function xcsv(tab){
   a.href=URL.createObjectURL(new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8;'}));
   a.download='report_'+tab+'_'+today()+'.csv';a.click();
 }
+
+// ══════════════════════════════════════════
+//  설정 패널
+// ══════════════════════════════════════════
+const ADMIN_PW = 'ap9813038';
+let _adminUnlocked = false;
+let _cfg = JSON.parse(localStorage.getItem('dc_im_cfg') || '{}');
+
+function openSettings(){
+  document.getElementById('cfg-show-input').checked  = !!_cfg.showInput;
+  document.getElementById('cfg-show-act').checked    = !!_cfg.showAct;
+  document.getElementById('cfg-kpi-open').checked    = !!_cfg.kpiOpen;
+  document.getElementById('cfg-allow-delete').checked = !!_cfg.allowDelete;
+  document.getElementById('cfg-sb-key').value = SB_KEY;
+  _adminUnlocked = false;
+  renderAdminLock();
+  renderMonthGrid();
+  document.getElementById('settingsOverlay').classList.add('open');
+}
+function closeSettings(){
+  document.getElementById('settingsOverlay').classList.remove('open');
+}
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('settingsOverlay').addEventListener('click', e => {
+    if(e.target === e.currentTarget) closeSettings();
+  });
+});
+
+function applySettings(){
+  _cfg.showInput   = document.getElementById('cfg-show-input').checked;
+  _cfg.showAct     = document.getElementById('cfg-show-act').checked;
+  _cfg.kpiOpen     = document.getElementById('cfg-kpi-open').checked;
+  _cfg.allowDelete = document.getElementById('cfg-allow-delete').checked;
+  localStorage.setItem('dc_im_cfg', JSON.stringify(_cfg));
+  document.querySelectorAll('[id^="mbi-"]').forEach(el => {
+    el.style.display = _cfg.showInput ? '' : 'none';
+  });
+}
+
+(function initSettings(){
+  document.querySelectorAll('[id^="mbi-"]').forEach(el => {
+    el.style.display = _cfg.showInput ? '' : 'none';
+  });
+})();
+
+function renderAdminLock(){
+  const btn     = document.getElementById('admin-lock-btn');
+  const content = document.getElementById('admin-content');
+  const pwArea  = document.getElementById('admin-pw-area');
+  if(_adminUnlocked){
+    btn.className = 'admin-lock unlocked';
+    btn.textContent = '🔓 관리자 인증됨';
+    content.style.display = 'block';
+    pwArea.style.display  = 'none';
+  } else {
+    btn.className = 'admin-lock';
+    btn.textContent = '🔒 관리자 잠금 — 클릭해서 인증';
+    content.style.display = 'none';
+  }
+}
+function toggleAdminLock(){
+  if(_adminUnlocked){ _adminUnlocked=false; renderAdminLock(); return; }
+  const pwArea = document.getElementById('admin-pw-area');
+  pwArea.style.display = pwArea.style.display==='none' ? 'block' : 'none';
+  if(pwArea.style.display==='block') setTimeout(()=>document.getElementById('admin-pw-input').focus(),50);
+}
+function verifyAdmin(){
+  const pw  = document.getElementById('admin-pw-input').value;
+  const err = document.getElementById('admin-pw-err');
+  if(pw === ADMIN_PW){
+    _adminUnlocked = true;
+    document.getElementById('admin-pw-input').value = '';
+    err.textContent = '';
+    renderAdminLock();
+  } else {
+    err.textContent = '❌ 비밀번호가 틀렸습니다';
+  }
+}
+
+let _selectedMonths = new Set();
+function renderMonthGrid(){
+  const saved = localStorage.getItem('dc_active_months');
+  if(saved) _selectedMonths = new Set(JSON.parse(saved));
+  const grid = document.getElementById('month-grid');
+  const now = new Date();
+  const months = [];
+  for(let i=5; i>=0; i--){
+    const d = new Date(now.getFullYear(), now.getMonth()-i, 1);
+    const ym = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
+    months.push(ym);
+  }
+  grid.innerHTML = months.map(m => `
+    <div class="month-chip ${_selectedMonths.has(m)?'active':''}" onclick="toggleMonth('${m}',this)">${m}</div>
+  `).join('');
+}
+function toggleMonth(m, el){
+  if(_selectedMonths.has(m)){ _selectedMonths.delete(m); el.classList.remove('active'); }
+  else { _selectedMonths.add(m); el.classList.add('active'); }
+}
+function saveActiveMonths(){
+  const arr = [..._selectedMonths].sort();
+  localStorage.setItem('dc_active_months', JSON.stringify(arr));
+  alert('활성 월 저장 완료! (' + arr.join(', ') + ')');
+}
+
+function reconnectSupabase(){
+  const url = document.getElementById('cfg-sb-url').value.trim();
+  const key = document.getElementById('cfg-sb-key').value.trim();
+  if(!url || !key){ alert('URL과 Key를 모두 입력해주세요.'); return; }
+  try{
+    sb = supabase.createClient(url, key);
+    document.getElementById('connDot').className='cd on';
+    document.getElementById('connText').textContent='Supabase 연결됨';
+    alert('✅ 재연결 완료!');
+  }catch(e){ alert('❌ 연결 실패: '+e.message); }
+}
+
 </script>
 
 <!-- 설정 오버레이 -->
