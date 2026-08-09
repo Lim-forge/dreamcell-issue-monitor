@@ -952,7 +952,7 @@ async function loadLMS(){
     const tb=document.getElementById('tb-lms');
     if(!data?.length){tb.innerHTML=emptyR(10,'📦','해당 조건의 출고건이 없습니다');setCnt('lms',0);}
     else{
-      tb.innerHTML=data.map(r=>'<tr data-id="'+r.id+'"><td>'+(r.ship_date||'—')+'</td><td>'+(r.customer_name||'—')+'</td><td>'+(r.rep||'—')+'</td><td>'+(r.catalog_no||'—')+'</td><td>'+(r.item_name||'—')+'</td><td>'+(r.brand||'—')+'</td><td class="r">'+fmt(r.cost_price)+'</td><td class="r">'+fmt(r.sale_price)+'</td><td class="r"><span class="'+mgC(r.margin_rate)+'">'+pct(r.margin_rate)+'</span></td><td class="dm">'+(r.reason||'')+'</td>'+actCell('lms',r.id)+'</tr>').join('');window._d.lms=data;
+      tb.innerHTML=data.map(r=>'<tr data-id="'+r.id+'" data-reason="'+(r.reason||'').replace(/"/g,'&quot;')+'"><td>'+(r.ship_date||'—')+'</td><td>'+(r.customer_name||'—')+'</td><td>'+(r.rep||'—')+'</td><td>'+(r.catalog_no||'—')+'</td><td>'+(r.item_name||'—')+'</td><td>'+(r.brand||'—')+'</td><td class="r">'+fmt(r.cost_price)+'</td><td class="r">'+fmt(r.sale_price)+'</td><td class="r"><span class="'+mgC(r.margin_rate)+'">'+pct(r.margin_rate)+'</span></td><td class="dm">'+(r.reason||'')+'</td>'+actCell('lms',r.id)+'</tr>').join('');window._d.lms=data;
       setCnt('lms',data.length);updKPI_margin('lms',data,'sale_price');restoreActCol('lms');
     }
     setTS('lms');
@@ -1725,10 +1725,12 @@ function reconnectSupabase(){
 // ── 사유 툴팁 (동적) ─────────────────────────────
 function applyReasonTooltips() {
   document.querySelectorAll('td.dm').forEach(td => {
-    if(td.querySelector('.reason-tip')) return; // 이미 적용됨
-    const text = td.textContent.trim();
-    if(!text || text === '—') return;
-    td.innerHTML = '<span class="reason-tip" data-tip="' + text.replace(/"/g,'&quot;') + '">' + text + '</span>';
+    const tr = td.closest('tr');
+    // tr의 data-reason에서 원본 전체 텍스트 가져오기
+    const fullReason = tr ? (tr.dataset.reason || td.textContent.trim()) : td.textContent.trim();
+    const dispText = td.textContent.trim();
+    if(!fullReason || fullReason === '—') return;
+    td.innerHTML = '<span class="reason-tip" data-tip="' + fullReason.replace(/"/g,'&quot;') + '">' + (dispText||'—') + '</span>';
   });
 }
 // loadLMS/loadRET 등 조회 후 자동 적용
