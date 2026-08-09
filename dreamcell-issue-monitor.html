@@ -32,21 +32,49 @@ body{font-family:'Pretendard',-apple-system,BlinkMacSystemFont,'Segoe UI','Malgu
     background:#0B0B0B;border-radius:18px;
     display:flex;flex-direction:column;overflow:hidden;flex-shrink:0;
     box-shadow:0 6px 32px rgba(0,0,0,.28)}
-.sb-logo{padding:26px 20px 20px;border-bottom:1px solid rgba(255,255,255,.05)}
+.sb-logo{padding:26px 20px 20px;border-bottom:none;position:relative;}
+.sb-logo::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,
+    transparent 0%,transparent 20%,
+    rgba(201,162,42,0.4) 35%,rgba(245,200,66,0.9) 48%,
+    rgba(255,232,138,1) 50%,rgba(245,200,66,0.9) 52%,
+    rgba(201,162,42,0.4) 65%,transparent 80%,transparent 100%);
+  background-size:300% 100%;
+  animation:shimmer-line 8s linear infinite;}
 .sb-brand{font-size:18px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;
-          color:rgba(201,162,42,.5);margin-bottom:8px}
-.sb-title{font-size:36px;font-weight:900;color:#fff;letter-spacing:-.04em;line-height:1}
+          margin-bottom:8px;
+          background:linear-gradient(90deg,rgba(201,162,42,0.4),rgba(245,200,66,0.8),rgba(255,232,138,1),rgba(245,200,66,0.8),rgba(201,162,42,0.4));
+          background-size:300% 100%;
+          -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+          animation:gradient-flow 6s ease infinite;}
+.sb-title{font-size:36px;font-weight:900;letter-spacing:-.04em;line-height:1;
+  background:linear-gradient(90deg,#ffffff,#c8d8ff,#ffffff,#a0c0ff,#ffffff);
+  background-size:300% 100%;
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  animation:gradient-flow 7s ease infinite;}
 .sb-author{font-size:13px;font-weight:700;color:var(--gold);letter-spacing:.03em;
   text-shadow:0 0 12px rgba(245,200,66,0.5),0 0 24px rgba(245,200,66,0.2);}
 .sb-author span{color:var(--text-muted);font-weight:400;font-size:11px;}
-.sb-dev{display:flex;align-items:center;gap:9px;padding:12px 20px 10px;border-top:1px solid rgba(255,255,255,.05);margin-top:auto;justify-content:space-between;}
+.sb-dev{display:flex;align-items:center;gap:9px;padding:12px 20px 10px;margin-top:auto;
+  justify-content:space-between;border-top:none;position:relative;}
+.sb-dev::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,
+    transparent 0%,transparent 20%,
+    rgba(201,162,42,0.4) 35%,rgba(245,200,66,0.9) 48%,
+    rgba(255,232,138,1) 50%,rgba(245,200,66,0.9) 52%,
+    rgba(201,162,42,0.4) 65%,transparent 80%,transparent 100%);
+  background-size:300% 100%;
+  animation:shimmer-line 8s linear infinite;}
 .sb-dev-avatar{width:30px;height:30px;border-radius:50%;object-fit:cover;object-position:center top;
   border:1.5px solid var(--gold);flex-shrink:0;
   box-shadow:0 0 0 2px rgba(245,200,66,0.15),0 0 10px rgba(245,200,66,0.2);}
 .sb-dev-info{display:flex;flex-direction:column;gap:1px;}
 .sb-dev-label{font-size:10px;color:rgba(245,200,66,0.6);font-weight:600;letter-spacing:0.05em;}
-.sb-dev-name{font-size:12.5px;font-weight:700;color:var(--gold);letter-spacing:.02em;
-  text-shadow:0 0 10px rgba(245,200,66,0.4);}
+.sb-dev-name{font-size:12.5px;font-weight:700;letter-spacing:.02em;
+  background:linear-gradient(90deg,#f5c842,#ffe88a,#f5c842,#e8a820,#f5c842,#ffe88a,#f5c842);
+  background-size:300% 100%;
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  animation:gradient-flow 5s ease infinite;}
 .sb-grp{padding:20px 20px 5px;font-size:9px;font-weight:700;letter-spacing:.16em;
         text-transform:uppercase;color:rgba(255,255,255,.18)}
 .sb-grp-sp{height:14px}
@@ -385,6 +413,17 @@ thead th.ac{text-align:center;width:90px}
   transition:all 0.15s;
 }
 .settings-close-btn:hover{color:#e8eaf6;border-color:#7b83b0;}
+
+/* ── 이펙트 애니메이션 ── */
+@keyframes gradient-flow {
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+@keyframes shimmer-line {
+  0%   { background-position: -100% center; }
+  100% { background-position: 200% center; }
+}
 </style>
 </head>
 <body>
