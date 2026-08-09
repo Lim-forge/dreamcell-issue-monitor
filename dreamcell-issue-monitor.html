@@ -1721,6 +1721,31 @@ function reconnectSupabase(){
   }catch(e){ alert('❌ 연결 실패: '+e.message); }
 }
 
+
+// ── 사유 툴팁 (동적) ─────────────────────────────
+function applyReasonTooltips() {
+  document.querySelectorAll('td.dm').forEach(td => {
+    if(td.querySelector('.reason-tip')) return; // 이미 적용됨
+    const text = td.textContent.trim();
+    if(!text || text === '—') return;
+    td.innerHTML = '<span class="reason-tip" data-tip="' + text.replace(/"/g,'&quot;') + '">' + text + '</span>';
+  });
+}
+// loadLMS/loadRET 등 조회 후 자동 적용
+const _origLFNS = window.LFNS || {};
+['lms','ret','cc','lmo','ush'].forEach(tab => {
+  const origFn = window['load' + tab.charAt(0).toUpperCase() + tab.slice(1)];
+});
+
+// MutationObserver로 테이블 변경 감지
+const _tipObserver = new MutationObserver(() => applyReasonTooltips());
+document.addEventListener('DOMContentLoaded', () => {
+  document.querySelectorAll('tbody').forEach(tb => {
+    _tipObserver.observe(tb, {childList: true, subtree: true});
+  });
+  applyReasonTooltips();
+});
+
 </script>
 
 <!-- 설정 오버레이 -->
