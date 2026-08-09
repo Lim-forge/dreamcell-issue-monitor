@@ -1544,9 +1544,27 @@ function applySettings(){
 }
 
 (function initSettings(){
+  // 입력 버튼
   document.querySelectorAll('[id^="mbi-"]').forEach(el => {
     el.style.display = _cfg.showInput ? '' : 'none';
   });
+  // 작업 열
+  if(!_cfg.showAct){
+    document.querySelectorAll('.act-cell, th.ac').forEach(el => {
+      el.style.display = 'none';
+    });
+  }
+  // KPI 기본 펼침
+  if(_cfg.kpiOpen){
+    ['lms','ret','cc','lmo','ush'].forEach(tab => {
+      const grid = document.getElementById('kpi-grid-'+tab);
+      const arr  = document.getElementById('kpi-arr-'+tab);
+      const txt  = document.getElementById('kpi-txt-'+tab);
+      if(grid){ grid.classList.add('open'); }
+      if(arr)  { arr.classList.add('open'); }
+      if(txt)  { txt.textContent = '닫기'; }
+    });
+  }
 })();
 
 function renderAdminLock(){
