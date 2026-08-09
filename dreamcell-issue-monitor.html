@@ -1065,7 +1065,15 @@ function toggleActCol(tab){
 // 동적 행 추가 후 작업열 상태 복원
 function restoreActCol(tab){
   const panel = document.getElementById('panel-'+tab);
-  if(panel && panel.dataset.actHidden === 'true'){
+  if(!panel) return;
+  // 설정에서 작업열 표시가 꺼져있으면 항상 숨김
+  if(typeof _cfg !== 'undefined' && _cfg.showAct === false){
+    panel.querySelectorAll('th.ac, td.act-cell').forEach(el => el.style.display = 'none');
+    panel.dataset.actHidden = 'true';
+    return;
+  }
+  // 설정에서 켜져있으면 → dataset 기반 판단
+  if(panel.dataset.actHidden === 'true'){
     panel.querySelectorAll('th.ac, td.act-cell').forEach(el => el.style.display = 'none');
   }
 }
@@ -1511,6 +1519,9 @@ function xcsv(tab){
 const ADMIN_PW = 'ap9813038';
 let _adminUnlocked = false;
 let _cfg = JSON.parse(localStorage.getItem('dc_im_cfg') || '{}');
+// 기본값 설정 (처음 접속 시)
+if(_cfg.showAct === undefined) _cfg.showAct = true;
+if(_cfg.showInput === undefined) _cfg.showInput = false;
 
 function openSettings(){
   document.getElementById('cfg-show-input').checked  = !!_cfg.showInput;
