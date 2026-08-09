@@ -1548,12 +1548,17 @@ function applySettings(){
   document.querySelectorAll('[id^="mbi-"]').forEach(el => {
     el.style.display = _cfg.showInput ? '' : 'none';
   });
-  // 작업 열
-  if(!_cfg.showAct){
-    document.querySelectorAll('.act-cell, th.ac').forEach(el => {
-      el.style.display = 'none';
-    });
-  }
+  // 작업 열 초기 적용
+  ['lms','ret','cc','lmo','ush'].forEach(tab => {
+    const panel = document.getElementById('panel-'+tab);
+    if(!panel) return;
+    if(!_cfg.showAct){
+      panel.dataset.actHidden = 'true';
+      panel.querySelectorAll('th.ac, td.act-cell').forEach(el => el.style.display = 'none');
+    } else {
+      panel.dataset.actHidden = 'false';
+    }
+  });
   // KPI 기본 펼침
   if(_cfg.kpiOpen){
     ['lms','ret','cc','lmo','ush'].forEach(tab => {
