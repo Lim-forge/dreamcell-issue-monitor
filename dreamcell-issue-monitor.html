@@ -428,29 +428,7 @@ thead th.ac{text-align:center;width:90px}
 /* 사유 툴팁 */
 td.dm{max-width:200px;overflow:visible;cursor:default;position:relative;}
 .reason-tip{position:relative;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:default;display:block;}
-.reason-tip::after{
-  content: attr(data-tip);
-  position:absolute;
-  left:0;top:calc(100% + 6px);
-  background:#1e2130;
-  color:#e8eaff;
-  font-size:12px;
-  font-weight:400;
-  padding:7px 12px;
-  border-radius:8px;
-  border:1px solid rgba(74,127,193,0.3);
-  box-shadow:0 8px 24px rgba(0,0,0,0.4);
-  white-space:normal;
-  max-width:320px;
-  min-width:120px;
-  word-break:break-all;
-  z-index:999;
-  opacity:0;
-  pointer-events:none;
-  transition:opacity 0.15s;
-  line-height:1.5;
-}
-.reason-tip:hover::after{opacity:1;}
+/* JS 동적 툴팁으로 대체 */
 </style>
 </head>
 <body>
@@ -1745,6 +1723,39 @@ document.addEventListener('DOMContentLoaded', () => {
   });
   applyReasonTooltips();
 });
+
+
+// ── 사유 동적 툴팁 ──────────────────────────────
+(function(){
+  const tip = document.createElement('div');
+  tip.id = 'reason-tooltip';
+  tip.style.cssText = 'position:fixed;display:none;background:#1e2130;color:#e8eaff;font-size:12px;padding:8px 12px;border-radius:8px;border:1px solid rgba(74,127,193,0.3);box-shadow:0 8px 24px rgba(0,0,0,0.5);max-width:360px;word-break:break-all;line-height:1.6;z-index:99999;pointer-events:none;white-space:pre-wrap;';
+  document.body.appendChild(tip);
+
+  document.addEventListener('mouseover', e => {
+    const span = e.target.closest('.reason-tip');
+    if(!span) return;
+    const text = span.dataset.tip;
+    if(!text) return;
+    tip.textContent = text;
+    tip.style.display = 'block';
+  });
+
+  document.addEventListener('mousemove', e => {
+    if(tip.style.display === 'none') return;
+    const x = e.clientX + 12;
+    const y = e.clientY + 12;
+    const tw = tip.offsetWidth;
+    const th = tip.offsetHeight;
+    tip.style.left = (x + tw > window.innerWidth ? x - tw - 24 : x) + 'px';
+    tip.style.top  = (y + th > window.innerHeight ? y - th - 24 : y) + 'px';
+  });
+
+  document.addEventListener('mouseout', e => {
+    const span = e.target.closest('.reason-tip');
+    if(span) tip.style.display = 'none';
+  });
+})();
 
 </script>
 
