@@ -1756,20 +1756,21 @@ async function doAdminMonthDelete(){
   const ym = `${yr}-${mo}`;
   const nm = mo==='12' ? `${parseInt(yr)+1}-01` : `${yr}-${String(parseInt(mo)+1).padStart(2,'0')}`;
 
-  // 테이블별 날짜 컬럼
-  const dkMap = {lms:'ship_date', ret:'return_date', lmo:'order_date', cc:'order_date', ush:'order_date'};
-  const lblMap = {lms:'10%미만 출고건', ret:'반품처리건', lmo:'수주건', cc:'수주취소·변경건', ush:'미출고내역'};
+  const dkMap  = {lms:'ship_date', ret:'return_date', lmo:'order_date', cc:'order_date', ush:'order_date'};
+  const lblMap = {lms:'10%미만 출고건', ret:'반품처리건', lmo:'10%미만 수주건', cc:'수주취소·변경건', ush:'미출고내역'};
   const tblMap = {lms:'low_margin_shipments', ret:'return_shipments', lmo:'orders', cc:'cancel_changes', ush:'unshipped'};
-  const dk  = dkMap[tbl];
+  const dk      = dkMap[tbl];
   const tblName = tblMap[tbl];
-  const lbl = lblMap[tbl];
+  const lbl     = lblMap[tbl];
 
   if(!confirm(`⚠️ ${ym} [${lbl}] 데이터를 영구 삭제합니다.\n\n되돌릴 수 없습니다. 계속하시겠습니까?`)) return;
 
   try {
-    const { error } = await sb.from(tblName).delete()
-      .gte(dk, `${ym}-01`).lt(dk, `${nm}-01`);
-    if(error) throw error;
+    const res = await fetch(
+      `${SB_URL}/rest/v1/${tblName}?${dk}=gte.${ym}-01&${dk}=lt.${nm}-01`,
+      { method:'DELETE', headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Prefer':'return=minimal'} }
+    );
+    if(!res.ok){ const t=await res.text(); throw new Error(t); }
     alert(`✅ ${ym} [${lbl}] 삭제 완료!`);
   } catch(e){
     alert('삭제 오류: ' + (e.message || JSON.stringify(e)));
@@ -1948,7 +1949,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <select id="del-tbl" class="admin-pw-input" style="width:160px;padding:6px 8px;">
               <option value="lms">10%미만 출고건</option>
               <option value="ret">반품처리건</option>
-              <option value="lmo">수주건</option>
+              <option value="lmo">10%미만 수주건</option>
               <option value="cc">수주취소·변경건</option>
               <option value="ush">미출고내역</option>
             </select>
