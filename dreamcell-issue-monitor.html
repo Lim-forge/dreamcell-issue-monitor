@@ -1756,24 +1756,51 @@ async function doAdminMonthDelete(){
   const ym = `${yr}-${mo}`;
   const nm = mo==='12' ? `${parseInt(yr)+1}-01` : `${yr}-${String(parseInt(mo)+1).padStart(2,'0')}`;
 
-  const dkMap  = {lms:'ship_date', ret:'return_date', lmo:'order_date', cc:'order_date', ush:'order_date'};
   const lblMap = {lms:'10%미만 출고건', ret:'반품처리건', lmo:'10%미만 수주건', cc:'수주취소·변경건', ush:'미출고내역'};
   const tblMap = {lms:'low_margin_shipments', ret:'return_shipments', lmo:'orders', cc:'cancel_changes', ush:'unshipped'};
-  const dk      = dkMap[tbl];
-  const tblName = tblMap[tbl];
+  const dkMap  = {lms:'ship_date', ret:'return_date', lmo:'order_date', cc:'order_date'};
   const lbl     = lblMap[tbl];
+  const tblName = tblMap[tbl];
 
   if(!confirm(`⚠️ ${ym} [${lbl}] 데이터를 영구 삭제합니다.\n\n되돌릴 수 없습니다. 계속하시겠습니까?`)) return;
 
   try {
+    // 미출고내역은 active_months JSON 배열 구조 — 해당 월만 배열에서 제거
+    if(tbl === 'ush'){
+      const getRes = await fetch(
+        `${SB_URL}/rest/v1/unshipped?active_months=cs.["${ym}"]&select=id,active_months`,
+        { headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY} }
+      );
+      const rows = await getRes.json();
+      if(!Array.isArray(rows)||!rows.length){ alert(`${ym} [미출고내역] 해당 데이터 없습니다.`); return; }
+      let updated=0, removed=0;
+      for(const row of rows){
+        const months = JSON.parse(row.active_months||'[]').filter(m=>m!==ym);
+        if(months.length===0){
+          await fetch(`${SB_URL}/rest/v1/unshipped?id=eq.${row.id}`,
+            {method:'DELETE',headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Prefer':'return=minimal'}});
+          removed++;
+        } else {
+          await fetch(`${SB_URL}/rest/v1/unshipped?id=eq.${row.id}`,
+            {method:'PATCH',
+             headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json','Prefer':'return=minimal'},
+             body:JSON.stringify({active_months:JSON.stringify(months)})});
+          updated++;
+        }
+      }
+      alert(`✅ ${ym} [미출고내역] 완료!\n행 삭제: ${removed}건 / 월 제거: ${updated}건`);
+      return;
+    }
+    // 그 외 테이블 날짜 범위 삭제
+    const dk  = dkMap[tbl];
     const res = await fetch(
       `${SB_URL}/rest/v1/${tblName}?${dk}=gte.${ym}-01&${dk}=lt.${nm}-01`,
-      { method:'DELETE', headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Prefer':'return=minimal'} }
+      {method:'DELETE',headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Prefer':'return=minimal'}}
     );
     if(!res.ok){ const t=await res.text(); throw new Error(t); }
     alert(`✅ ${ym} [${lbl}] 삭제 완료!`);
   } catch(e){
-    alert('삭제 오류: ' + (e.message || JSON.stringify(e)));
+    alert('삭제 오류: ' + (e.message||JSON.stringify(e)));
   }
 }
 
