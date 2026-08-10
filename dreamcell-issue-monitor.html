@@ -1628,6 +1628,21 @@ function openSettings(){
   _adminUnlocked = false;
   renderAdminLock();
   renderMonthGrid();
+  // 연도 select 초기화
+  const yrSel = document.getElementById('del-yr');
+  if(yrSel && !yrSel.options.length){
+    const cur = new Date().getFullYear();
+    for(let y=cur; y>=cur-3; y--){
+      const o = document.createElement('option');
+      o.value = y; o.textContent = y+'년';
+      yrSel.appendChild(o);
+    }
+  }
+  // 이번 달로 기본값
+  const now = new Date();
+  if(yrSel) yrSel.value = now.getFullYear();
+  const moSel = document.getElementById('del-mo');
+  if(moSel) moSel.value = String(now.getMonth()+1).padStart(2,'0');
   document.getElementById('settingsOverlay').classList.add('open');
 }
 function closeSettings(){
@@ -1733,6 +1748,34 @@ function toggleMonth(m, el){
   if(_selectedMonths.has(m)){ _selectedMonths.delete(m); el.classList.remove('active'); }
   else { _selectedMonths.add(m); el.classList.add('active'); }
 }
+async function doAdminMonthDelete(){
+  const yr  = document.getElementById('del-yr')?.value;
+  const mo  = document.getElementById('del-mo')?.value;
+  const tbl = document.getElementById('del-tbl')?.value;
+  if(!yr || !mo || !tbl){ alert('연도·월·대상을 선택해주세요.'); return; }
+  const ym = `${yr}-${mo}`;
+  const nm = mo==='12' ? `${parseInt(yr)+1}-01` : `${yr}-${String(parseInt(mo)+1).padStart(2,'0')}`;
+
+  // 테이블별 날짜 컬럼
+  const dkMap = {lms:'ship_date', ret:'return_date', lmo:'order_date', cc:'order_date', ush:'order_date'};
+  const lblMap = {lms:'10%미만 출고건', ret:'반품처리건', lmo:'수주건', cc:'수주취소·변경건', ush:'미출고내역'};
+  const tblMap = {lms:'low_margin_shipments', ret:'return_shipments', lmo:'orders', cc:'cancel_changes', ush:'unshipped'};
+  const dk  = dkMap[tbl];
+  const tblName = tblMap[tbl];
+  const lbl = lblMap[tbl];
+
+  if(!confirm(`⚠️ ${ym} [${lbl}] 데이터를 영구 삭제합니다.\n\n되돌릴 수 없습니다. 계속하시겠습니까?`)) return;
+
+  try {
+    const { error } = await sb.from(tblName).delete()
+      .gte(dk, `${ym}-01`).lt(dk, `${nm}-01`);
+    if(error) throw error;
+    alert(`✅ ${ym} [${lbl}] 삭제 완료!`);
+  } catch(e){
+    alert('삭제 오류: ' + (e.message || JSON.stringify(e)));
+  }
+}
+
 function saveActiveMonths(){
   const arr = [..._selectedMonths].sort();
   localStorage.setItem('dc_active_months', JSON.stringify(arr));
@@ -1887,6 +1930,30 @@ document.addEventListener('DOMContentLoaded', () => {
             <input type="text" id="cfg-sb-key" placeholder="eyJhbGci...">
           </div>
           <button class="sb-reconnect-btn" onclick="reconnectSupabase()">🔌 재연결</button>
+        </div>
+
+        <!-- 월별 데이터 삭제 -->
+        <div style="margin-bottom:18px;">
+          <div class="settings-row-label" style="margin-bottom:6px;">🗑️ 월별 데이터 삭제</div>
+          <div class="settings-row-desc" style="margin-bottom:10px;">테스트 데이터 정리용 — 선택한 월의 데이터를 영구 삭제합니다</div>
+          <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;">
+            <select id="del-yr" class="admin-pw-input" style="width:90px;padding:6px 8px;">
+            </select>
+            <select id="del-mo" class="admin-pw-input" style="width:70px;padding:6px 8px;">
+              <option value="01">1월</option><option value="02">2월</option><option value="03">3월</option>
+              <option value="04">4월</option><option value="05">5월</option><option value="06">6월</option>
+              <option value="07">7월</option><option value="08">8월</option><option value="09">9월</option>
+              <option value="10">10월</option><option value="11">11월</option><option value="12">12월</option>
+            </select>
+            <select id="del-tbl" class="admin-pw-input" style="width:160px;padding:6px 8px;">
+              <option value="lms">10%미만 출고건</option>
+              <option value="ret">반품처리건</option>
+              <option value="lmo">수주건</option>
+              <option value="cc">수주취소·변경건</option>
+              <option value="ush">미출고내역</option>
+            </select>
+          </div>
+          <button onclick="doAdminMonthDelete()" style="width:100%;padding:9px;border-radius:9px;border:none;background:linear-gradient(135deg,#d04040,#a02020);color:#fff;font-size:13px;font-weight:700;cursor:pointer;">🗑️ 선택 월 데이터 삭제</button>
         </div>
 
         <!-- 데이터 삭제 권한 -->
