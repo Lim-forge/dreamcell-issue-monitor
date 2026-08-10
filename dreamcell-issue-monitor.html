@@ -690,8 +690,13 @@ function toggleKPI(tab){
 function setKV(id,val){const el=document.getElementById(id);if(el)el.textContent=val;}
 function updKPI_margin(tab,data,saleField){
   const cnt=data.length;
-  const avg=cnt?(data.reduce((a,r)=>a+(+r.margin_rate||0),0)/cnt).toFixed(1)+'%':'—';
-  const min=cnt?Math.min(...data.map(r=>+r.margin_rate||0)).toFixed(1)+'%':'—';
+  // 수주건(lmo)은 마진율 반올림 정수로 표시
+  const isLmo=(tab==='lmo');
+  const avg=cnt?(isLmo
+    ?Math.round(data.reduce((a,r)=>a+(+r.margin_rate||0),0)/cnt)+'%'
+    :(data.reduce((a,r)=>a+(+r.margin_rate||0),0)/cnt).toFixed(1)+'%'):'—';
+  const minV=cnt?Math.min(...data.map(r=>+r.margin_rate||0)):0;
+  const min=cnt?(isLmo?Math.round(minV)+'%':minV.toFixed(1)+'%'):'—';
   const sum=cnt?Math.round(data.reduce((a,r)=>a+(+r[saleField]||0),0)).toLocaleString()+'원':'—';
   setKV('kv-'+tab+'-cnt',cnt+'건');setKV('kv-'+tab+'-avg',avg);
   setKV('kv-'+tab+'-min',min);setKV('kv-'+tab+'-sum',sum);
@@ -718,7 +723,7 @@ function yearStart(){return new Date().getFullYear()+'-01-01';}
 function monthAgo(){const d=new Date();d.setMonth(d.getMonth()-1);return d.toISOString().slice(0,10);}
 function fmt(n){return n!=null?Number(n).toLocaleString():'—';}
 function pct(v){return v!=null?(+v).toFixed(1)+'%':'—';}
-function mgC(v){return +v<10?'mlo':'';}
+function mgC(v){return Math.round(+v)<10?'mlo':'';}
 function setTS(tab){document.getElementById('ts-'+tab).textContent='최근 조회 '+new Date().toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit',second:'2-digit'});}
 function setCnt(tab,n){
   document.getElementById('cnt-'+tab).textContent=n+'건';
@@ -809,15 +814,62 @@ async function loadLMO(){
     const c=document.getElementById('lmo-cust').value.trim();
     const r=document.getElementById('lmo-rep').value.trim();
     if(c)q=q.ilike('customer_name','%'+c+'%');if(r)q=q.eq('orderer',r);
-    const{data,error}=await q;if(error)throw error;
+    const{data:raw,error}=await q;if(error)throw error;
+
+    // ── 제외 규칙 (dc-uploader와 동일) ──
+    const EX_ORDERER=['이은정','임영재','서재란','이나연','김정대'];
+    const EX_CHANNEL=['업자','대리점'];
+    const EX_KEYWORD=['폐기','취소','반품'];
+    const valid=(raw||[]).filter(r=>{
+      // 마진율 반올림 10% 이상 제외 (9.5→10 제외, 9.4→9 포함)
+      if(r.margin_rate!=null && Math.round(r.margin_rate)>=10) return false;
+      if(EX_ORDERER.some(n=>(r.orderer||'').includes(n))) return false;
+      if(EX_CHANNEL.some(x=>(r.orderer||'').includes(x))) return false;
+      if(EX_CHANNEL.some(x=>(r.customer_name||'').includes(x))) return false;
+      const txt=(r.item_name||'')+'|'+(r.customer_name||'');
+      if(EX_KEYWORD.some(k=>txt.includes(k))) return false;
+      return true;
+    });
+
+    // ── 중복 제거 (최신 우선 + reason 병합) ──
+    const dmap=new Map();
+    valid.forEach(r=>{
+      const key=r.orderer+'|'+r.order_date+'|'+r.item_code;
+      const prev=dmap.get(key);
+      if(!prev){dmap.set(key,r);return;}
+      if((r.created_at||'')>(prev.created_at||'')){
+        const m={...r}; if(!r.reason&&prev.reason){m.reason=prev.reason;m.reason_at=prev.reason_at;} dmap.set(key,m);
+      }else if(!prev.reason&&r.reason){dmap.set(key,{...prev,reason:r.reason,reason_at:r.reason_at});}
+    });
+    const data=[...dmap.values()];
+
     const tb=document.getElementById('tb-lmo');
-    if(!data?.length){tb.innerHTML=emptyR(12,'📋','해당 조건의 수주건이 없습니다');setCnt('lmo',0);}
+    if(!data.length){tb.innerHTML=emptyR(13,'📋','해당 조건의 수주건이 없습니다');setCnt('lmo',0);updKPI_margin('lmo',[],'order_price');}
     else{
-      tb.innerHTML=data.map(r=>'<tr data-id="'+r.id+'"><td>'+(r.orderer||'—')+'</td><td>'+(r.order_date||'—')+'</td><td>'+(r.customer_name||'—')+'</td><td>'+(r.item_code||'—')+'</td><td>'+(r.item_name||'—')+'</td><td class="r">'+fmt(r.order_qty)+'</td><td class="r">'+fmt(r.order_price)+'</td><td>'+(r.maker||'—')+'</td><td>'+(r.po_vendor||'—')+'</td><td class="r">'+fmt(r.po_price)+'</td><td class="r"><span class="'+mgC(r.margin_rate)+'">'+pct(r.margin_rate)+'</span></td><td class="dm">'+(r.reason||'')+'</td>'+actCell('lmo',r.id)+'</tr>').join('');window._d.lmo=data;restoreActCol('lmo');
+      // 수주자별 그룹핑 (가나다 정렬)
+      const groups={};
+      data.forEach(r=>{const k=r.orderer||'(미입력)';(groups[k]=groups[k]||[]).push(r);});
+      const keys=Object.keys(groups).sort((a,b)=>a.localeCompare(b,'ko'));
+      let html='';
+      keys.forEach(name=>{
+        const g=groups[name];
+        const avg=g.reduce((s,r)=>s+(r.margin_rate||0),0)/g.length;
+        const rc=g.filter(r=>r.reason).length;
+        html+='<tr class="ush-grp-hdr"><td colspan="13">👤 '+name
+          +' <span class="badge bb">'+g.length+'건</span>'
+          +' <span class="badge br">평균 '+avg.toFixed(1)+'%</span>'
+          +' <span class="badge '+(rc===g.length?'bg':'bo')+'">사유 '+rc+'/'+g.length+'</span></td></tr>';
+        g.forEach(r=>{
+          const mgDisp=r.margin_rate!=null?Math.round(r.margin_rate)+'%':'—';
+          const nm=(r.item_name&&r.item_name!==r.item_code)?r.item_name:'—';
+          html+='<tr data-id="'+r.id+'"><td>'+(r.orderer||'—')+'</td><td>'+(r.order_date||'—')+'</td><td>'+(r.customer_name||'—')+'</td><td>'+(r.item_code||'—')+'</td><td>'+nm+'</td><td class="r">'+fmt(r.order_qty)+'</td><td class="r">'+fmt(r.order_price)+'</td><td>'+(r.maker||'—')+'</td><td>'+(r.po_vendor||'—')+'</td><td class="r">'+fmt(r.po_price)+'</td><td class="r"><span class="'+mgC(r.margin_rate)+'">'+mgDisp+'</span></td><td class="dm">'+(r.reason||'<span style="color:#c8956a">미입력</span>')+'</td>'+actCell('lmo',r.id)+'</tr>';
+        });
+      });
+      tb.innerHTML=html;window._d.lmo=data;restoreActCol('lmo');
       setCnt('lmo',data.length);updKPI_margin('lmo',data,'order_price');
     }
     setTS('lmo');
-  }catch(e){document.getElementById('tb-lmo').innerHTML=errR(12,e.message);}
+  }catch(e){document.getElementById('tb-lmo').innerHTML=errR(13,e.message);}
   finally{L(false);}
 }
 
