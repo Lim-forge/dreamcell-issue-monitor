@@ -936,12 +936,15 @@ function ushChips(text, isDate){
   if(!lines.length) return '<span class="ush-empty">—</span>';
   return '<div class="ush-stack">'+lines.map(l=>'<div class="ush-chip'+(isDate?' date':'')+'">'+escHtml(l)+'</div>').join('\n')+'</div>';
 }
-// 출고예정일 변경횟수 배지 (1차=파랑, 2차=주황, 3차 이상=빨강 - 약속을 계속 못 지킬수록 경고)
+// 출고예정일 변경횟수 배지: 최초 약속(1건)은 변경이 아니므로 (개수-1)이 실제 변경횟수
+// 0회(최초만 있음)=회색, 1~2회=파랑/주황, 3회 이상(계속 미뤄짐)=빨강
 function ushChangeBadge(text){
   const n=String(text||'').split('\n').map(s=>s.trim()).filter(Boolean).length;
   if(n<=0) return '<span class="ush-empty">—</span>';
-  const cls=n>=3?'br':(n===2?'bo':'bb');
-  return '<span class="badge '+cls+'">'+n+'차</span>';
+  const changes=Math.max(n-1,0);
+  if(changes===0) return '<span class="badge bgr">최초</span>';
+  const cls=changes>=3?'br':(changes===2?'bo':'bb');
+  return '<span class="badge '+cls+'">'+changes+'회 변경</span>';
 }
 function pct(v){return v!=null?(+v).toFixed(1)+'%':'—';}
 function mgC(v){return Math.round(+v)<10?'mlo':'';}
@@ -1793,7 +1796,7 @@ async function doAdminMonthDelete(){
   const nm = mo==='12' ? `${parseInt(yr)+1}-01` : `${yr}-${String(parseInt(mo)+1).padStart(2,'0')}`;
 
   const lblMap = {lms:'10%미만 출고건', ret:'반품처리건', lmo:'10%미만 수주건', cc:'수주취소·변경건', ush:'미출고내역'};
-  const tblMap = {lms:'low_margin_shipments', ret:'return_shipments', lmo:'orders', cc:'cancel_changes', ush:'unshipped'};
+  const tblMap = {lms:'low_margin_shipments', ret:'return_shipments', lmo:'orders', cc:'order_issues', ush:'unshipped'};
   const dkMap  = {lms:'ship_date', ret:'return_date', lmo:'order_date', cc:'order_date'};
   const lbl     = lblMap[tbl];
   const tblName = tblMap[tbl];
