@@ -174,12 +174,16 @@ tbody td.dm{color:var(--t3);font-size:12px}
 #panel-ush tbody td.dm{color:var(--text)}
 .ush-reason{display:block;max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:default}
 .ush-date{display:block;max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ush-cust{display:block;max-width:210px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:default}
 /* 미출고내역 컬럼 폭 재조정 - 사유는 넓게, 나머지는 타이트하게 (가로 여백 낭비 방지) */
 #panel-ush thead th:nth-child(1),#panel-ush tbody td:nth-child(1){width:88px;}
-#panel-ush thead th:nth-child(3),#panel-ush tbody td:nth-child(3){width:92px;}
-#panel-ush thead th:nth-child(5),#panel-ush tbody td:nth-child(5){width:60px;}
-#panel-ush thead th:nth-child(6),#panel-ush tbody td:nth-child(6){width:56px;}
-#panel-ush thead th:nth-child(7),#panel-ush tbody td:nth-child(7){width:70px;}
+#panel-ush thead th:nth-child(2),#panel-ush tbody td:nth-child(2){width:210px;}
+#panel-ush thead th:nth-child(3),#panel-ush tbody td:nth-child(3){width:180px;padding-right:4px;}
+#panel-ush thead th:nth-child(4),#panel-ush tbody td:nth-child(4){padding-left:4px;}
+/* 수주량/입고/미출고 폭 통일 */
+#panel-ush thead th:nth-child(5),#panel-ush tbody td:nth-child(5),
+#panel-ush thead th:nth-child(6),#panel-ush tbody td:nth-child(6),
+#panel-ush thead th:nth-child(7),#panel-ush tbody td:nth-child(7){width:64px;}
 #panel-ush thead th:nth-child(9),#panel-ush tbody td:nth-child(9){width:96px;}
 #panel-ush thead th:nth-child(10),#panel-ush tbody td:nth-child(10){width:270px;}
 #panel-ush thead th:nth-child(13),#panel-ush tbody td:nth-child(13){width:82px;}
@@ -731,7 +735,7 @@ td.dm{max-width:200px;overflow:visible;cursor:default;position:relative;}
       <div class="tbl-card"><div class="tx">
         <table><thead><tr>
           <th>수주일</th><th>수주처</th><th>품명코드</th>
-          <th>품명</th><th class="r">수주량</th><th class="r">입고</th><th class="r">미출고량</th>
+          <th>품명</th><th class="r">수주량</th><th class="r">입고</th><th class="r">미출고</th>
           <th class="r">출고가</th><th>제조업체</th><th>사유</th>
           <th>출고예정일</th><th>변경출고예정일</th><th>출고여부</th>
         </tr></thead>
@@ -1128,7 +1132,7 @@ async function loadUSH(){
           +'</td></tr>';
         rows+=items.map(r=>'<tr data-id="'+r.id+'">'
           +'<td>'+(r.order_date||'—')+'</td>'
-          +'<td>'+(r.customer_name||'—')+'</td>'
+          +'<td><span class="ush-cust" title="'+(r.customer_name||'')+'">'+(r.customer_name||'—')+'</span></td>'
           +'<td>'+(r.item_code||'—')+'</td>'
           +'<td>'+(r.item_name||'—')+'</td>'
           +'<td class="r">'+fmt(r.order_qty)+'</td>'
