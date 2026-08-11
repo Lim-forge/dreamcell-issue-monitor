@@ -468,7 +468,14 @@ table.report td:first-child,table.report th:first-child{width:105px;min-width:10
 .brand-col{text-align:left;background-color:#fff2cc;font-weight:bold;}
 .text-blue{color:#0070c0;font-weight:bold;}
 .cc-cards{display:flex;gap:16px;margin-bottom:16px;min-width:1550px;}
-.cc-chcard{flex:1;background:#fafbfc;border-radius:16px;padding:16px 18px;box-shadow:0 1px 3px rgba(0,0,0,.05);border:1.5px solid transparent;}
+.cc-chcard{flex:1;background:#fafbfc;border-radius:16px;padding:16px 18px;box-shadow:0 1px 3px rgba(0,0,0,.05);border:1.5px solid transparent;cursor:pointer;transition:all .15s;}
+.cc-chcard:hover{transform:translateY(-2px);box-shadow:0 6px 16px rgba(0,0,0,.08);}
+.cc-chcard.active{border-width:2px;}
+.cc-chcard.amt.active{border-color:#FF9F0A;}
+.cc-chcard.cost.active{border-color:#FF6B52;}
+.cc-detail-card{min-width:1550px;margin-bottom:16px;border-radius:12px;overflow:hidden;border:1px solid #e5e7eb;max-height:420px;}
+.cc-detail-card .tbl-card{border-radius:0;box-shadow:none;}
+.cc-detail-card .tx{max-height:420px;}
 .cc-chcard.amt{border-color:#FFE5B4;}
 .cc-chcard.cost{border-color:#FFD4CC;}
 .cc-chcard-count{font-size:24px;font-weight:800;color:#1C1C1E;line-height:1;}
@@ -640,50 +647,16 @@ table.report td:first-child,table.report th:first-child{width:105px;min-width:10
   <div class="panel" id="panel-cc">
     <div class="ph">
       <span class="ph-t">수주 취소·변경건</span>
-      <span class="ph-n" id="cnt-cc">0건</span>
       <div class="mode-g">
         <button class="mbtn on" id="mbv-cc" onclick="setMode('cc','view')">📊 조회</button>
         <button class="mbtn"    id="mbi-cc" onclick="setMode('cc','input')">✏️ 입력</button>
       </div>
       <span class="ph-s"></span><span class="ph-m" id="ts-cc"></span>
     </div>
-    <div class="kpi-wrap">
-      <button class="kpi-toggle" onclick="toggleKPI('cc')">
-        <span class="kpi-tl">📊 KPI 요약 <span class="kpi-desc">클릭하면 요약 정보가 나타납니다</span></span>
-        <span class="kpi-tr">
-          <span id="kpi-txt-cc">펼치기</span><span class="kpi-arr" id="kpi-arr-cc">▼</span><button class="act-toggle-btn" id="act-btn-cc" onclick="event.stopPropagation();toggleActCol('cc')" style="display:none">작업 보이기</button>
-        </span>
-      </button>
-      <div class="kpi-grid" id="kpi-grid-cc">
-        <div class="kpi-card"><div class="kpi-lbl">총 건수</div><div class="kpi-val" id="kv-cc-cnt">—</div></div>
-        <div class="kpi-card"><div class="kpi-lbl">완전취소</div><div class="kpi-val warn" id="kv-cc-cancel">—</div></div>
-        <div class="kpi-card"><div class="kpi-lbl">반품·취소처리</div><div class="kpi-val" id="kv-cc-return">—</div></div>
-        <div class="kpi-card"><div class="kpi-lbl">총 차액</div><div class="kpi-val" id="kv-cc-sum">—</div></div>
-      </div>
-    </div>
     <div class="va" id="va-cc">
-      <div class="fb">
-        <span class="fbl">수주일</span>
-        <input type="date" id="cc-f"><span class="fbs">~</span><input type="date" id="cc-t">
-        <select class="fs" id="cc-type" style="width:130px"><option value="">변동유형 전체</option><option value="완전취소">완전취소</option><option value="수량변경">수량변경</option><option value="금액변경">금액변경</option><option value="반품·취소처리">반품·취소처리</option><option value="원본미상">원본미상</option></select>
-        <input class="fi" placeholder="거래처 검색" id="cc-cust">
-        <button class="btn btn-p" onclick="loadCC()">🔍 조회</button>
-        <div class="fbr"><button class="btn btn-g" onclick="xcsv('cc')">⬇ CSV</button></div>
-      </div>
+      <div class="fb"></div>
 
       <div id="cc-report-wrap" class="cc-report-wrap" style="display:none;"></div>
-
-      <div class="tbl-card"><div class="tx">
-        <table><thead><tr>
-          <th>변동유형</th><th>담당자</th><th>수주일</th><th>전산No</th>
-          <th>품명코드</th><th>품명</th>
-          <th class="r">수량</th><th class="r">수주금액</th><th>사유</th><th class="ac">작업</th>
-        </tr></thead>
-        <tbody id="tb-cc"><tr><td colspan="10"><div class="empty">
-          <div class="emic">⚠️</div><div class="emt">조회 전입니다</div>
-          <div class="ems">기간을 설정하고 조회 버튼을 눌러주세요</div>
-        </div></td></tr></tbody></table>
-      </div></div>
     </div>
     <div class="ia" id="ia-cc"></div>
   </div>
@@ -893,6 +866,11 @@ window._d=window._d||{lms:[],ret:[],cc:[],lmo:[]};
   });
   TABS.forEach(t=>buildInputArea(t));
   initYMFilters();
+  // cc탭: 연/월 바꾸면 적용 버튼 없이 바로 조회 + 최근 업로드 달을 기본값으로
+  const ccYr=document.getElementById('ym-yr-cc'), ccMo=document.getElementById('ym-mo-cc');
+  if(ccYr)ccYr.addEventListener('change',()=>loadCC());
+  if(ccMo)ccMo.addEventListener('change',()=>loadCC());
+  if(sb) initCCDefaultMonth();
   // 모든 탭 작업열 기본 숨김
   TABS.forEach(t=>{
     const panel=document.getElementById('panel-'+t);
@@ -1060,27 +1038,34 @@ function ccBeforeAfter(before,after,isAmount){
   const clr=diff<0?'#B91C1C':'#065F46';
   return f(before)+' → '+f(after)+' <span style="color:'+clr+';font-weight:700;">('+(diff>=0?'+':'')+fmt(diff)+')</span>';
 }
+let ccCurrentMonth=null;
+let ccDetailOpen=null; // 'amt' | 'cost' | null
+
 async function loadCC(){
-  if(!guard())return;L(true);
+  if(!guard())return;
+  const yr=document.getElementById('ym-yr-cc')?.value;
+  const mo=document.getElementById('ym-mo-cc')?.value;
+  const wrap=document.getElementById('cc-report-wrap');
+  if(!yr||!mo){
+    wrap.style.display='block';
+    wrap.innerHTML='<div class="cc-report-empty">연도와 월을 선택해주세요</div>';
+    return;
+  }
+  ccCurrentMonth = yr+'-'+String(mo).padStart(2,'0');
+  ccDetailOpen=null;
+  await loadCCReport();
+}
+
+// 이슈모니터 첫 진입 시(또는 cc탭 첫 진입 시) 가장 최근 업로드된 달을 기본값으로 세팅
+async function initCCDefaultMonth(){
   try{
-    let q=sb.from('order_issues').select('*')
-      .gte('order_date',document.getElementById('cc-f').value)
-      .lte('order_date',document.getElementById('cc-t').value)
-      .order('order_date',{ascending:false});
-    const tp=document.getElementById('cc-type').value;
-    const c=document.getElementById('cc-cust').value.trim();
-    if(tp)q=q.ilike('change_types','%'+tp+'%');if(c)q=q.ilike('customer_name','%'+c+'%');
-    const{data,error}=await q;if(error)throw error;
-    const tb=document.getElementById('tb-cc');
-    if(!data?.length){tb.innerHTML=emptyR(10,'⚠️','해당 조건의 취소·변경건이 없습니다');setCnt('cc',0);}
-    else{
-      tb.innerHTML=data.map(r=>'<tr data-id="'+r.id+'"><td>'+ccTypeBadges(r.change_types)+'</td><td>'+(r.manager||'—')+'</td><td>'+(r.order_date||'—')+'</td><td>'+(r.sn||'—')+'</td><td>'+(r.item_code||'—')+'</td><td>'+(r.item_name||'—')+'</td><td class="r" style="white-space:nowrap;">'+ccBeforeAfter(r.qty_before,r.qty_after,false)+'</td><td class="r" style="white-space:nowrap;">'+ccBeforeAfter(r.amount_before,r.amount_after,true)+'</td><td class="dm">'+(r.reason||'')+'</td>'+actCell('cc',r.id)+'</tr>').join('');window._d.cc=data;restoreActCol('cc');
-      setCnt('cc',data.length);updKPI_cc(data);
-    }
-    setTS('cc');
-    loadCCReport();
-  }catch(e){document.getElementById('tb-cc').innerHTML=errR(10,e.message);}
-  finally{L(false);}
+    const{data,error}=await sb.from('sales_report_summary').select('report_month').order('updated_at',{ascending:false}).limit(1);
+    if(error||!data||!data.length)return;
+    const[y,m]=data[0].report_month.split('-');
+    const yrSel=document.getElementById('ym-yr-cc'), moSel=document.getElementById('ym-mo-cc');
+    if(yrSel && [...yrSel.options].some(o=>o.value===y)) yrSel.value=y;
+    if(moSel) moSel.value=String(parseInt(m,10));
+  }catch(e){console.warn('기본월 설정 실패:',e);}
 }
 
 // ── 월매출 보고서 (계산은 업로더에서 이미 끝난 값 — 여기선 그대로 그리기만 함) ──
@@ -1090,28 +1075,69 @@ function rptFmt(v,isRate){
   if(isRate==='mRate')return(v*100).toFixed(2)+'%';
   return Math.round(v).toLocaleString();
 }
-// 조회기간(cc-f~cc-t)이 정확히 한 달 범위일 때만 report_month를 뽑아냄
-function ccSingleMonth(){
-  const f=document.getElementById('cc-f').value, t=document.getElementById('cc-t').value;
-  if(!f||!t)return null;
-  const fm=f.slice(0,7), tm=t.slice(0,7);
-  return fm===tm ? fm : null;
-}
 async function loadCCReport(){
   const wrap=document.getElementById('cc-report-wrap');
-  const ym=ccSingleMonth();
-  if(!ym){wrap.style.display='none';wrap.innerHTML='';return;}
+  if(!ccCurrentMonth){wrap.style.display='none';wrap.innerHTML='';return;}
+  L(true);
   try{
-    const{data,error}=await sb.from('sales_report_summary').select('*').eq('report_month',ym).limit(1);
+    const{data,error}=await sb.from('sales_report_summary').select('*').eq('report_month',ccCurrentMonth).limit(1);
     if(error)throw error;
-    if(!data||!data.length){wrap.style.display='block';wrap.innerHTML='<div class="cc-report-empty">'+ym+' 매출 분석 보고서가 아직 업로드되지 않았습니다</div>';return;}
+    if(!data||!data.length){wrap.style.display='block';wrap.innerHTML='<div class="cc-report-empty">'+ccCurrentMonth+' 매출 분석 보고서가 아직 업로드되지 않았습니다</div>';return;}
     wrap.style.display='block';
     renderMonthlyReport(wrap,data[0]);
   }catch(e){
     wrap.style.display='block';
     wrap.innerHTML='<div class="cc-report-empty">보고서 조회 오류: '+e.message+'</div>';
+  }finally{L(false);}
+}
+
+// 카드 클릭 → 상세 그리드 토글 (order_issues / sales_cost_changes 조회, 사유는 읽기전용 텍스트)
+async function toggleCCDetail(type){
+  if(ccDetailOpen===type){closeCCDetail();return;}
+  ccDetailOpen=type;
+  document.querySelectorAll('.cc-chcard').forEach(el=>el.classList.remove('active'));
+  const cardEl=document.getElementById('cc-chcard-'+type);
+  if(cardEl)cardEl.classList.add('active');
+  const dw=document.getElementById('cc-detail-wrap');
+  if(!dw)return;
+  dw.style.display='block';
+  dw.innerHTML='<div class="cc-report-empty">불러오는 중...</div>';
+  try{
+    if(type==='amt'){
+      const{data,error}=await sb.from('order_issues').select('*').eq('report_month',ccCurrentMonth).order('order_date',{ascending:false});
+      if(error)throw error;
+      dw.innerHTML=ccDetailTableAmt(data||[]);
+    }else{
+      const{data,error}=await sb.from('sales_cost_changes').select('*').eq('report_month',ccCurrentMonth).order('order_date',{ascending:false});
+      if(error)throw error;
+      dw.innerHTML=ccDetailTableCost(data||[]);
+    }
+  }catch(e){
+    dw.innerHTML='<div class="cc-report-empty">상세 조회 오류: '+e.message+'</div>';
   }
 }
+function closeCCDetail(){
+  ccDetailOpen=null;
+  document.querySelectorAll('.cc-chcard').forEach(el=>el.classList.remove('active'));
+  const dw=document.getElementById('cc-detail-wrap');
+  if(dw){dw.style.display='none';dw.innerHTML='';}
+}
+function ccDetailTableAmt(rows){
+  if(!rows.length)return'<div class="cc-report-empty">수주 변동 내역이 없습니다</div>';
+  const trs=rows.map(r=>'<tr><td>'+ccTypeBadges(r.change_types)+'</td><td>'+(r.manager||'—')+'</td><td>'+(r.order_date||'—')+'</td><td>'+(r.sn||'—')+'</td><td>'+(r.item_code||'—')+'</td><td>'+(r.item_name||'—')+'</td><td class="r" style="white-space:nowrap;">'+ccBeforeAfter(r.qty_before,r.qty_after,false)+'</td><td class="r" style="white-space:nowrap;">'+ccBeforeAfter(r.amount_before,r.amount_after,true)+'</td><td class="dm">'+(r.reason||'—')+'</td></tr>').join('');
+  return '<div class="cc-detail-card"><div class="tbl-card"><div class="tx"><table><thead><tr><th>변동유형</th><th>담당자</th><th>수주일</th><th>전산No</th><th>품명코드</th><th>품명</th><th class="r">수량</th><th class="r">수주금액</th><th>사유</th></tr></thead><tbody>'+trs+'</tbody></table></div></div></div>';
+}
+function ccDetailTableCost(rows){
+  if(!rows.length)return'<div class="cc-report-empty">발주단가 변동 내역이 없습니다</div>';
+  const diffTxt=(v)=>'<span style="color:'+(v<0?'#B91C1C':'#065F46')+';font-weight:700;">('+(v>=0?'+':'')+rptFmt(v)+')</span>';
+  const trs=rows.map(r=>{
+    const costCell=rptFmt(r.cost_before)+' → '+rptFmt(r.cost_after)+' '+diffTxt(r.cost_diff);
+    const totalCell=rptFmt(r.total_before)+' → '+rptFmt(r.total_after)+' '+diffTxt(r.total_diff);
+    return '<tr><td>'+(r.manager||'—')+'</td><td>'+(r.order_date||'—')+'</td><td>'+(r.sn||'—')+'</td><td>'+(r.item_code||'—')+'</td><td>'+(r.item_name||'—')+'</td><td class="r">'+(r.qty??'—')+'</td><td class="r" style="white-space:nowrap;">'+costCell+'</td><td class="r" style="white-space:nowrap;">'+totalCell+'</td><td class="dm">'+(r.reason||'—')+'</td></tr>';
+  }).join('');
+  return '<div class="cc-detail-card"><div class="tbl-card"><div class="tx"><table><thead><tr><th>담당자</th><th>수주일</th><th>전산No</th><th>품명코드</th><th>품명</th><th class="r">수량</th><th class="r">개당 발주단가</th><th class="r">총 발주금액</th><th>사유</th></tr></thead><tbody>'+trs+'</tbody></table></div></div></div>';
+}
+
 function renderMonthlyReport(wrap,row){
   const MGRS=row.managers||[];
   const mStats=row.mstats||{};
@@ -1138,16 +1164,17 @@ function renderMonthlyReport(wrap,row){
 
   let html='';
 
-  // 수주변동/발주단가변동 카드 + 담당자별 매출변동 (2차 업로드에만 값이 있음, 1차는 change_cards가 없어서 자동 생략)
+  // 수주변동/발주단가변동 카드 (클릭하면 상세+사유 그리드 펼침) — 1차 업로드는 change_cards가 없어서 자동 생략
   if(row.change_cards){
     const cc=row.change_cards;
     html+='<div class="cc-cards">';
-    html+='<div class="cc-chcard amt"><div class="cc-chcard-count">'+cc.amtCount+'<span class="unit">건</span></div><div class="cc-chcard-label">수주 변동 (반품·취소·수량·금액)</div>';
+    html+='<div class="cc-chcard amt" id="cc-chcard-amt" onclick="toggleCCDetail(\'amt\')"><div class="cc-chcard-count">'+cc.amtCount+'<span class="unit">건</span></div><div class="cc-chcard-label">수주 변동 (반품·취소·수량·금액)</div>';
     html+= cc.amtCount>0 ? '<div class="cc-chcard-sub">매출 변동 '+(cc.amtDiff>=0?'+':'')+rptFmt(cc.amtDiff)+'원</div>' : '<div class="cc-chcard-sub" style="color:#30D158;">변동 없음</div>';
     html+='</div>';
-    html+='<div class="cc-chcard cost"><div class="cc-chcard-count">'+cc.costCount+'<span class="unit">건</span></div><div class="cc-chcard-label">발주단가 변동 (10만↑)</div>';
+    html+='<div class="cc-chcard cost" id="cc-chcard-cost" onclick="toggleCCDetail(\'cost\')"><div class="cc-chcard-count">'+cc.costCount+'<span class="unit">건</span></div><div class="cc-chcard-label">발주단가 변동 (10만↑)</div>';
     html+= cc.costCount>0 ? '<div class="cc-chcard-sub">총액 차이 '+(cc.costDiff>=0?'+':'')+rptFmt(cc.costDiff)+'원</div>' : '<div class="cc-chcard-sub" style="color:#30D158;">변동 없음</div>';
     html+='</div></div>';
+    html+='<div id="cc-detail-wrap" style="display:none;"></div>';
   }
   if(row.mgr_diff && row.mgr_diff.length){
     html+='<div class="cc-mdc-card"><div class="cc-mdc-title">📈 담당자별 매출 변동</div>';
