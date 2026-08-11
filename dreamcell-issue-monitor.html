@@ -172,8 +172,17 @@ tbody td.dm{color:var(--t3);font-size:12px}
 .ush-grp-hdr td{background:#F2F4FB;font-weight:700;font-size:11.5px;padding:8px 13px;color:var(--t2);border-top:2px solid var(--border);letter-spacing:.02em}
 #panel-ush tbody td{color:var(--text)}
 #panel-ush tbody td.dm{color:var(--text)}
-.ush-reason{display:block;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:default}
+.ush-reason{display:block;max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:default}
 .ush-date{display:block;max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* 미출고내역 컬럼 폭 재조정 - 사유는 넓게, 나머지는 타이트하게 (가로 여백 낭비 방지) */
+#panel-ush thead th:nth-child(1),#panel-ush tbody td:nth-child(1){width:88px;}
+#panel-ush thead th:nth-child(3),#panel-ush tbody td:nth-child(3){width:92px;}
+#panel-ush thead th:nth-child(5),#panel-ush tbody td:nth-child(5){width:60px;}
+#panel-ush thead th:nth-child(6),#panel-ush tbody td:nth-child(6){width:56px;}
+#panel-ush thead th:nth-child(7),#panel-ush tbody td:nth-child(7){width:70px;}
+#panel-ush thead th:nth-child(9),#panel-ush tbody td:nth-child(9){width:96px;}
+#panel-ush thead th:nth-child(10),#panel-ush tbody td:nth-child(10){width:270px;}
+#panel-ush thead th:nth-child(13),#panel-ush tbody td:nth-child(13){width:82px;}
 #panel-ush .act-col-hidden{display:none}
 .badge{display:inline-block;padding:2px 8px;border-radius:5px;font-size:11px;font-weight:700}
 .br{background:#FFF1F1;color:#B91C1C}
@@ -1127,7 +1136,7 @@ async function loadUSH(){
           +'<td class="r">'+fmt(r.unshipped_qty)+'</td>'
           +'<td class="r">'+fmt(r.sale_price)+'</td>'
           +'<td>'+(r.manufacturer||'—')+'</td>'
-          +'<td><span class="ush-reason" title="'+(r.reason||'')+'">'+( r.reason||'—')+'</span></td>'
+          +'<td><span class="ush-reason reason-tip" data-tip="'+String(r.reason||'').replace(/"/g,'&quot;')+'" title="'+String(r.reason||'').replace(/"/g,'&quot;')+'">'+( r.reason||'—')+'</span></td>'
           +'<td><span class="ush-date" title="'+(r.expected_date||'')+'">'+( r.expected_date||'—')+'</span></td>'
           +'<td><span class="ush-date" title="'+(r.changed_date||'')+'">'+( r.changed_date?'<span class="badge bb">'+r.changed_date+'</span>':'—')+'</span></td>'
           +'<td><span class="badge '+(PB[r.ship_status]||'bgr')+'">'+(r.ship_status||'—')+'</span></td>'+'</tr>').join('');
