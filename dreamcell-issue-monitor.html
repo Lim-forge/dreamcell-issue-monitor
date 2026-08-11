@@ -1062,7 +1062,7 @@ async function loadCC(){
       setCnt('cc',data.length);updKPI_cc(data);
     }
     setTS('cc');
-    loadCCReport();
+    await loadCCReport();
   }catch(e){document.getElementById('tb-cc').innerHTML=errR(10,e.message);}
   finally{L(false);}
 }
