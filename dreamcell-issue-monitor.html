@@ -451,6 +451,22 @@ thead th.ac{text-align:center;width:90px}
 td.dm{max-width:200px;overflow:visible;cursor:default;position:relative;}
 .reason-tip{position:relative;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:default;display:block;}
 /* JS 동적 툴팁으로 대체 */
+/* ── 월매출 보고서 (업로더 화면 그대로 이식, 계산 없이 값만 표시) ── */
+.cc-report-wrap{background:#fff;border-radius:12px;padding:16px;margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,.05);overflow-x:auto;}
+.cc-report-empty{padding:24px;text-align:center;color:#8aa0b8;font-size:13px;}
+.main-title-container{position:relative;width:100%;min-width:1550px;border-bottom:2px solid #333;margin-bottom:10px;padding-bottom:5px;}
+.main-title{font-size:18px;font-weight:bold;text-align:center;color:#1C1C1E;}
+.program-by{position:absolute;right:10px;bottom:6px;font-size:11px;font-weight:bold;color:#8E8E93;}
+.section-title{font-weight:bold;font-size:13px;margin-top:14px;margin-bottom:6px;color:#2c3e50;border-left:5px solid #2c3e50;padding-left:8px;}
+table.report{border-collapse:collapse;width:100%;min-width:1550px;border:1.5px solid #000;margin-bottom:12px;table-layout:fixed;font-family:'Malgun Gothic',sans-serif;}
+table.report th,table.report td{border:1px solid #999;padding:3px 4px;text-align:center;font-size:9.5px;word-break:break-all;overflow:hidden;color:#1C1C1E;}
+table.report td:first-child,table.report th:first-child{width:105px;min-width:105px;line-height:1.2;}
+.bg-header{background-color:#f2f2f2;font-weight:bold;}
+.bg-blue,.sum-row{background-color:#deebf7!important;font-weight:bold;}
+.bg-green,.subtotal-row{background-color:#e2efda!important;font-weight:bold;}
+.num-cell{text-align:right;white-space:nowrap;padding-right:4px!important;font-size:9px;}
+.brand-col{text-align:left;background-color:#fff2cc;font-weight:bold;}
+.text-blue{color:#0070c0;font-weight:bold;}
 </style>
 </head>
 <body>
@@ -638,11 +654,14 @@ td.dm{max-width:200px;overflow:visible;cursor:default;position:relative;}
         <button class="btn btn-p" onclick="loadCC()">🔍 조회</button>
         <div class="fbr"><button class="btn btn-g" onclick="xcsv('cc')">⬇ CSV</button></div>
       </div>
+
+      <div id="cc-report-wrap" class="cc-report-wrap" style="display:none;"></div>
+
       <div class="tbl-card"><div class="tx">
         <table><thead><tr>
-          <th>수주일</th><th>거래처</th><th>담당자</th>
-          <th>품명코드</th><th>품명</th><th>변동유형</th>
-          <th class="r">수량</th><th class="r">금액</th><th>사유</th><th class="ac">작업</th>
+          <th>변동유형</th><th>담당자</th><th>수주일</th><th>전산No</th>
+          <th>품명코드</th><th>품명</th>
+          <th class="r">수량</th><th class="r">수주금액</th><th>사유</th><th class="ac">작업</th>
         </tr></thead>
         <tbody id="tb-cc"><tr><td colspan="10"><div class="empty">
           <div class="emic">⚠️</div><div class="emt">조회 전입니다</div>
@@ -1039,12 +1058,139 @@ async function loadCC(){
     const tb=document.getElementById('tb-cc');
     if(!data?.length){tb.innerHTML=emptyR(10,'⚠️','해당 조건의 취소·변경건이 없습니다');setCnt('cc',0);}
     else{
-      tb.innerHTML=data.map(r=>'<tr data-id="'+r.id+'"><td>'+(r.order_date||'—')+'</td><td>'+(r.customer_name||'—')+'</td><td>'+(r.manager||'—')+'</td><td>'+(r.item_code||'—')+'</td><td>'+(r.item_name||'—')+'</td><td>'+ccTypeBadges(r.change_types)+'</td><td class="r" style="white-space:nowrap;">'+ccBeforeAfter(r.qty_before,r.qty_after,false)+'</td><td class="r" style="white-space:nowrap;">'+ccBeforeAfter(r.amount_before,r.amount_after,true)+'</td><td class="dm">'+(r.reason||'')+'</td>'+actCell('cc',r.id)+'</tr>').join('');window._d.cc=data;restoreActCol('cc');
+      tb.innerHTML=data.map(r=>'<tr data-id="'+r.id+'"><td>'+ccTypeBadges(r.change_types)+'</td><td>'+(r.manager||'—')+'</td><td>'+(r.order_date||'—')+'</td><td>'+(r.sn||'—')+'</td><td>'+(r.item_code||'—')+'</td><td>'+(r.item_name||'—')+'</td><td class="r" style="white-space:nowrap;">'+ccBeforeAfter(r.qty_before,r.qty_after,false)+'</td><td class="r" style="white-space:nowrap;">'+ccBeforeAfter(r.amount_before,r.amount_after,true)+'</td><td class="dm">'+(r.reason||'')+'</td>'+actCell('cc',r.id)+'</tr>').join('');window._d.cc=data;restoreActCol('cc');
       setCnt('cc',data.length);updKPI_cc(data);
     }
     setTS('cc');
+    loadCCReport();
   }catch(e){document.getElementById('tb-cc').innerHTML=errR(10,e.message);}
   finally{L(false);}
+}
+
+// ── 월매출 보고서 (계산은 업로더에서 이미 끝난 값 — 여기선 그대로 그리기만 함) ──
+function rptFmt(v,isRate){
+  if(!v||v===0)return'';
+  if(isRate===true)return(v*100).toFixed(1)+'%';
+  if(isRate==='mRate')return(v*100).toFixed(2)+'%';
+  return Math.round(v).toLocaleString();
+}
+// 조회기간(cc-f~cc-t)이 정확히 한 달 범위일 때만 report_month를 뽑아냄
+function ccSingleMonth(){
+  const f=document.getElementById('cc-f').value, t=document.getElementById('cc-t').value;
+  if(!f||!t)return null;
+  const fm=f.slice(0,7), tm=t.slice(0,7);
+  return fm===tm ? fm : null;
+}
+async function loadCCReport(){
+  const wrap=document.getElementById('cc-report-wrap');
+  const ym=ccSingleMonth();
+  if(!ym){wrap.style.display='none';wrap.innerHTML='';return;}
+  try{
+    const{data,error}=await sb.from('sales_report_summary').select('*').eq('report_month',ym).limit(1);
+    if(error)throw error;
+    if(!data||!data.length){wrap.style.display='block';wrap.innerHTML='<div class="cc-report-empty">'+ym+' 매출 분석 보고서가 아직 업로드되지 않았습니다</div>';return;}
+    wrap.style.display='block';
+    renderMonthlyReport(wrap,data[0]);
+  }catch(e){
+    wrap.style.display='block';
+    wrap.innerHTML='<div class="cc-report-empty">보고서 조회 오류: '+e.message+'</div>';
+  }
+}
+function renderMonthlyReport(wrap,row){
+  const MGRS=row.managers||[];
+  const mStats=row.mstats||{};
+  const matrix=row.matrix||{};
+  const total=row.total||{sales:0,pre:0,cost:0,ribeSales:0,ribeCost:0};
+  const BRANDS=(row.brands||[]).filter(b=>b.visible!==false);
+  const tNet=total.sales-total.pre, tProfit=tNet-total.cost;
+
+  const mgrHeadCells=MGRS.map(m=>'<td class="bg-header">'+m+'</td>').join('');
+  const rowCells=(fn)=>{
+    let cells=MGRS.map(m=>{
+      const s=mStats[m]||{sales:0,pre:0,cost:0,ribeSales:0,ribeCost:0};
+      const net=s.sales-s.pre, profit=net-s.cost;
+      const exNet=net-s.ribeSales, exProfit=profit-(s.ribeSales-s.ribeCost);
+      return '<td class="num-cell">'+fn(s,net,profit,exNet,exProfit)+'</td>';
+    }).join('');
+    return cells;
+  };
+  const totRow=(fn)=>{
+    const net=total.sales-total.pre, profit=net-total.cost;
+    const exNet=net-total.ribeSales, exProfit=profit-(total.ribeSales-total.ribeCost);
+    return '<td class="bg-blue num-cell">'+fn(total,net,profit,exNet,exProfit)+'</td>';
+  };
+
+  let html='';
+  html+='<div class="main-title-container"><div class="main-title">DREAMCELL 매출 분석 보고서</div><div class="program-by">Made Program by LYJ</div></div>';
+
+  html+='<div class="section-title">1. 드림셀 전체 매출 (요약)</div>';
+  html+='<table class="report"><tr class="bg-header"><td>구분</td><td>총매출</td><td>매출<br>(-선발행)</td><td>선발행</td><td>총발주단가</td><td>이익</td><td>이익률</td></tr>';
+  html+='<tr class="bg-blue"><td style="text-align:center;">전체 합계</td><td class="num-cell">'+rptFmt(total.sales)+'</td><td class="num-cell">'+rptFmt(tNet)+'</td><td class="num-cell">'+rptFmt(total.pre)+'</td><td class="num-cell">'+rptFmt(total.cost)+'</td><td class="num-cell">'+rptFmt(tProfit)+'</td><td>'+rptFmt(tNet?tProfit/tNet:0,true)+'</td></tr></table>';
+
+  html+='<div class="section-title">2. 담당자별 매출 분석</div>';
+  html+='<table class="report"><tr class="bg-header"><td>구분</td>'+mgrHeadCells+'<td class="bg-blue">합 계</td></tr>';
+  html+='<tr><td>매출</td>'+rowCells(s=>rptFmt(s.sales))+totRow(t=>rptFmt(t.sales))+'</tr>';
+  html+='<tr><td>선발행</td>'+rowCells(s=>rptFmt(s.pre))+totRow(t=>rptFmt(t.pre))+'</tr>';
+  html+='<tr style="font-weight:bold;"><td>매출<br>(-선발행)</td>'+rowCells((s,net)=>rptFmt(net))+totRow((t,net)=>rptFmt(net))+'</tr>';
+  html+='<tr><td>발주단가</td>'+rowCells(s=>rptFmt(s.cost))+totRow(t=>rptFmt(t.cost))+'</tr>';
+  html+='<tr style="font-weight:bold;"><td>이익</td>'+rowCells((s,net,profit)=>rptFmt(profit))+totRow((t,net,profit)=>rptFmt(profit))+'</tr>';
+  html+='<tr><td>이익률</td>'+rowCells((s,net,profit)=>rptFmt(net?profit/net:0,true))+totRow((t,net,profit)=>rptFmt(net?profit/net:0,true))+'</tr></table>';
+
+  html+='<div class="section-title">2-1. 담당자별 매출 분석 [ 인터넷구입 리베이트 제외 ]</div>';
+  html+='<table class="report"><tr class="bg-header"><td>구분</td>'+mgrHeadCells+'<td class="bg-blue">합 계</td></tr>';
+  html+='<tr><td>매출</td>'+rowCells(s=>rptFmt(s.sales))+totRow(t=>rptFmt(t.sales))+'</tr>';
+  html+='<tr><td class="text-blue">인터넷,리베<br>매출</td>'+rowCells(s=>rptFmt(s.ribeSales))+totRow(t=>rptFmt(t.ribeSales))+'</tr>';
+  html+='<tr><td>선발행</td>'+rowCells(s=>rptFmt(s.pre))+totRow(t=>rptFmt(t.pre))+'</tr>';
+  html+='<tr style="font-weight:bold;"><td>매출<br>(-선발행)</td>'+rowCells((s,net,profit,exNet)=>rptFmt(exNet))+totRow((t,net,profit,exNet)=>rptFmt(exNet))+'</tr>';
+  html+='<tr><td>발주단가</td>'+rowCells(s=>rptFmt(s.cost))+totRow(t=>rptFmt(t.cost))+'</tr>';
+  html+='<tr><td class="text-blue">인터넷,리베<br>발주단가</td>'+rowCells(s=>rptFmt(s.ribeCost))+totRow(t=>rptFmt(t.ribeCost))+'</tr>';
+  html+='<tr style="font-weight:bold;"><td>이익</td>'+rowCells((s,net,profit,exNet,exProfit)=>rptFmt(exProfit))+totRow((t,net,profit,exNet,exProfit)=>rptFmt(exProfit))+'</tr>';
+  html+='<tr><td>이익률</td>'+rowCells((s,net,profit,exNet,exProfit)=>rptFmt(exNet?exProfit/exNet:0,true))+totRow((t,net,profit,exNet,exProfit)=>rptFmt(exNet?exProfit/exNet:0,true))+'</tr>';
+  html+='<tr><td>매출률</td>'+rowCells(s=>rptFmt(total.sales?s.sales/total.sales:0,'mRate'))+'<td class="bg-blue num-cell">100.00%</td></tr>';
+  html+='<tr><td>타 겟</td>'+MGRS.map(()=>'<td class="num-cell"></td>').join('')+'<td class="bg-blue num-cell"></td></tr></table>';
+
+  html+='<div class="section-title">3. 제조사별 상세 매출 분석</div>';
+  html+='<table class="report"><thead><tr><td class="bg-green brand-col" style="text-align:center;">제조사 (Brand)</td>'+mgrHeadCells+'<td class="bg-blue">합 계</td></tr></thead><tbody>';
+  html+=renderBrandTableStatic(matrix,MGRS,BRANDS);
+  html+='</tbody></table>';
+
+  wrap.innerHTML=html;
+}
+function renderBrandTableStatic(matrix,MGRS,BRANDS){
+  const CAT_LABEL={line:'Line',special:'특판'};
+  let html='';
+  ['line','special'].forEach(cat=>{
+    const brands=BRANDS.filter(b=>b.category===cat).sort((a,b)=>(a.sort_order||0)-(b.sort_order||0));
+    if(!brands.length)return;
+    const catTotal=Array(MGRS.length+1).fill(0);
+    const subRow=(arr,label,cls)=>{
+      let row='<tr class="'+cls+'"><td style="text-align:center;">'+label+'</td>';
+      arr.forEach(v=>{row+='<td class="num-cell">'+rptFmt(v)+'</td>';});
+      return row+'</tr>';
+    };
+    const drawRow=(b,accum)=>{
+      let row='<tr><td class="brand-col">'+b.brand_name+'</td>';
+      let rSum=0;
+      MGRS.forEach((m,mIdx)=>{
+        const v=(matrix[b.brand_name]&&matrix[b.brand_name][m])||0;
+        row+='<td class="num-cell">'+rptFmt(v)+'</td>';
+        rSum+=v;accum[mIdx]+=v;catTotal[mIdx]+=v;
+      });
+      row+='<td class="num-cell bg-blue">'+rptFmt(rSum)+'</td></tr>';
+      accum[MGRS.length]+=rSum;catTotal[MGRS.length]+=rSum;
+      return row;
+    };
+    const core=brands.filter(b=>b.is_core), rest=brands.filter(b=>!b.is_core);
+    if(core.length){
+      const coreTotal=Array(MGRS.length+1).fill(0);
+      core.forEach(b=>{ html+=drawRow(b,coreTotal); });
+      html+=subRow(coreTotal,CAT_LABEL[cat]+' 핵심소계','bg-green subtotal-row');
+    }
+    const dummy=Array(MGRS.length+1).fill(0);
+    rest.forEach(b=>{ html+=drawRow(b,dummy); });
+    html+=subRow(catTotal,CAT_LABEL[cat]+' 합계','bg-blue sum-row');
+  });
+  return html;
 }
 
 async function loadLMO(){
