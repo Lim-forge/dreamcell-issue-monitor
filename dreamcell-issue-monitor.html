@@ -624,25 +624,25 @@ td.dm{max-width:200px;overflow:visible;cursor:default;position:relative;}
       </button>
       <div class="kpi-grid" id="kpi-grid-cc">
         <div class="kpi-card"><div class="kpi-lbl">총 건수</div><div class="kpi-val" id="kv-cc-cnt">—</div></div>
-        <div class="kpi-card"><div class="kpi-lbl">취소</div><div class="kpi-val warn" id="kv-cc-cancel">—</div></div>
-        <div class="kpi-card"><div class="kpi-lbl">금액조정</div><div class="kpi-val" id="kv-cc-change">—</div></div>
+        <div class="kpi-card"><div class="kpi-lbl">완전취소</div><div class="kpi-val warn" id="kv-cc-cancel">—</div></div>
+        <div class="kpi-card"><div class="kpi-lbl">반품·취소처리</div><div class="kpi-val" id="kv-cc-return">—</div></div>
         <div class="kpi-card"><div class="kpi-lbl">총 차액</div><div class="kpi-val" id="kv-cc-sum">—</div></div>
       </div>
     </div>
     <div class="va" id="va-cc">
       <div class="fb">
-        <span class="fbl">접수일</span>
+        <span class="fbl">수주일</span>
         <input type="date" id="cc-f"><span class="fbs">~</span><input type="date" id="cc-t">
-        <select class="fs" id="cc-type" style="width:100px"><option value="">변경사유 전체</option><option>취소</option><option>금액조정</option></select>
+        <select class="fs" id="cc-type" style="width:130px"><option value="">변동유형 전체</option><option value="완전취소">완전취소</option><option value="수량변경">수량변경</option><option value="금액변경">금액변경</option><option value="반품·취소처리">반품·취소처리</option><option value="원본미상">원본미상</option></select>
         <input class="fi" placeholder="거래처 검색" id="cc-cust">
         <button class="btn btn-p" onclick="loadCC()">🔍 조회</button>
         <div class="fbr"><button class="btn btn-g" onclick="xcsv('cc')">⬇ CSV</button></div>
       </div>
       <div class="tbl-card"><div class="tx">
         <table><thead><tr>
-          <th>기존수주일</th><th>거래처</th><th>담당자</th><th>브랜드</th>
-          <th>카달로그번호</th><th>품명</th><th>변경사유</th>
-          <th>사유</th><th class="r">차액</th><th class="ac">작업</th>
+          <th>수주일</th><th>거래처</th><th>담당자</th>
+          <th>품명코드</th><th>품명</th><th>변동유형</th>
+          <th class="r">수량</th><th class="r">금액</th><th>사유</th><th class="ac">작업</th>
         </tr></thead>
         <tbody id="tb-cc"><tr><td colspan="10"><div class="empty">
           <div class="emic">⚠️</div><div class="emt">조회 전입니다</div>
@@ -805,15 +805,19 @@ const M={
     {k:'process',lb:'처리내용',t:'select',w:100,def:'처리중',opts:['반품완료','악성재고','재고사용','처리중','클레임','폐기']},
     {k:'unit_price',lb:'단가',t:'num',w:88}]},
   cc:{tbl:'order_issues',dk:'order_date',cols:[
-    {k:'order_date',lb:'기존수주일',t:'date',req:true,w:108},
+    {k:'order_date',lb:'수주일',t:'date',req:true,w:108},
+    {k:'sn',lb:'전산번호',t:'text',w:90},
     {k:'customer_name',lb:'거래처',t:'text',w:120},
-    {k:'rep',lb:'담당자',t:'text',w:76},
-    {k:'brand',lb:'브랜드',t:'text',w:90},
-    {k:'catalog_no',lb:'카달로그번호',t:'text',w:110},
+    {k:'manager',lb:'담당자',t:'text',w:76},
+    {k:'item_code',lb:'품명코드',t:'text',w:100},
     {k:'item_name',lb:'품명',t:'text',w:150},
-    {k:'change_type',lb:'변경사유',t:'select',w:90,opts:['취소','금액조정']},
-    {k:'reason',lb:'사유',t:'text',w:130},
-    {k:'diff_amount',lb:'차액',t:'num',w:88}]},
+    {k:'change_types',lb:'변동유형',t:'text',w:130},
+    {k:'qty_before',lb:'수량(전)',t:'num',w:80},
+    {k:'qty_after',lb:'수량(후)',t:'num',w:80},
+    {k:'amount_before',lb:'금액(전)',t:'num',w:100},
+    {k:'amount_after',lb:'금액(후)',t:'num',w:100},
+    {k:'amount_diff',lb:'차액',t:'num',w:100},
+    {k:'reason',lb:'사유',t:'text',w:130}]},
   ush:{tbl:'unshipped',dk:'order_date',cols:[
     {k:'order_date',lb:'수주일',t:'date',req:true,w:108},
     {k:'rep',lb:'담당자',t:'text',w:76},
@@ -917,9 +921,9 @@ function updKPI_ret(data){
 }
 function updKPI_cc(data){
   setKV('kv-cc-cnt',data.length+'건');
-  setKV('kv-cc-cancel',data.filter(r=>r.change_type==='취소').length+'건');
-  setKV('kv-cc-change',data.filter(r=>r.change_type==='금액조정').length+'건');
-  const sum=Math.round(data.reduce((a,r)=>a+(+r.diff_amount||0),0)).toLocaleString();
+  setKV('kv-cc-cancel',data.filter(r=>String(r.change_types||'').includes('완전취소')).length+'건');
+  setKV('kv-cc-return',data.filter(r=>String(r.change_types||'').includes('반품·취소처리')).length+'건');
+  const sum=Math.round(data.reduce((a,r)=>a+(+r.amount_diff||0),0)).toLocaleString();
   setKV('kv-cc-sum',sum+'원');
 }
 
@@ -1005,6 +1009,22 @@ async function loadRET(){
   finally{L(false);}
 }
 
+function ccTypeBadges(typesStr){
+  const CB={완전취소:'br','반품·취소처리':'bo',수량변경:'bb',금액변경:'bo',원본미상:'bgr'};
+  const types=String(typesStr||'').split(',').map(s=>s.trim()).filter(Boolean);
+  if(!types.length) return '—';
+  return types.map(t=>'<span class="badge '+(CB[t]||'bgr')+'" style="margin-right:3px;">'+t+'</span>').join('');
+}
+function ccBeforeAfter(before,after,isAmount){
+  const f=v=>isAmount?fmt(v):(v==null?'—':v);
+  if(before==null && after==null) return '—';
+  if(before==null) return f(after);
+  if(after==null) return f(before);
+  if(before===after) return f(before);
+  const diff=after-before;
+  const clr=diff<0?'#B91C1C':'#065F46';
+  return f(before)+' → '+f(after)+' <span style="color:'+clr+';font-weight:700;">('+(diff>=0?'+':'')+fmt(diff)+')</span>';
+}
 async function loadCC(){
   if(!guard())return;L(true);
   try{
@@ -1014,17 +1034,16 @@ async function loadCC(){
       .order('order_date',{ascending:false});
     const tp=document.getElementById('cc-type').value;
     const c=document.getElementById('cc-cust').value.trim();
-    if(tp)q=q.eq('change_type',tp);if(c)q=q.ilike('customer_name','%'+c+'%');
+    if(tp)q=q.ilike('change_types','%'+tp+'%');if(c)q=q.ilike('customer_name','%'+c+'%');
     const{data,error}=await q;if(error)throw error;
-    const TB={취소:'br',금액조정:'bo'};
     const tb=document.getElementById('tb-cc');
-    if(!data?.length){tb.innerHTML=emptyR(9,'⚠️','해당 조건의 취소·변경건이 없습니다');setCnt('cc',0);}
+    if(!data?.length){tb.innerHTML=emptyR(10,'⚠️','해당 조건의 취소·변경건이 없습니다');setCnt('cc',0);}
     else{
-      tb.innerHTML=data.map(r=>'<tr data-id="'+r.id+'"><td>'+(r.order_date||'—')+'</td><td>'+(r.customer_name||'—')+'</td><td>'+(r.rep||'—')+'</td><td>'+(r.brand||'—')+'</td><td>'+(r.catalog_no||'—')+'</td><td>'+(r.item_name||'—')+'</td><td><span class="badge '+(TB[r.change_type]||'bgr')+'">'+(r.change_type||'—')+'</span></td><td>'+(r.reason||'—')+'</td><td class="r">'+fmt(r.diff_amount)+'</td>'+actCell('cc',r.id)+'</tr>').join('');window._d.cc=data;restoreActCol('cc');
+      tb.innerHTML=data.map(r=>'<tr data-id="'+r.id+'"><td>'+(r.order_date||'—')+'</td><td>'+(r.customer_name||'—')+'</td><td>'+(r.manager||'—')+'</td><td>'+(r.item_code||'—')+'</td><td>'+(r.item_name||'—')+'</td><td>'+ccTypeBadges(r.change_types)+'</td><td class="r" style="white-space:nowrap;">'+ccBeforeAfter(r.qty_before,r.qty_after,false)+'</td><td class="r" style="white-space:nowrap;">'+ccBeforeAfter(r.amount_before,r.amount_after,true)+'</td><td class="dm">'+(r.reason||'')+'</td>'+actCell('cc',r.id)+'</tr>').join('');window._d.cc=data;restoreActCol('cc');
       setCnt('cc',data.length);updKPI_cc(data);
     }
     setTS('cc');
-  }catch(e){document.getElementById('tb-cc').innerHTML=errR(9,e.message);}
+  }catch(e){document.getElementById('tb-cc').innerHTML=errR(10,e.message);}
   finally{L(false);}
 }
 
