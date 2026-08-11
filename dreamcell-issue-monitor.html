@@ -175,6 +175,13 @@ tbody td.dm{color:var(--t3);font-size:12px}
 .ush-reason{display:block;max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:default}
 .ush-date{display:block;max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .ush-cust{display:block;max-width:210px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:default}
+/* 사유/출고예정일 칸칸이 누적 표시 (업로더 관리자 화면과 동일한 방식) */
+.ush-stack{display:flex;flex-direction:column;gap:3px;max-height:74px;overflow-y:auto;padding-right:2px;}
+.ush-chip{background:#F4F5F9;border-left:2px solid var(--pri,#4A7FC1);border-radius:3px;padding:3px 6px;font-size:11px;line-height:1.4;color:var(--text);white-space:normal;word-break:break-word;}
+.ush-chip.date{background:#EFF6FF;border-left-color:#1D4ED8;}
+.ush-empty{color:var(--t3);font-size:12px;}
+#panel-ush thead th:nth-child(10),#panel-ush tbody td:nth-child(10),
+#panel-ush thead th:nth-child(11),#panel-ush tbody td:nth-child(11){white-space:normal;vertical-align:top;}
 /* 미출고내역 컬럼 폭 재조정 - 사유는 넓게, 나머지는 타이트하게 (가로 여백 낭비 방지) */
 #panel-ush thead th:nth-child(1),#panel-ush tbody td:nth-child(1){width:88px;}
 #panel-ush thead th:nth-child(2),#panel-ush tbody td:nth-child(2){width:210px;}
@@ -186,6 +193,8 @@ tbody td.dm{color:var(--t3);font-size:12px}
 #panel-ush thead th:nth-child(7),#panel-ush tbody td:nth-child(7){width:64px;}
 #panel-ush thead th:nth-child(9),#panel-ush tbody td:nth-child(9){width:96px;}
 #panel-ush thead th:nth-child(10),#panel-ush tbody td:nth-child(10){width:270px;}
+#panel-ush thead th:nth-child(11),#panel-ush tbody td:nth-child(11){width:170px;}
+#panel-ush thead th:nth-child(12),#panel-ush tbody td:nth-child(12){width:80px;}
 #panel-ush thead th:nth-child(13),#panel-ush tbody td:nth-child(13){width:82px;}
 #panel-ush .act-col-hidden{display:none}
 .badge{display:inline-block;padding:2px 8px;border-radius:5px;font-size:11px;font-weight:700}
@@ -737,7 +746,7 @@ td.dm{max-width:200px;overflow:visible;cursor:default;position:relative;}
           <th>수주일</th><th>수주처</th><th>품명코드</th>
           <th>품명</th><th class="r">수주량</th><th class="r">입고</th><th class="r">미출고</th>
           <th class="r">출고가</th><th>제조업체</th><th>사유</th>
-          <th>출고예정일</th><th>변경출고예정일</th><th>출고여부</th>
+          <th>출고예정일</th><th>변경횟수</th><th>출고여부</th>
         </tr></thead>
         <tbody id="tb-ush"><tr><td colspan="14"><div class="empty">
           <div class="emic">📦</div><div class="emt">조회 전입니다</div>
@@ -920,6 +929,20 @@ function today(){return new Date().toISOString().slice(0,10);}
 function yearStart(){return new Date().getFullYear()+'-01-01';}
 function monthAgo(){const d=new Date();d.setMonth(d.getMonth()-1);return d.toISOString().slice(0,10);}
 function fmt(n){return n!=null?Number(n).toLocaleString():'—';}
+function escHtml(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+// 사유/출고예정일: 업로더 관리자 화면처럼 칸칸이 누적 표시 (\n 구분된 히스토리를 chip으로)
+function ushChips(text, isDate){
+  const lines=String(text||'').split('\n').map(s=>s.trim()).filter(Boolean);
+  if(!lines.length) return '<span class="ush-empty">—</span>';
+  return '<div class="ush-stack">'+lines.map(l=>'<div class="ush-chip'+(isDate?' date':'')+'">'+escHtml(l)+'</div>').join('\n')+'</div>';
+}
+// 출고예정일 변경횟수 배지 (1차=파랑, 2차=주황, 3차 이상=빨강 - 약속을 계속 못 지킬수록 경고)
+function ushChangeBadge(text){
+  const n=String(text||'').split('\n').map(s=>s.trim()).filter(Boolean).length;
+  if(n<=0) return '<span class="ush-empty">—</span>';
+  const cls=n>=3?'br':(n===2?'bo':'bb');
+  return '<span class="badge '+cls+'">'+n+'차</span>';
+}
 function pct(v){return v!=null?(+v).toFixed(1)+'%':'—';}
 function mgC(v){return Math.round(+v)<10?'mlo':'';}
 function setTS(tab){document.getElementById('ts-'+tab).textContent='최근 조회 '+new Date().toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit',second:'2-digit'});}
@@ -1140,9 +1163,9 @@ async function loadUSH(){
           +'<td class="r">'+fmt(r.unshipped_qty)+'</td>'
           +'<td class="r">'+fmt(r.sale_price)+'</td>'
           +'<td>'+(r.manufacturer||'—')+'</td>'
-          +'<td><span class="ush-reason reason-tip" data-tip="'+String(r.reason||'').replace(/"/g,'&quot;')+'" title="'+String(r.reason||'').replace(/"/g,'&quot;')+'">'+( r.reason||'—')+'</span></td>'
-          +'<td><span class="ush-date" title="'+(r.expected_date||'')+'">'+( r.expected_date||'—')+'</span></td>'
-          +'<td><span class="ush-date" title="'+(r.changed_date||'')+'">'+( r.changed_date?'<span class="badge bb">'+r.changed_date+'</span>':'—')+'</span></td>'
+          +'<td>'+ushChips(r.reason,false)+'</td>'
+          +'<td>'+ushChips(r.expected_date,true)+'</td>'
+          +'<td>'+ushChangeBadge(r.expected_date)+'</td>'
           +'<td><span class="badge '+(PB[r.ship_status]||'bgr')+'">'+(r.ship_status||'—')+'</span></td>'+'</tr>').join('');
       });
       tb.innerHTML=rows;
