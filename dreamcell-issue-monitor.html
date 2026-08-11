@@ -474,6 +474,7 @@ table.report td:first-child,table.report th:first-child{width:105px;min-width:10
 .cc-chcard.amt.active{border-color:#FF9F0A;}
 .cc-chcard.cost.active{border-color:#FF6B52;}
 .cc-detail-card{min-width:1550px;margin-bottom:16px;border-radius:12px;overflow:hidden;border:1px solid #e5e7eb;max-height:420px;}
+.cc-detail-card td.dm{color:#1C1C1E;max-width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:default;}
 .cc-detail-card .tbl-card{border-radius:0;box-shadow:none;}
 .cc-detail-card .tx{max-height:420px;}
 .cc-chcard.amt{border-color:#FFE5B4;}
@@ -1124,7 +1125,7 @@ function closeCCDetail(){
 }
 function ccDetailTableAmt(rows){
   if(!rows.length)return'<div class="cc-report-empty">수주 변동 내역이 없습니다</div>';
-  const trs=rows.map(r=>'<tr><td>'+ccTypeBadges(r.change_types)+'</td><td>'+(r.manager||'—')+'</td><td>'+(r.order_date||'—')+'</td><td>'+(r.sn||'—')+'</td><td>'+(r.item_code||'—')+'</td><td>'+(r.item_name||'—')+'</td><td class="r" style="white-space:nowrap;">'+ccBeforeAfter(r.qty_before,r.qty_after,false)+'</td><td class="r" style="white-space:nowrap;">'+ccBeforeAfter(r.amount_before,r.amount_after,true)+'</td><td class="dm">'+(r.reason||'—')+'</td></tr>').join('');
+  const trs=rows.map(r=>'<tr><td>'+ccTypeBadges(r.change_types)+'</td><td>'+(r.manager||'—')+'</td><td>'+(r.order_date||'—')+'</td><td>'+(r.sn||'—')+'</td><td>'+(r.item_code||'—')+'</td><td>'+(r.item_name||'—')+'</td><td class="r" style="white-space:nowrap;">'+ccBeforeAfter(r.qty_before,r.qty_after,false)+'</td><td class="r" style="white-space:nowrap;">'+ccBeforeAfter(r.amount_before,r.amount_after,true)+'</td><td class="dm" title="'+escHtml(r.reason||'')+'">'+(r.reason||'—')+'</td></tr>').join('');
   return '<div class="cc-detail-card"><div class="tbl-card"><div class="tx"><table><thead><tr><th>변동유형</th><th>담당자</th><th>수주일</th><th>전산No</th><th>품명코드</th><th>품명</th><th class="r">수량</th><th class="r">수주금액</th><th>사유</th></tr></thead><tbody>'+trs+'</tbody></table></div></div></div>';
 }
 function ccDetailTableCost(rows){
@@ -1133,7 +1134,7 @@ function ccDetailTableCost(rows){
   const trs=rows.map(r=>{
     const costCell=rptFmt(r.cost_before)+' → '+rptFmt(r.cost_after)+' '+diffTxt(r.cost_diff);
     const totalCell=rptFmt(r.total_before)+' → '+rptFmt(r.total_after)+' '+diffTxt(r.total_diff);
-    return '<tr><td>'+(r.manager||'—')+'</td><td>'+(r.order_date||'—')+'</td><td>'+(r.sn||'—')+'</td><td>'+(r.item_code||'—')+'</td><td>'+(r.item_name||'—')+'</td><td class="r">'+(r.qty??'—')+'</td><td class="r" style="white-space:nowrap;">'+costCell+'</td><td class="r" style="white-space:nowrap;">'+totalCell+'</td><td class="dm">'+(r.reason||'—')+'</td></tr>';
+    return '<tr><td>'+(r.manager||'—')+'</td><td>'+(r.order_date||'—')+'</td><td>'+(r.sn||'—')+'</td><td>'+(r.item_code||'—')+'</td><td>'+(r.item_name||'—')+'</td><td class="r">'+(r.qty??'—')+'</td><td class="r" style="white-space:nowrap;">'+costCell+'</td><td class="r" style="white-space:nowrap;">'+totalCell+'</td><td class="dm" title="'+escHtml(r.reason||'')+'">'+(r.reason||'—')+'</td></tr>';
   }).join('');
   return '<div class="cc-detail-card"><div class="tbl-card"><div class="tx"><table><thead><tr><th>담당자</th><th>수주일</th><th>전산No</th><th>품명코드</th><th>품명</th><th class="r">수량</th><th class="r">개당 발주단가</th><th class="r">총 발주금액</th><th>사유</th></tr></thead><tbody>'+trs+'</tbody></table></div></div></div>';
 }
