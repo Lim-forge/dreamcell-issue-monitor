@@ -186,16 +186,19 @@ tbody td.dm{color:var(--t3);font-size:12px}
 #panel-ush thead th:nth-child(1),#panel-ush tbody td:nth-child(1){width:88px;}
 #panel-ush thead th:nth-child(2),#panel-ush tbody td:nth-child(2){width:210px;}
 #panel-ush thead th:nth-child(3),#panel-ush tbody td:nth-child(3){width:180px;padding-right:4px;}
-#panel-ush thead th:nth-child(4),#panel-ush tbody td:nth-child(4){padding-left:4px;}
+#panel-ush thead th:nth-child(4),#panel-ush tbody td:nth-child(4){width:200px;padding-left:4px;}
 /* 수주량/입고/미출고 폭 통일 */
 #panel-ush thead th:nth-child(5),#panel-ush tbody td:nth-child(5),
 #panel-ush thead th:nth-child(6),#panel-ush tbody td:nth-child(6),
 #panel-ush thead th:nth-child(7),#panel-ush tbody td:nth-child(7){width:64px;}
+#panel-ush thead th:nth-child(8),#panel-ush tbody td:nth-child(8){width:110px;}
 #panel-ush thead th:nth-child(9),#panel-ush tbody td:nth-child(9){width:96px;}
 #panel-ush thead th:nth-child(10),#panel-ush tbody td:nth-child(10){width:270px;}
 #panel-ush thead th:nth-child(11),#panel-ush tbody td:nth-child(11){width:170px;}
 #panel-ush thead th:nth-child(12),#panel-ush tbody td:nth-child(12){width:80px;}
 #panel-ush thead th:nth-child(13),#panel-ush tbody td:nth-child(13){width:82px;}
+/* 위 폭들의 합만큼 최소폭을 줘서, 부족하면 컴프레션 대신 가로스크롤 되게 함 (헤더 글자 세로쌓임 버그 방지) */
+#panel-ush table{min-width:1750px;}
 #panel-ush .act-col-hidden{display:none}
 .badge{display:inline-block;padding:2px 8px;border-radius:5px;font-size:11px;font-weight:700}
 .br{background:#FFF1F1;color:#B91C1C}
