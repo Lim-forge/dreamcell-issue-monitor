@@ -1012,7 +1012,9 @@ async function loadRET(){
       .order('return_date',{ascending:true});
     const st=document.getElementById('ret-status').value;
     const c=document.getElementById('ret-cust').value.trim();
-    if(st)q=q.eq('process',st);if(c)q=q.ilike('customer_name','%'+c+'%');
+    const repEl=document.getElementById('ret-rep');
+    const rp=repEl?repEl.value.trim():'';
+    if(st)q=q.eq('process',st);if(c)q=q.ilike('customer_name','%'+c+'%');if(rp)q=q.ilike('rep','%'+rp+'%');
     const{data,error}=await q;if(error)throw error;
     const PB={반품완료:'bg',악성재고:'br',재고사용:'bb',처리중:'bo',클레임:'br',폐기:'bgr'};
     const tb=document.getElementById('tb-ret');
@@ -2339,9 +2341,18 @@ document.addEventListener('DOMContentLoaded', () => {
     const yrEl = document.getElementById(cfg.yrId);
     const moEl = document.getElementById(cfg.moId);
     const repEl = document.getElementById(cfg.repInputId);
-    if(yrEl) yrEl.value = String(new Date().getFullYear());
+    const yr = String(new Date().getFullYear());
+    if(yrEl) yrEl.value = yr;
     if(moEl) moEl.value = '';
     if(repEl) repEl.value = name;
+    // 날짜 범위(집수일/출고일 시작~종료)도 같이 올해 전체로 리셋 —
+    // 이걸 안 하면 이전에 보고 있던 월의 날짜 범위가 그대로 남아서
+    // 담당자 필터를 걸어도 그 좁은 기간 밖의 건은 안 보이는 버그가 있었음
+    const datePrefix = cfg.repInputId.split('-')[0];
+    const fromEl = document.getElementById(datePrefix + '-f');
+    const toEl = document.getElementById(datePrefix + '-t');
+    if(fromEl) fromEl.value = yr + '-01-01';
+    if(toEl) toEl.value = yr + '-12-31';
     const goBtn = document.querySelector(cfg.goSel);
     if(goBtn) goBtn.click();
   }
@@ -2383,11 +2394,19 @@ document.addEventListener('DOMContentLoaded', () => {
     }, 180);
   }
 
+  function computeFillSpan(cfg, host){
+    const grid = document.getElementById(cfg.gridId);
+    if(!grid) return 3;
+    const totalCols = getComputedStyle(grid).gridTemplateColumns.split(' ').filter(Boolean).length;
+    const otherCards = Array.from(grid.children).filter(c => c !== host && c.classList.contains('kpi-card')).length;
+    return Math.max(1, totalCols - otherCards);
+  }
+
   function paintExpanded(host, cfg, list){
     const inner = host.querySelector('.rank-inner');
     inner.classList.add('fading');
     setTimeout(()=>{
-      host.style.gridColumn = 'span 3';
+      host.style.gridColumn = 'span ' + computeFillSpan(cfg, host);
       inner.innerHTML =
         '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">' +
         '<span style="font-size:10px;color:rgb(139,154,174);">담당자별 발생 빈도 · 올해</span>' +
