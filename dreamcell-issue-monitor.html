@@ -184,7 +184,7 @@ tbody td.dm{color:var(--t3);font-size:12px}
 .ush-date-val{font-size:12px;color:var(--text);font-weight:600;}
 .ush-stack{max-width:100%;overflow:visible;}
 .ush-empty{color:var(--t3);font-size:12px;}
-.badge.진행{background:#1565c0;} .badge.취소{background:#b71c1c;}
+.badge.진행{background:#3b82f6;color:#fff;} .badge.취소{background:#dc2626;color:#fff;}
 .badge.status-stage-0{background:#9e9e9e;} .badge.status-stage-1{background:#fbc02d;color:#333;}
 .badge.status-stage-2{background:#1e88e5;} .badge.status-stage-3{background:var(--success,#2e7d32);}
 #panel-ush thead th:nth-child(10),#panel-ush tbody td:nth-child(10),
@@ -962,12 +962,17 @@ function monthAgo(){const d=new Date();d.setMonth(d.getMonth()-1);return d.toISO
 function fmt(n){return n!=null?Number(n).toLocaleString():'—';}
 function escHtml(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 // 사유/출고예정일: 마지막 확인 내용만 대표로 보여주고, 여러 건이면 "N건 기재" 클릭 시 전체 펼침
+// (화면엔 "날짜~날짜 확인 (N회, 동일):" 접두어 빼고 순수 사유 텍스트만 — 저장은 그대로 유지)
 let _ushChipSeq = 0;
+function ushStripPrefix(line){
+  const m=/확인(?:\s*\([^)]*\))?:\s*(.*)$/.exec(line);
+  return m ? m[1].trim() : line;
+}
 function ushChips(text, isDate){
   const lines=String(text||'').split('\n').map(s=>s.trim()).filter(Boolean);
   if(!lines.length) return '<span class="ush-empty">—</span>';
   const last = lines[lines.length-1];
-  const lastChip = '<div class="ush-chip'+(isDate?' date':'')+'">'+escHtml(last)+'</div>';
+  const lastChip = '<div class="ush-chip'+(isDate?' date':'')+'">'+escHtml(ushStripPrefix(last))+'</div>';
   if(lines.length===1) return '<div class="ush-stack">'+lastChip+'</div>';
   const id = 'ushx'+(_ushChipSeq++);
   const allChips = lines.map(l=>'<div class="ush-chip'+(isDate?' date':'')+'">'+escHtml(l)+'</div>').join('');
