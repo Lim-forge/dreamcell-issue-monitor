@@ -968,7 +968,7 @@ function ushChangeBadge(text){
   const n=String(text||'').split('\n').map(s=>s.trim()).filter(Boolean).length;
   if(n<=0) return '<span class="ush-empty">—</span>';
   const changes=Math.max(n-1,0);
-  if(changes===0) return '<span class="badge bgr">최초</span>';
+  if(changes===0) return '<span class="ush-empty">—</span>';
   const cls=changes>=3?'br':(changes===2?'bo':'bb');
   return '<span class="badge '+cls+'">'+changes+'회 변경</span>';
 }
