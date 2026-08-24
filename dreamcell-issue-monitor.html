@@ -2274,5 +2274,159 @@ document.addEventListener('DOMContentLoaded', () => {
     <button class="settings-close-btn" onclick="closeSettings()">닫기</button>
   </div>
 </div>
+<script>
+(function(){
+  const RANK_CFG = {
+    lms: { table:'low_margin_shipments', dateField:'ship_date', repField:'rep',
+           gridId:'kpi-grid-lms', repInputId:'lms-rep', yrId:'ym-yr-lms', moId:'ym-mo-lms',
+           goSel:'#va-lms .btn-p', metric:'margin', marginField:'margin_rate',
+           label:'저마진 출고 발생 빈도 순 · 올해' },
+    lmo: { table:'orders', dateField:'order_date', repField:'orderer',
+           gridId:'kpi-grid-lmo', repInputId:'lmo-rep', yrId:'ym-yr-lmo', moId:'ym-mo-lmo',
+           goSel:'#va-lmo .btn-p', metric:'margin', marginField:'margin_rate',
+           label:'저마진 수주 발생 빈도 순 · 올해' },
+    ret: { table:'return_shipments', dateField:'return_date', repField:'rep',
+           gridId:'kpi-grid-ret', repInputId:'ret-rep', yrId:'ym-yr-ret', moId:'ym-mo-ret',
+           goSel:'#va-ret .btn-p', metric:'amount', amtField:'total',
+           label:'반품 발생 빈도 순 · 올해' },
+    ush: { table:'unshipped', dateField:'order_date', repField:'rep',
+           gridId:'kpi-grid-ush', repInputId:'ush-rep', yrId:'ym-yr-ush', moId:'ym-mo-ush',
+           goSel:'#va-ush .btn-p', metric:'months', monthsField:'active_months',
+           label:'미출고 발생 빈도 순 · 올해' }
+  };
+
+  function ensureRetRepInput(){
+    if(document.getElementById('ret-rep')) return;
+    const custInput = document.getElementById('ret-cust');
+    if(!custInput) return;
+    const repInput = document.createElement('input');
+    repInput.className = 'fi';
+    repInput.id = 'ret-rep';
+    repInput.placeholder = '담당자';
+    repInput.style.width = '90px';
+    custInput.parentElement.insertBefore(repInput, custInput);
+  }
+
+  async function fetchYearRows(cfg){
+    const yrEl = document.getElementById(cfg.yrId);
+    const yr = (yrEl && yrEl.value) || String(new Date().getFullYear());
+    const from = yr + '-01-01';
+    const to = (Number(yr) + 1) + '-01-01';
+    const { data, error } = await sb.from(cfg.table).select('*')
+      .gte(cfg.dateField, from).lt(cfg.dateField, to);
+    if(error){ console.error('[랭킹위젯]', cfg.table, error); return []; }
+    return data || [];
+  }
+
+  function aggregate(rows, cfg){
+    const map = new Map();
+    rows.forEach(r=>{
+      const name = (r[cfg.repField] || '').trim();
+      if(!name) return;
+      if(!map.has(name)) map.set(name, { name, cnt:0, marginSum:0, amt:0, monthsSet:new Set() });
+      const g = map.get(name);
+      g.cnt++;
+      if(cfg.metric === 'margin' && typeof r[cfg.marginField] === 'number') g.marginSum += r[cfg.marginField];
+      if(cfg.metric === 'amount' && typeof r[cfg.amtField] === 'number') g.amt += r[cfg.amtField];
+      if(cfg.metric === 'months' && Array.isArray(r[cfg.monthsField])) r[cfg.monthsField].forEach(m=>g.monthsSet.add(m));
+    });
+    const list = [...map.values()].map(g=>{
+      let sub = '';
+      if(cfg.metric === 'margin') sub = (g.cnt ? (g.marginSum/g.cnt).toFixed(1) : '0') + '%';
+      else if(cfg.metric === 'amount') sub = Math.round(g.amt).toLocaleString() + '원';
+      else if(cfg.metric === 'months') sub = g.monthsSet.size + '개월';
+      return { name: g.name, cnt: g.cnt, sub };
+    });
+    list.sort((a,b) => b.cnt - a.cnt);
+    return list;
+  }
+
+  function ensureHost(tab, cfg){
+    const grid = document.getElementById(cfg.gridId);
+    if(!grid) return null;
+    let host = document.getElementById('rankw-' + tab);
+    if(host) return host;
+    const row = document.createElement('div');
+    row.style.cssText = 'display:flex;gap:10px;align-items:stretch;flex-wrap:wrap;';
+    grid.parentElement.insertBefore(row, grid);
+    row.appendChild(grid);
+    grid.style.flex = '3 1 600px';
+    host = document.createElement('div');
+    host.id = 'rankw-' + tab;
+    host.style.cssText = 'background:#fff;border-radius:14px;padding:10px 14px;min-width:220px;flex:1 1 240px;font-family:Pretendard,-apple-system,sans-serif;';
+    row.appendChild(host);
+    return host;
+  }
+
+  function renderWidget(tab, cfg, list){
+    const host = ensureHost(tab, cfg);
+    if(!host) return;
+    const expanded = host.dataset.expanded === '1';
+    const shown = expanded ? list : list.slice(0,5);
+    host.innerHTML =
+      '<div style="font-size:9.5px;color:rgb(139,154,174);margin-bottom:6px;">' + cfg.label + '</div>' +
+      '<div style="display:flex;flex-direction:column;gap:4px;">' +
+      shown.map((it,i) =>
+        '<div class="rankw-row" data-name="' + it.name.replace(/"/g,'&quot;') + '" ' +
+        'style="display:flex;align-items:center;justify-content:space-between;font-size:12px;cursor:pointer;padding:2px 4px;border-radius:6px;">' +
+        '<span><span style="color:rgb(139,154,174);font-size:10px;margin-right:5px;">' + (i+1) + '</span>' +
+        '<span style="text-decoration:underline;text-decoration-color:rgb(139,154,174);text-underline-offset:2px;">' + it.name + '</span></span>' +
+        '<span style="color:rgb(22,32,46);">' + it.cnt + '건 · ' + it.sub + '</span></div>'
+      ).join('') +
+      '</div>' +
+      (list.length > 5 ?
+        '<button class="rankw-more" style="width:100%;margin-top:6px;font-size:11px;padding:4px;background:none;border:1px solid rgb(227,231,240);border-radius:6px;cursor:pointer;">' +
+        (expanded ? '접기' : '더보기') + '</button>' : '');
+    const moreBtn = host.querySelector('.rankw-more');
+    if(moreBtn) moreBtn.addEventListener('click', ()=>{
+      host.dataset.expanded = expanded ? '0' : '1';
+      renderWidget(tab, cfg, list);
+    });
+    host.querySelectorAll('.rankw-row').forEach(row=>{
+      row.addEventListener('click', ()=> drillDown(cfg, row.dataset.name));
+    });
+  }
+
+  function drillDown(cfg, name){
+    if(cfg.table === 'return_shipments') ensureRetRepInput();
+    const yrEl = document.getElementById(cfg.yrId);
+    const moEl = document.getElementById(cfg.moId);
+    const repEl = document.getElementById(cfg.repInputId);
+    if(yrEl) yrEl.value = String(new Date().getFullYear());
+    if(moEl) moEl.value = '';
+    if(repEl) repEl.value = name;
+    const goBtn = document.querySelector(cfg.goSel);
+    if(goBtn) goBtn.click();
+  }
+
+  async function refreshRank(tab){
+    const cfg = RANK_CFG[tab];
+    if(!cfg) return;
+    if(cfg.table === 'return_shipments') ensureRetRepInput();
+    const rows = await fetchYearRows(cfg);
+    const list = aggregate(rows, cfg);
+    renderWidget(tab, cfg, list);
+  }
+
+  const HOOK_MAP = { loadLMS:'lms', loadRET:'ret', loadLMO:'lmo', loadUSH:'ush' };
+  Object.keys(HOOK_MAP).forEach(fnName=>{
+    const tab = HOOK_MAP[fnName];
+    const orig = window[fnName];
+    if(typeof orig !== 'function'){
+      console.warn('[랭킹위젯] ' + fnName + ' 함수를 찾지 못했어요 — 이 탭 위젯은 새로고침 훅이 걸리지 않습니다.');
+      return;
+    }
+    window[fnName] = async function(...args){
+      const r = await orig.apply(this, args);
+      refreshRank(tab);
+      return r;
+    };
+  });
+
+  window.addEventListener('load', ()=>{
+    setTimeout(()=>{ Object.keys(RANK_CFG).forEach(refreshRank); }, 800);
+  });
+})();
+</script>
 </body>
 </html>
