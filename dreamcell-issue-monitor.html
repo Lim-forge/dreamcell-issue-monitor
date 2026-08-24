@@ -179,6 +179,8 @@ tbody td.dm{color:var(--t3);font-size:12px}
 .ush-stack{display:flex;flex-direction:column;gap:2px;word-break:break-word;font-size:11px;color:var(--t2,#555);text-align:left;padding-right:2px;}
 .ush-chip{background:#f1f1f1;border-radius:3px;padding:2px 5px;margin-bottom:2px;line-height:1.4;color:var(--text);white-space:normal;}
 .ush-chip.date{background:#e8f4fd;}
+.ush-more{font-size:10.5px;color:var(--pri,#4A7FC1);cursor:pointer;padding:2px 0;text-decoration:underline;user-select:none;}
+.ush-full{margin-top:2px;}
 .ush-empty{color:var(--t3);font-size:12px;}
 .badge.진행{background:#1565c0;} .badge.취소{background:#b71c1c;}
 .badge.status-stage-0{background:#9e9e9e;} .badge.status-stage-1{background:#fbc02d;color:#333;}
@@ -956,11 +958,31 @@ function yearStart(){return new Date().getFullYear()+'-01-01';}
 function monthAgo(){const d=new Date();d.setMonth(d.getMonth()-1);return d.toISOString().slice(0,10);}
 function fmt(n){return n!=null?Number(n).toLocaleString():'—';}
 function escHtml(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
-// 사유/출고예정일: 업로더 관리자 화면처럼 칸칸이 누적 표시 (\n 구분된 히스토리를 chip으로)
+// 사유/출고예정일: 마지막 확인 내용만 대표로 보여주고, 여러 건이면 "N건 기재" 클릭 시 전체 펼침
+let _ushChipSeq = 0;
 function ushChips(text, isDate){
   const lines=String(text||'').split('\n').map(s=>s.trim()).filter(Boolean);
   if(!lines.length) return '<span class="ush-empty">—</span>';
-  return '<div class="ush-stack">'+lines.map(l=>'<div class="ush-chip'+(isDate?' date':'')+'">'+escHtml(l)+'</div>').join('\n')+'</div>';
+  const last = lines[lines.length-1];
+  const lastChip = '<div class="ush-chip'+(isDate?' date':'')+'">'+escHtml(last)+'</div>';
+  if(lines.length===1) return '<div class="ush-stack">'+lastChip+'</div>';
+  const id = 'ushx'+(_ushChipSeq++);
+  const allChips = lines.map(l=>'<div class="ush-chip'+(isDate?' date':'')+'">'+escHtml(l)+'</div>').join('');
+  return '<div class="ush-stack">'
+    + lastChip
+    + '<div class="ush-more" onclick="ushToggle(\''+id+'\')">📋 '+lines.length+'건 기재 (펼치기)</div>'
+    + '<div class="ush-full" id="'+id+'" style="display:none">'+allChips+'</div>'
+    + '</div>';
+}
+function ushToggle(id){
+  const el=document.getElementById(id);
+  if(!el) return;
+  const showing = el.style.display!=='none';
+  el.style.display = showing ? 'none' : 'block';
+  const btn = el.previousElementSibling;
+  if(btn && btn.classList.contains('ush-more')){
+    btn.textContent = btn.textContent.replace(showing?'(접기)':'(펼치기)', showing?'(펼치기)':'(접기)');
+  }
 }
 // 출고예정일 변경횟수 배지: 최초 약속(1건)은 변경이 아니므로 (개수-1)이 실제 변경횟수
 // 0회(최초만 있음)=회색, 1~2회=파랑/주황, 3회 이상(계속 미뤄짐)=빨강
