@@ -2279,35 +2279,25 @@ document.addEventListener('DOMContentLoaded', () => {
   const RANK_CFG = {
     lms: { table:'low_margin_shipments', dateField:'ship_date', repField:'rep',
            gridId:'kpi-grid-lms', repInputId:'lms-rep', yrId:'ym-yr-lms', moId:'ym-mo-lms',
-           goSel:'#va-lms .btn-p', metric:'margin', marginField:'margin_rate', label:'저마진 출고' },
+           goSel:'#va-lms .btn-p', metric:'margin', marginField:'margin_rate' },
     lmo: { table:'orders', dateField:'order_date', repField:'orderer',
            gridId:'kpi-grid-lmo', repInputId:'lmo-rep', yrId:'ym-yr-lmo', moId:'ym-mo-lmo',
-           goSel:'#va-lmo .btn-p', metric:'margin', marginField:'margin_rate', label:'저마진 수주' },
+           goSel:'#va-lmo .btn-p', metric:'margin', marginField:'margin_rate' },
     ret: { table:'return_shipments', dateField:'return_date', repField:'rep',
            gridId:'kpi-grid-ret', repInputId:'ret-rep', yrId:'ym-yr-ret', moId:'ym-mo-ret',
-           goSel:'#va-ret .btn-p', metric:'amount', amtField:'total', label:'반품' },
+           goSel:'#va-ret .btn-p', metric:'amount', amtField:'total' },
     ush: { table:'unshipped', dateField:'order_date', repField:'rep',
            gridId:'kpi-grid-ush', repInputId:'ush-rep', yrId:'ym-yr-ush', moId:'ym-mo-ush',
-           goSel:'#va-ush .btn-p', metric:'months', monthsField:'active_months', label:'미출고' }
+           goSel:'#va-ush .btn-p', metric:'months', monthsField:'active_months' }
   };
-
-  if(!document.getElementById('rankw-style')){
-    const st = document.createElement('style');
-    st.id = 'rankw-style';
-    st.textContent = '.kpi-grid.open[data-rank-flex]{display:flex !important;flex-wrap:wrap;}';
-    document.head.appendChild(st);
-  }
 
   function ensureRetRepInput(){
     if(document.getElementById('ret-rep')) return;
-    const custInput = document.getElementById('ret-cust');
-    if(!custInput) return;
-    const repInput = document.createElement('input');
-    repInput.className = 'fi';
-    repInput.id = 'ret-rep';
-    repInput.placeholder = '담당자';
-    repInput.style.width = '90px';
-    custInput.parentElement.insertBefore(repInput, custInput);
+    const c = document.getElementById('ret-cust');
+    if(!c) return;
+    const i = document.createElement('input');
+    i.className = 'fi'; i.id = 'ret-rep'; i.placeholder = '담당자'; i.style.width = '90px';
+    c.parentElement.insertBefore(i, c);
   }
 
   async function fetchYearRows(cfg){
@@ -2344,63 +2334,6 @@ document.addEventListener('DOMContentLoaded', () => {
     return list;
   }
 
-  function prepGrid(tab, cfg){
-    const grid = document.getElementById(cfg.gridId);
-    if(!grid) return null;
-    if(!grid.hasAttribute('data-rank-flex')){
-      const origCards = Array.from(grid.children).filter(c => c.classList.contains('kpi-card'));
-      origCards.forEach(c=>{
-        const w = c.getBoundingClientRect().width;
-        if(w > 0) c.style.flex = '1 1 ' + Math.round(w) + 'px';
-      });
-      grid.setAttribute('data-rank-flex', '1');
-    }
-    return grid;
-  }
-
-  function makeCard(html, onClick){
-    const c = document.createElement('div');
-    c.className = 'kpi-card rank-card';
-    c.style.cssText = 'flex:0 1 120px;cursor:pointer;';
-    c.innerHTML = html;
-    if(onClick) c.addEventListener('click', onClick);
-    return c;
-  }
-
-  function renderWidget(tab, cfg, list){
-    const grid = prepGrid(tab, cfg);
-    if(!grid) return;
-    grid.querySelectorAll('.rank-card[data-tab="' + tab + '"]').forEach(el => el.remove());
-    if(list.length === 0) return;
-
-    function paint(expanded){
-      grid.querySelectorAll('.rank-card[data-tab="' + tab + '"]').forEach(el => el.remove());
-      const shown = expanded ? list : list.slice(0, 5);
-      shown.forEach((it, i) => {
-        const card = makeCard(
-          '<div class="kpi-lbl">' + (i+1) + '위 · ' + cfg.label + '</div>' +
-          '<div class="kpi-val" style="font-size:16px;">' + it.name + '</div>' +
-          '<div class="kpi-sub">' + it.cnt + '건 · ' + it.sub + '</div>',
-          () => drillDown(cfg, it.name)
-        );
-        card.dataset.tab = tab;
-        grid.appendChild(card);
-      });
-      if(list.length > 5){
-        const moreCard = makeCard(
-          '<div class="kpi-lbl" style="font-size:11px;">' + (expanded ? '접기' : ('+' + (list.length - 5) + '명 더보기')) + '</div>',
-          () => paint(!expanded)
-        );
-        moreCard.dataset.tab = tab;
-        moreCard.style.justifyContent = 'center';
-        moreCard.style.alignItems = 'center';
-        moreCard.style.display = 'flex';
-        grid.appendChild(moreCard);
-      }
-    }
-    paint(false);
-  }
-
   function drillDown(cfg, name){
     if(cfg.table === 'return_shipments') ensureRetRepInput();
     const yrEl = document.getElementById(cfg.yrId);
@@ -2413,13 +2346,56 @@ document.addEventListener('DOMContentLoaded', () => {
     if(goBtn) goBtn.click();
   }
 
+  function entryHtml(it, i){
+    return '<div class="rank-entry" data-name="' + it.name.replace(/"/g,'&quot;') + '" ' +
+      'style="cursor:pointer;padding:2px;border-radius:5px;">' +
+      '<div style="font-size:10px;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' +
+      (i+1) + '위 ' + it.name + '</div>' +
+      '<div style="font-size:8.5px;color:rgb(139,154,174);">' + it.cnt + '건·' + it.sub + '</div></div>';
+  }
+
+  function paintCard(host, cfg, list, expanded){
+    const shown = expanded ? list : list.slice(0, 5);
+    host.querySelector('.rank-inner').innerHTML =
+      '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:3px;' +
+      (expanded ? 'max-height:150px;overflow-y:auto;' : '') + '">' +
+      shown.map((it,i) => entryHtml(it,i)).join('') +
+      (list.length > 5 ?
+        '<div class="rank-more" style="cursor:pointer;padding:2px;border-radius:5px;display:flex;align-items:center;">' +
+        '<div style="font-size:9.5px;color:rgb(139,154,174);">' +
+        (expanded ? '접기' : ('+' + (list.length - 5) + '명 더보기')) + '</div></div>' : '') +
+      '</div>';
+    host.querySelectorAll('.rank-entry').forEach(el=>{
+      el.addEventListener('click', () => drillDown(cfg, el.dataset.name));
+    });
+    const moreEl = host.querySelector('.rank-more');
+    if(moreEl) moreEl.addEventListener('click', () => paintCard(host, cfg, list, !expanded));
+  }
+
+  function ensureCard(tab, cfg){
+    const grid = document.getElementById(cfg.gridId);
+    if(!grid) return null;
+    let host = document.getElementById('rankcard-' + tab);
+    if(!host){
+      host = document.createElement('div');
+      host.id = 'rankcard-' + tab;
+      host.className = 'kpi-card';
+      host.innerHTML = '<div class="rank-inner"></div>';
+      grid.appendChild(host);
+    }
+    return host;
+  }
+
   async function refreshRank(tab){
     const cfg = RANK_CFG[tab];
     if(!cfg) return;
     if(cfg.table === 'return_shipments') ensureRetRepInput();
     const rows = await fetchYearRows(cfg);
     const list = aggregate(rows, cfg);
-    renderWidget(tab, cfg, list);
+    const host = ensureCard(tab, cfg);
+    if(!host) return;
+    if(list.length === 0){ host.remove(); return; }
+    paintCard(host, cfg, list, false);
   }
 
   const HOOK_MAP = { loadLMS:'lms', loadRET:'ret', loadLMO:'lmo', loadUSH:'ush' };
