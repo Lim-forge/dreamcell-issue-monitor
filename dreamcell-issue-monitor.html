@@ -2348,10 +2348,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function entryHtml(it, i){
     return '<div class="rank-entry" data-name="' + it.name.replace(/"/g,'&quot;') + '" ' +
-      'style="cursor:pointer;padding:3px 6px;border-radius:5px;">' +
+      'style="cursor:pointer;padding:3px 8px;border-radius:5px;flex:0 0 auto;">' +
       '<div style="font-size:14px;font-weight:900;white-space:nowrap;">' +
       (i+1) + '위 ' + it.name + '</div>' +
-      '<div style="font-size:12px;color:#c2410c;font-weight:700;">' + it.cnt + '건·' + it.sub + '</div></div>';
+      '<div style="font-size:12px;color:#c2410c;font-weight:700;white-space:nowrap;">' + it.cnt + '건·' + it.sub + '</div></div>';
   }
 
   function ensureCard(tab, cfg){
@@ -2371,34 +2371,44 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function paintCollapsed(host){
-    host.style.gridColumn = '';
-    host.querySelector('.rank-inner').innerHTML =
-      '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:4px;">' +
-      '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgb(139,154,174)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/></svg>' +
-      '<div style="font-size:12px;color:rgb(139,154,174);font-weight:700;">요약보기</div></div>';
+    const inner = host.querySelector('.rank-inner');
+    inner.classList.add('fading');
+    setTimeout(()=>{
+      host.style.gridColumn = '';
+      inner.innerHTML =
+        '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:4px;">' +
+        '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgb(139,154,174)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/></svg>' +
+        '<div style="font-size:12px;color:rgb(139,154,174);font-weight:700;">요약보기</div></div>';
+      inner.classList.remove('fading');
+    }, 180);
   }
 
   function paintExpanded(host, cfg, list){
-    host.style.gridColumn = 'span 3';
-    host.querySelector('.rank-inner').innerHTML =
-      '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">' +
-      '<span style="font-size:10px;color:rgb(139,154,174);">담당자별 발생 빈도 · 올해</span>' +
-      '<span class="rank-close" style="font-size:11px;color:rgb(139,154,174);cursor:pointer;">접기 ▲</span></div>' +
-      '<div style="display:grid;grid-template-columns:repeat(6,1fr);gap:4px;">' +
-      list.slice(0,10).map((it,i) => entryHtml(it,i)).join('') +
-      (list.length > 10 ?
-        '<div style="display:flex;align-items:center;font-size:11px;color:rgb(139,154,174);">+' +
-        (list.length - 10) + '명</div>' : '') +
-      '</div>';
-    host.querySelectorAll('.rank-entry').forEach(el=>{
-      el.addEventListener('click', (e)=>{ e.stopPropagation(); drillDown(cfg, el.dataset.name); });
-    });
-    const closeEl = host.querySelector('.rank-close');
-    if(closeEl) closeEl.addEventListener('click', (e)=>{
-      e.stopPropagation();
-      host.dataset.expanded = '0';
-      paintCollapsed(host);
-    });
+    const inner = host.querySelector('.rank-inner');
+    inner.classList.add('fading');
+    setTimeout(()=>{
+      host.style.gridColumn = 'span 3';
+      inner.innerHTML =
+        '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">' +
+        '<span style="font-size:10px;color:rgb(139,154,174);">담당자별 발생 빈도 · 올해</span>' +
+        '<span class="rank-close" style="font-size:11px;color:rgb(139,154,174);cursor:pointer;">접기 ▲</span></div>' +
+        '<div style="display:flex;flex-wrap:nowrap;overflow-x:auto;gap:6px;">' +
+        list.slice(0,10).map((it,i) => entryHtml(it,i)).join('') +
+        (list.length > 10 ?
+          '<div style="display:flex;align-items:center;font-size:11px;color:rgb(139,154,174);flex:0 0 auto;">+' +
+          (list.length - 10) + '명</div>' : '') +
+        '</div>';
+      inner.querySelectorAll('.rank-entry').forEach(el=>{
+        el.addEventListener('click', (e)=>{ e.stopPropagation(); drillDown(cfg, el.dataset.name); });
+      });
+      const closeEl = inner.querySelector('.rank-close');
+      if(closeEl) closeEl.addEventListener('click', (e)=>{
+        e.stopPropagation();
+        host.dataset.expanded = '0';
+        paintCollapsed(host);
+      });
+      inner.classList.remove('fading');
+    }, 180);
   }
 
   async function refreshRank(tab){
@@ -2552,6 +2562,21 @@ document.addEventListener('DOMContentLoaded', () => {
       setDefaultMonths();
     }, 800);
   });
+
+  // 모든 아코디언(요약보기 카드, KPI 요약 배너)에 부드러운 전환 애니메이션 적용
+  function attachSmoothAccordions(){
+    if(document.getElementById('smooth-accordion-style')) return;
+    const st = document.createElement('style');
+    st.id = 'smooth-accordion-style';
+    st.textContent =
+      '.rank-inner{ transition: opacity .2s ease; }' +
+      '.rank-inner.fading{ opacity:0; }' +
+      '.kpi-grid{ transition: max-height .32s ease, opacity .28s ease, margin-top .32s ease !important; overflow:hidden !important; }' +
+      '.kpi-grid:not(.open){ display:flex !important; max-height:0 !important; opacity:0 !important; margin-top:-10px !important; pointer-events:none !important; }' +
+      '.kpi-grid.open{ max-height:700px !important; opacity:1 !important; margin-top:10px !important; }';
+    document.head.appendChild(st);
+  }
+  attachSmoothAccordions();
 })();
 </script>
 </body>
