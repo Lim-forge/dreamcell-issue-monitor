@@ -2279,21 +2279,24 @@ document.addEventListener('DOMContentLoaded', () => {
   const RANK_CFG = {
     lms: { table:'low_margin_shipments', dateField:'ship_date', repField:'rep',
            gridId:'kpi-grid-lms', repInputId:'lms-rep', yrId:'ym-yr-lms', moId:'ym-mo-lms',
-           goSel:'#va-lms .btn-p', metric:'margin', marginField:'margin_rate',
-           label:'저마진 출고 발생 빈도 순 · 올해' },
+           goSel:'#va-lms .btn-p', metric:'margin', marginField:'margin_rate', label:'저마진 출고' },
     lmo: { table:'orders', dateField:'order_date', repField:'orderer',
            gridId:'kpi-grid-lmo', repInputId:'lmo-rep', yrId:'ym-yr-lmo', moId:'ym-mo-lmo',
-           goSel:'#va-lmo .btn-p', metric:'margin', marginField:'margin_rate',
-           label:'저마진 수주 발생 빈도 순 · 올해' },
+           goSel:'#va-lmo .btn-p', metric:'margin', marginField:'margin_rate', label:'저마진 수주' },
     ret: { table:'return_shipments', dateField:'return_date', repField:'rep',
            gridId:'kpi-grid-ret', repInputId:'ret-rep', yrId:'ym-yr-ret', moId:'ym-mo-ret',
-           goSel:'#va-ret .btn-p', metric:'amount', amtField:'total',
-           label:'반품 발생 빈도 순 · 올해' },
+           goSel:'#va-ret .btn-p', metric:'amount', amtField:'total', label:'반품' },
     ush: { table:'unshipped', dateField:'order_date', repField:'rep',
            gridId:'kpi-grid-ush', repInputId:'ush-rep', yrId:'ym-yr-ush', moId:'ym-mo-ush',
-           goSel:'#va-ush .btn-p', metric:'months', monthsField:'active_months',
-           label:'미출고 발생 빈도 순 · 올해' }
+           goSel:'#va-ush .btn-p', metric:'months', monthsField:'active_months', label:'미출고' }
   };
+
+  if(!document.getElementById('rankw-style')){
+    const st = document.createElement('style');
+    st.id = 'rankw-style';
+    st.textContent = '.kpi-grid.open[data-rank-flex]{display:flex !important;flex-wrap:wrap;}';
+    document.head.appendChild(st);
+  }
 
   function ensureRetRepInput(){
     if(document.getElementById('ret-rep')) return;
@@ -2341,46 +2344,61 @@ document.addEventListener('DOMContentLoaded', () => {
     return list;
   }
 
-  function ensureHost(tab, cfg){
+  function prepGrid(tab, cfg){
     const grid = document.getElementById(cfg.gridId);
     if(!grid) return null;
-    let host = document.getElementById('rankw-' + tab);
-    if(host) return host;
-    const row = document.createElement('div');
-    row.style.cssText = 'display:flex;gap:10px;align-items:stretch;flex-wrap:wrap;';
-    grid.parentElement.insertBefore(row, grid);
-    row.appendChild(grid);
-    grid.style.flex = '3 1 600px';
-    host = document.createElement('div');
-    host.id = 'rankw-' + tab;
-    host.style.cssText = 'background:#fff;border-radius:14px;padding:10px 14px;min-width:220px;flex:1 1 240px;font-family:Pretendard,-apple-system,sans-serif;display:flex;flex-direction:column;box-sizing:border-box;overflow:hidden;';
-    row.appendChild(host);
-    // 옆 KPI 카드와 높이를 정확히 맞춤 (인원수와 무관하게 카드 크기 고정)
-    const sampleCard = grid.querySelector('.kpi-card');
-    if(sampleCard){
-      const h = sampleCard.getBoundingClientRect().height;
-      if(h > 0) host.style.height = h + 'px';
+    if(!grid.hasAttribute('data-rank-flex')){
+      const origCards = Array.from(grid.children).filter(c => c.classList.contains('kpi-card'));
+      origCards.forEach(c=>{
+        const w = c.getBoundingClientRect().width;
+        if(w > 0) c.style.flex = '1 1 ' + Math.round(w) + 'px';
+      });
+      grid.setAttribute('data-rank-flex', '1');
     }
-    return host;
+    return grid;
+  }
+
+  function makeCard(html, onClick){
+    const c = document.createElement('div');
+    c.className = 'kpi-card rank-card';
+    c.style.cssText = 'flex:0 1 120px;cursor:pointer;';
+    c.innerHTML = html;
+    if(onClick) c.addEventListener('click', onClick);
+    return c;
   }
 
   function renderWidget(tab, cfg, list){
-    const host = ensureHost(tab, cfg);
-    if(!host) return;
-    host.innerHTML =
-      '<div style="font-size:9.5px;color:rgb(139,154,174);margin-bottom:6px;flex-shrink:0;">' + cfg.label + '</div>' +
-      '<div style="display:flex;flex-direction:column;gap:3px;overflow-y:auto;flex:1;min-height:0;">' +
-      list.map((it,i) =>
-        '<div class="rankw-row" data-name="' + it.name.replace(/"/g,'&quot;') + '" ' +
-        'style="display:flex;align-items:center;justify-content:space-between;font-size:11.5px;cursor:pointer;padding:1px 4px;border-radius:6px;flex-shrink:0;">' +
-        '<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"><span style="color:rgb(139,154,174);font-size:9.5px;margin-right:4px;">' + (i+1) + '</span>' +
-        '<span style="text-decoration:underline;text-decoration-color:rgb(139,154,174);text-underline-offset:2px;">' + it.name + '</span></span>' +
-        '<span style="color:rgb(22,32,46);flex-shrink:0;margin-left:6px;">' + it.cnt + '건 · ' + it.sub + '</span></div>'
-      ).join('') +
-      '</div>';
-    host.querySelectorAll('.rankw-row').forEach(row=>{
-      row.addEventListener('click', ()=> drillDown(cfg, row.dataset.name));
-    });
+    const grid = prepGrid(tab, cfg);
+    if(!grid) return;
+    grid.querySelectorAll('.rank-card[data-tab="' + tab + '"]').forEach(el => el.remove());
+    if(list.length === 0) return;
+
+    function paint(expanded){
+      grid.querySelectorAll('.rank-card[data-tab="' + tab + '"]').forEach(el => el.remove());
+      const shown = expanded ? list : list.slice(0, 5);
+      shown.forEach((it, i) => {
+        const card = makeCard(
+          '<div class="kpi-lbl">' + (i+1) + '위 · ' + cfg.label + '</div>' +
+          '<div class="kpi-val" style="font-size:16px;">' + it.name + '</div>' +
+          '<div class="kpi-sub">' + it.cnt + '건 · ' + it.sub + '</div>',
+          () => drillDown(cfg, it.name)
+        );
+        card.dataset.tab = tab;
+        grid.appendChild(card);
+      });
+      if(list.length > 5){
+        const moreCard = makeCard(
+          '<div class="kpi-lbl" style="font-size:11px;">' + (expanded ? '접기' : ('+' + (list.length - 5) + '명 더보기')) + '</div>',
+          () => paint(!expanded)
+        );
+        moreCard.dataset.tab = tab;
+        moreCard.style.justifyContent = 'center';
+        moreCard.style.alignItems = 'center';
+        moreCard.style.display = 'flex';
+        grid.appendChild(moreCard);
+      }
+    }
+    paint(false);
   }
 
   function drillDown(cfg, name){
