@@ -2348,21 +2348,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function entryHtml(it, i){
     return '<div class="rank-entry" data-name="' + it.name.replace(/"/g,'&quot;') + '" ' +
-      'style="cursor:pointer;padding:2px;border-radius:5px;">' +
-      '<div style="font-size:10px;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' +
+      'style="cursor:pointer;padding:3px 6px;border-radius:5px;">' +
+      '<div style="font-size:14px;font-weight:900;white-space:nowrap;">' +
       (i+1) + '위 ' + it.name + '</div>' +
-      '<div style="font-size:8.5px;color:rgb(139,154,174);">' + it.cnt + '건·' + it.sub + '</div></div>';
+      '<div style="font-size:12px;color:#c2410c;font-weight:700;">' + it.cnt + '건·' + it.sub + '</div></div>';
   }
 
   function paintCard(host, cfg, list, expanded){
     const shown = expanded ? list : list.slice(0, 5);
     host.querySelector('.rank-inner').innerHTML =
-      '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:3px;' +
+      '<div style="display:grid;grid-template-columns:repeat(6,1fr);gap:4px;' +
       (expanded ? 'max-height:150px;overflow-y:auto;' : '') + '">' +
       shown.map((it,i) => entryHtml(it,i)).join('') +
       (list.length > 5 ?
-        '<div class="rank-more" style="cursor:pointer;padding:2px;border-radius:5px;display:flex;align-items:center;">' +
-        '<div style="font-size:9.5px;color:rgb(139,154,174);">' +
+        '<div class="rank-more" style="cursor:pointer;padding:3px 6px;border-radius:5px;display:flex;align-items:center;">' +
+        '<div style="font-size:11px;color:rgb(139,154,174);">' +
         (expanded ? '접기' : ('+' + (list.length - 5) + '명 더보기')) + '</div></div>' : '') +
       '</div>';
     host.querySelectorAll('.rank-entry').forEach(el=>{
@@ -2380,6 +2380,10 @@ document.addEventListener('DOMContentLoaded', () => {
       host = document.createElement('div');
       host.id = 'rankcard-' + tab;
       host.className = 'kpi-card';
+      host.style.gridColumn = 'span 3';
+      host.style.display = 'flex';
+      host.style.flexDirection = 'column';
+      host.style.justifyContent = 'center';
       host.innerHTML = '<div class="rank-inner"></div>';
       grid.appendChild(host);
     }
@@ -2413,9 +2417,73 @@ document.addEventListener('DOMContentLoaded', () => {
     };
   });
 
+  // "최저 마진율" 카드 클릭 시 실제 해당 행으로 스크롤 + 하이라이트 이동
+  // (저마진 출고건/수주건 탭에만 있는 지표라 이 두 탭에만 적용)
+  function attachMinMarginJump(panelId, minCardValId){
+    const kv = document.getElementById(minCardValId);
+    if(!kv) return;
+    const card = kv.closest('.kpi-card');
+    if(!card) return;
+    card.style.cursor = 'pointer';
+    card.onclick = () => {
+      const panel = document.getElementById(panelId);
+      if(!panel) return;
+      const table = Array.from(panel.querySelectorAll('table')).find(t => t.rows.length > 3);
+      if(!table) return;
+      const headerCells = Array.from(table.rows[0].cells).map(c => c.textContent.trim());
+      const colIdx = headerCells.findIndex(h => h.includes('마진율'));
+      if(colIdx < 0) return;
+      let minRow = null, minVal = Infinity;
+      Array.from(table.querySelectorAll('tr[data-id]')).forEach(tr=>{
+        const cell = tr.cells[colIdx];
+        if(!cell) return;
+        const val = parseFloat(cell.textContent.replace('%','').replace(',',''));
+        if(!isNaN(val) && val < minVal){ minVal = val; minRow = tr; }
+      });
+      if(minRow){
+        minRow.scrollIntoView({ behavior:'smooth', block:'center' });
+        minRow.style.transition = 'background-color 0.5s';
+        minRow.style.backgroundColor = '#fff3cd';
+        setTimeout(()=>{ minRow.style.backgroundColor = ''; }, 2500);
+      }
+    };
+  }
+  window.addEventListener('load', ()=>{
+    setTimeout(()=>{
+      attachMinMarginJump('panel-lms', 'kv-lms-min');
+      attachMinMarginJump('panel-lmo', 'kv-lmo-min');
+    }, 800);
+  });
+
   window.addEventListener('load', ()=>{
     setTimeout(()=>{ Object.keys(RANK_CFG).forEach(refreshRank); }, 800);
   });
+
+  // 사이드바 이모지/텍스트 아이콘 → SVG 라인 아이콘 교체 (10%미만 출고건의 ↑ 방향 오류도 함께 수정)
+  function cleanupUI(){
+    ['mbv-lms','mbv-ret','mbv-cc','mbv-lmo','mbv-ush'].forEach(id=>{
+      const b = document.getElementById(id);
+      if(b) b.remove();
+    });
+    const ICONS = {
+      'nav-lms': '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 18 13.5 8.5 8.5 13.5 1 6"/><polyline points="17 18 23 18 23 12"/></svg>',
+      'nav-lmo': '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 18 13.5 8.5 8.5 13.5 1 6"/><polyline points="17 18 23 18 23 12"/></svg>',
+      'nav-ret': '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 14 4 9 9 4"/><path d="M20 20v-7a4 4 0 0 0-4-4H4"/></svg>',
+      'nav-cc': '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>',
+      'nav-ush': '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>'
+    };
+    Object.keys(ICONS).forEach(navId=>{
+      const el = document.getElementById(navId);
+      if(!el) return;
+      const icSpan = el.querySelector('.nic');
+      if(icSpan){
+        icSpan.innerHTML = ICONS[navId];
+        icSpan.style.display = 'inline-flex';
+        icSpan.style.alignItems = 'center';
+      }
+    });
+  }
+  window.addEventListener('load', ()=>{ setTimeout(cleanupUI, 800); });
 })();
 </script>
 </body>
