@@ -2349,7 +2349,8 @@ document.addEventListener('DOMContentLoaded', () => {
            goSel:'#va-ret .btn-p', metric:'amount', amtField:'total' },
     ush: { table:'unshipped', dateField:'order_date', repField:'rep',
            gridId:'kpi-grid-ush', repInputId:'ush-rep', yrId:'ym-yr-ush', moId:'ym-mo-ush',
-           goSel:'#va-ush .btn-p', metric:'months', monthsField:'active_months' }
+           goSel:'#va-ush .btn-p', metric:'months', monthsField:'active_months',
+           sortBy:'months', showRank:false, layout:'col', label:'담당자별 미출고 정체 기간 · 올해' }
   };
 
   function ensureRetRepInput(){
@@ -2389,9 +2390,10 @@ document.addEventListener('DOMContentLoaded', () => {
       if(cfg.metric === 'margin') sub = (g.cnt ? (g.marginSum/g.cnt).toFixed(1) : '0') + '%';
       else if(cfg.metric === 'amount') sub = Math.round(g.amt).toLocaleString() + '원';
       else if(cfg.metric === 'months') sub = g.monthsSet.size + '개월';
-      return { name: g.name, cnt: g.cnt, sub };
+      return { name: g.name, cnt: g.cnt, sub, monthsCount: g.monthsSet.size };
     });
-    list.sort((a,b) => b.cnt - a.cnt);
+    if(cfg.sortBy === 'months') list.sort((a,b) => b.monthsCount - a.monthsCount || b.cnt - a.cnt);
+    else list.sort((a,b) => b.cnt - a.cnt);
     return list;
   }
 
@@ -2416,12 +2418,19 @@ document.addEventListener('DOMContentLoaded', () => {
     if(goBtn) goBtn.click();
   }
 
-  function entryHtml(it, i){
+  function entryHtml(it, i, cfg){
+    const showRank = cfg.showRank !== false;
     return '<div class="rank-entry" data-name="' + it.name.replace(/"/g,'&quot;') + '" ' +
       'style="cursor:pointer;padding:3px 8px;border-radius:5px;flex:0 0 auto;">' +
       '<div style="font-size:14px;font-weight:900;white-space:nowrap;">' +
-      (i+1) + '위 ' + it.name + '</div>' +
+      (showRank ? (i+1) + '위 ' : '') + it.name + '</div>' +
       '<div style="font-size:12px;color:#c2410c;font-weight:700;white-space:nowrap;">' + it.cnt + '건·' + it.sub + '</div></div>';
+  }
+  function entryHtmlCol(it, i){
+    return '<div class="rank-entry" data-name="' + it.name.replace(/"/g,'&quot;') + '" ' +
+      'style="cursor:pointer;padding:6px 10px;border-radius:6px;display:flex;align-items:center;justify-content:space-between;">' +
+      '<span style="font-size:13px;font-weight:700;">' + it.name + '</span>' +
+      '<span style="font-size:12px;color:#c2410c;font-weight:700;">' + it.cnt + '건 · ' + it.sub + '</span></div>';
   }
 
   function ensureCard(tab, cfg){
@@ -2466,16 +2475,25 @@ document.addEventListener('DOMContentLoaded', () => {
     inner.classList.add('fading');
     setTimeout(()=>{
       host.style.gridColumn = 'span ' + computeFillSpan(cfg, host);
+      const label = cfg.label || '담당자별 발생 빈도 · 올해';
+      let bodyHtml;
+      if(cfg.layout === 'col'){
+        bodyHtml = '<div style="display:flex;flex-direction:column;gap:2px;max-height:260px;overflow-y:auto;">'
+          + list.map((it,i) => entryHtmlCol(it,i)).join('')
+          + '</div>';
+      } else {
+        bodyHtml = '<div style="display:flex;flex-wrap:nowrap;overflow-x:auto;gap:6px;">'
+          + list.slice(0,10).map((it,i) => entryHtml(it,i,cfg)).join('')
+          + (list.length > 10 ?
+            '<div style="display:flex;align-items:center;font-size:11px;color:rgb(139,154,174);flex:0 0 auto;">+' +
+            (list.length - 10) + '명</div>' : '')
+          + '</div>';
+      }
       inner.innerHTML =
         '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">' +
-        '<span style="font-size:10px;color:rgb(139,154,174);">담당자별 발생 빈도 · 올해</span>' +
+        '<span style="font-size:10px;color:rgb(139,154,174);">' + label + '</span>' +
         '<span class="rank-close" style="font-size:11px;color:rgb(139,154,174);cursor:pointer;">접기 ▲</span></div>' +
-        '<div style="display:flex;flex-wrap:nowrap;overflow-x:auto;gap:6px;">' +
-        list.slice(0,10).map((it,i) => entryHtml(it,i)).join('') +
-        (list.length > 10 ?
-          '<div style="display:flex;align-items:center;font-size:11px;color:rgb(139,154,174);flex:0 0 auto;">+' +
-          (list.length - 10) + '명</div>' : '') +
-        '</div>';
+        bodyHtml;
       inner.querySelectorAll('.rank-entry').forEach(el=>{
         el.addEventListener('click', (e)=>{ e.stopPropagation(); drillDown(cfg, el.dataset.name); });
       });
