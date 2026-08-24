@@ -747,6 +747,7 @@ table.report td:first-child,table.report th:first-child{width:105px;min-width:10
         <div class="kpi-card"><div class="kpi-lbl">기간변경</div><div class="kpi-val warn" id="kv-ush-chg">—</div></div>
         <div class="kpi-card"><div class="kpi-lbl">출고완료</div><div class="kpi-val ok" id="kv-ush-done">—</div></div>
       </div>
+      <div id="rank-wrap-ush" style="width:100%;margin-top:8px;"></div>
     </div>
     <div class="va" id="va-ush">
       <div class="fb">
@@ -2350,7 +2351,8 @@ document.addEventListener('DOMContentLoaded', () => {
     ush: { table:'unshipped', dateField:'order_date', repField:'rep',
            gridId:'kpi-grid-ush', repInputId:'ush-rep', yrId:'ym-yr-ush', moId:'ym-mo-ush',
            goSel:'#va-ush .btn-p', metric:'months', monthsField:'active_months',
-           sortBy:'months', showRank:false, layout:'col', label:'담당자별 미출고 정체 기간 · 올해' }
+           sortBy:'months', showRank:false, layout:'col', label:'담당자별 미출고 정체 기간 (수주일 기준, 전체)',
+           standalone:true, wrapId:'rank-wrap-ush', noYearFilter:true }
   };
 
   function ensureRetRepInput(){
@@ -2363,6 +2365,11 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   async function fetchYearRows(cfg){
+    if(cfg.noYearFilter){
+      const { data, error } = await sb.from(cfg.table).select('*');
+      if(error){ console.error('[랭킹위젯]', cfg.table, error); return []; }
+      return data || [];
+    }
     const yrEl = document.getElementById(cfg.yrId);
     const yr = (yrEl && yrEl.value) || String(new Date().getFullYear());
     const from = yr + '-01-01';
@@ -2375,24 +2382,40 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function aggregate(rows, cfg){
     const map = new Map();
+    const today = new Date();
     rows.forEach(r=>{
       const name = (r[cfg.repField] || '').trim();
       if(!name) return;
-      if(!map.has(name)) map.set(name, { name, cnt:0, marginSum:0, amt:0, monthsSet:new Set() });
+      if(!map.has(name)) map.set(name, { name, cnt:0, marginSum:0, amt:0, monthsSet:new Set(), oldestDate:null });
       const g = map.get(name);
       g.cnt++;
       if(cfg.metric === 'margin' && typeof r[cfg.marginField] === 'number') g.marginSum += r[cfg.marginField];
       if(cfg.metric === 'amount' && typeof r[cfg.amtField] === 'number') g.amt += r[cfg.amtField];
-      if(cfg.metric === 'months' && Array.isArray(r[cfg.monthsField])) r[cfg.monthsField].forEach(m=>g.monthsSet.add(m));
+      if(cfg.metric === 'months'){
+        // active_months는 DB에 JSON 문자열로 저장돼있어서 배열이 아님 — 파싱 필요 (이게 "0개월" 버그의 원인이었음)
+        let arr = r[cfg.monthsField];
+        if(typeof arr === 'string'){ try{ arr = JSON.parse(arr || '[]'); }catch(e){ arr = []; } }
+        if(Array.isArray(arr)) arr.forEach(m=>g.monthsSet.add(m));
+        // "개월"의 의미 = 수주일로부터 오늘까지 경과기간 (활성월 집계 횟수가 아니라 실제 정체기간)
+        const od = r[cfg.dateField];
+        if(od && (!g.oldestDate || od < g.oldestDate)) g.oldestDate = od;
+      }
     });
     const list = [...map.values()].map(g=>{
       let sub = '';
+      let elapsedMonths = 0;
       if(cfg.metric === 'margin') sub = (g.cnt ? (g.marginSum/g.cnt).toFixed(1) : '0') + '%';
       else if(cfg.metric === 'amount') sub = Math.round(g.amt).toLocaleString() + '원';
-      else if(cfg.metric === 'months') sub = g.monthsSet.size + '개월';
-      return { name: g.name, cnt: g.cnt, sub, monthsCount: g.monthsSet.size };
+      else if(cfg.metric === 'months'){
+        if(g.oldestDate){
+          const od = new Date(g.oldestDate);
+          elapsedMonths = (today.getFullYear()-od.getFullYear())*12 + (today.getMonth()-od.getMonth());
+        }
+        sub = elapsedMonths + '개월째';
+      }
+      return { name: g.name, cnt: g.cnt, sub, monthsCount: g.monthsSet.size, elapsedMonths };
     });
-    if(cfg.sortBy === 'months') list.sort((a,b) => b.monthsCount - a.monthsCount || b.cnt - a.cnt);
+    if(cfg.sortBy === 'months') list.sort((a,b) => b.elapsedMonths - a.elapsedMonths || b.cnt - a.cnt);
     else list.sort((a,b) => b.cnt - a.cnt);
     return list;
   }
@@ -2434,17 +2457,18 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function ensureCard(tab, cfg){
-    const grid = document.getElementById(cfg.gridId);
-    if(!grid) return null;
+    const container = cfg.standalone ? document.getElementById(cfg.wrapId) : document.getElementById(cfg.gridId);
+    if(!container) return null;
     let host = document.getElementById('rankcard-' + tab);
     if(!host){
       host = document.createElement('div');
       host.id = 'rankcard-' + tab;
-      host.className = 'kpi-card';
+      host.className = cfg.standalone ? 'kpi-card' : 'kpi-card';
+      if(cfg.standalone) host.style.width = '100%';
       host.style.cursor = 'pointer';
-      host.dataset.expanded = '0';
+      host.dataset.expanded = cfg.standalone ? '1' : '0'; // 그리드 밖 독립 섹션은 기본으로 펼쳐서 보여줌
       host.innerHTML = '<div class="rank-inner"></div>';
-      grid.appendChild(host);
+      container.appendChild(host);
     }
     return host;
   }
@@ -2474,7 +2498,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const inner = host.querySelector('.rank-inner');
     inner.classList.add('fading');
     setTimeout(()=>{
-      host.style.gridColumn = 'span ' + computeFillSpan(cfg, host);
+      if(!cfg.standalone) host.style.gridColumn = 'span ' + computeFillSpan(cfg, host);
       const label = cfg.label || '담당자별 발생 빈도 · 올해';
       let bodyHtml;
       if(cfg.layout === 'col'){
