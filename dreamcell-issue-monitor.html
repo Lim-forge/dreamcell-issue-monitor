@@ -181,6 +181,7 @@ tbody td.dm{color:var(--t3);font-size:12px}
 .ush-chip.date{background:#e8f4fd;}
 .ush-more{display:block;font-size:10.5px;color:var(--pri,#4A7FC1);cursor:pointer;padding:2px 0;text-decoration:underline;user-select:none;white-space:normal;word-break:keep-all;max-width:100%;}
 .ush-full{margin-top:2px;max-width:100%;}
+.ush-date-val{font-size:12px;color:var(--text);font-weight:600;}
 .ush-stack{max-width:100%;overflow:visible;}
 .ush-empty{color:var(--t3);font-size:12px;}
 .badge.진행{background:#1565c0;} .badge.취소{background:#b71c1c;}
@@ -986,7 +987,16 @@ function ushToggle(id){
     btn.textContent = btn.textContent.replace(showing?'(접기)':'(펼치기)', showing?'(펼치기)':'(접기)');
   }
 }
-// 출고예정일 변경횟수 배지: 최초 약속(1건)은 변경이 아니므로 (개수-1)이 실제 변경횟수
+// 출고예정일: 저장은 이력 그대로 쌓되(변경횟수 계산용), 화면엔 최신 날짜만 깔끔하게 표시
+// ("2026-02-25~2026-07-24 확인 (6회, 동일): 2026-08-31" 통째로 안 보여주고 "2026-08-31"만)
+function ushExpectedDateDisplay(text){
+  const lines=String(text||'').split('\n').map(s=>s.trim()).filter(Boolean);
+  if(!lines.length) return '<span class="ush-empty">—</span>';
+  const last=lines[lines.length-1];
+  const m=/확인(?:\s*\([^)]*\))?:\s*(.*)$/.exec(last);
+  const dateOnly=(m?m[1]:last).trim();
+  return '<span class="ush-date-val">'+escHtml(dateOnly)+'</span>';
+}
 // 0회(최초만 있음)=회색, 1~2회=파랑/주황, 3회 이상(계속 미뤄짐)=빨강
 function ushChangeBadge(text){
   const n=String(text||'').split('\n').map(s=>s.trim()).filter(Boolean).length;
@@ -1438,7 +1448,7 @@ async function loadUSH(){
           +'<td class="r">'+fmt(r.sale_price)+'</td>'
           +'<td>'+(r.manufacturer||'—')+'</td>'
           +'<td>'+ushChips(r.reason,false)+'</td>'
-          +'<td>'+ushChips(r.expected_date,true)+'</td>'
+          +'<td>'+ushExpectedDateDisplay(r.expected_date)+'</td>'
           +'<td>'+ushChangeBadge(r.expected_date)+'</td>'
           +'<td>'+(r.progress?'<span class="badge '+r.progress+'">'+r.progress+'</span>':'<span class="ush-empty">—</span>')+'</td>'
           +'<td>'+(r.confirm_stage?'<span class="badge status-stage-'+ushConfirmStageNum(r.confirm_stage)+'">'+r.confirm_stage+'</span>':'<span class="ush-empty">—</span>')+'</td>'
