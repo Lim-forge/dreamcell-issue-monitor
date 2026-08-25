@@ -818,7 +818,7 @@ try{sb=supabase.createClient(SB_URL,SB_KEY);
 /* ══════════════════════════════════════════
    로그인 게이트 (화면 접근만 막는 클라이언트 사이드 방식)
    ══════════════════════════════════════════ */
-const LOGIN_GATE_ENABLED = false; // true로 바꾸면 로그인 화면 다시 활성화
+const LOGIN_GATE_ENABLED = false; // DB(app_config.login_gate_enabled) 조회 실패 시 폴백 기본값
 const AUTH_STORAGE_KEY = 'dc_im_auth_until';
 const AUTH_SESSION_DAYS = 7;
 const AUTH_FALLBACK_HASH = 'c6ad3ffe8e7a206263e77ad34e43e55da3f9d03d98ec1de95fdcb2b26ccdd195'; // dr2068619187 (DB 조회 실패 시 폴백)
@@ -834,6 +834,23 @@ async function getStoredPasswordHash(){
     if(error || !data) return AUTH_FALLBACK_HASH;
     return data.value || AUTH_FALLBACK_HASH;
   }catch(e){ return AUTH_FALLBACK_HASH; }
+}
+
+async function getGateEnabled(){
+  try{
+    const {data, error} = await sb.from('app_config').select('value').eq('key','login_gate_enabled').single();
+    if(error || !data || data.value===undefined || data.value===null) return LOGIN_GATE_ENABLED;
+    return data.value === 'true';
+  }catch(e){ return LOGIN_GATE_ENABLED; }
+}
+
+async function setGateEnabled(enabled){
+  await sb.from('app_config').upsert({key:'login_gate_enabled', value: enabled ? 'true' : 'false'});
+}
+
+async function onGateToggleChange(){
+  const checked = document.getElementById('cfg-login-gate').checked;
+  await setGateEnabled(checked);
 }
 
 function isAuthValid(){
@@ -869,8 +886,9 @@ async function attemptLogin(){
   }
 }
 
-(function initLoginGate(){
-  if(!LOGIN_GATE_ENABLED){ hideLoginOverlay(); return; }
+(async function initLoginGate(){
+  const enabled = await getGateEnabled();
+  if(!enabled){ hideLoginOverlay(); return; }
   if(isAuthValid()){ hideLoginOverlay(); }
   const btn = document.getElementById('loginSubmitBtn');
   const input = document.getElementById('loginPwInput');
@@ -1345,9 +1363,11 @@ function renderMonthlyReport(wrap,row){
     html+='<div class="cc-cards">';
     html+='<div class="cc-chcard amt" id="cc-chcard-amt" onclick="toggleCCDetail(\'amt\')"><div class="cc-chcard-count">'+cc.amtCount+'<span class="unit">건</span></div><div class="cc-chcard-label">수주 변동 (반품·취소·수량·금액)</div>';
     html+= cc.amtCount>0 ? '<div class="cc-chcard-sub">매출 변동 '+(cc.amtDiff>=0?'+':'')+rptFmt(cc.amtDiff)+'원</div>' : '<div class="cc-chcard-sub" style="color:#30D158;">변동 없음</div>';
+    html+='<div class="kpi-sub">클릭해서 담당자별 상세보기</div>';
     html+='</div>';
     html+='<div class="cc-chcard cost" id="cc-chcard-cost" onclick="toggleCCDetail(\'cost\')"><div class="cc-chcard-count">'+cc.costCount+'<span class="unit">건</span></div><div class="cc-chcard-label">발주단가 변동 (10만↑)</div>';
     html+= cc.costCount>0 ? '<div class="cc-chcard-sub">총액 차이 '+(cc.costDiff>=0?'+':'')+rptFmt(cc.costDiff)+'원</div>' : '<div class="cc-chcard-sub" style="color:#30D158;">변동 없음</div>';
+    html+='<div class="kpi-sub">클릭해서 담당자별 상세보기</div>';
     html+='</div></div>';
     html+='<div id="cc-detail-wrap" style="display:none;"></div>';
   }
@@ -2069,6 +2089,7 @@ function openSettings(){
   document.getElementById('cfg-kpi-open').checked    = !!_cfg.kpiOpen;
   document.getElementById('cfg-allow-delete').checked = !!_cfg.allowDelete;
   document.getElementById('cfg-sb-key').value = SB_KEY;
+  getGateEnabled().then(v=>{ document.getElementById('cfg-login-gate').checked = v; });
   _adminUnlocked = false;
   renderAdminLock();
   renderMonthGrid();
@@ -2409,6 +2430,18 @@ document.addEventListener('DOMContentLoaded', () => {
           <div class="settings-row-desc" style="margin-bottom:8px;">미출고내역에서 조회할 월을 선택하세요</div>
           <div class="month-grid" id="month-grid"></div>
           <button class="month-save-btn" onclick="saveActiveMonths()">활성 월 저장</button>
+        </div>
+
+        <!-- 로그인 화면 사용 여부 -->
+        <div class="settings-row" style="margin-bottom:18px;">
+          <div>
+            <div class="settings-row-label">🔐 로그인 화면 사용</div>
+            <div class="settings-row-desc">끄면 팀 전체가 로그인 없이 바로 접속 (DB 저장 — 새로고침 시 전체 적용)</div>
+          </div>
+          <label class="toggle-sw">
+            <input type="checkbox" id="cfg-login-gate" onchange="onGateToggleChange()">
+            <span class="slider"></span>
+          </label>
         </div>
 
         <!-- 로그인 비밀번호 변경 -->
