@@ -703,7 +703,6 @@ table.report td:first-child,table.report th:first-child{width:105px;min-width:10
         </span>
       </button>
       <div class="kpi-grid" id="kpi-grid-lmo"></div>
-      </div>
     </div>
     <div class="va" id="va-lmo">
       <div class="fb">
@@ -2692,6 +2691,8 @@ document.addEventListener('DOMContentLoaded', () => {
       el.addEventListener('click', (e)=>{ e.stopPropagation(); jumpToRowById(panelId, el.dataset.id); });
     });
   }
+  // updKPI_margin(전역 스코프, 806번 스크립트 블록)에서 호출하므로 전역에 노출 필요
+  window.renderMinMarginTop10 = renderMinMarginTop10;
   window.addEventListener('load', ()=>{
     setTimeout(()=>{
       const c3 = document.getElementById('mstockcard-ret');
