@@ -127,7 +127,6 @@ body{font-family:'Pretendard',-apple-system,BlinkMacSystemFont,'Segoe UI','Malgu
 .kpi-grid{display:none;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));
           gap:10px;margin-top:10px}
 .kpi-grid.open{display:grid}
-.kpi-basic-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px}
 .kpi-card{background:var(--card);border-radius:var(--r);padding:10px 18px;box-shadow:var(--sh)}
 .kpi-lbl{font-size:9.5px;font-weight:700;color:var(--t3);text-transform:uppercase;
          letter-spacing:.08em;margin-bottom:8px}
@@ -566,19 +565,18 @@ table.report td:first-child,table.report th:first-child{width:105px;min-width:10
       <span class="ph-s"></span><span class="ph-m" id="ts-lms"></span>
     </div>
     <div class="kpi-wrap">
-      <div class="kpi-basic-grid" id="kpi-basic-lms">
-        <div class="kpi-card"><div class="kpi-lbl">총 건수</div><div class="kpi-val" id="kv-lms-cnt">—</div></div>
-        <div class="kpi-card"><div class="kpi-lbl">평균 마진율</div><div class="kpi-val warn" id="kv-lms-avg">—</div></div>
-        <div class="kpi-card"><div class="kpi-lbl">최저 마진율</div><div class="kpi-val warn" id="kv-lms-min">—</div></div>
-        <div class="kpi-card"><div class="kpi-lbl">총 판매금액</div><div class="kpi-val" id="kv-lms-sum">—</div></div>
-      </div>
-      <button class="kpi-toggle" onclick="toggleKPI('lms')" style="margin-top:10px;">
+      <button class="kpi-toggle" onclick="toggleKPI('lms')">
         <span class="kpi-tl">📊 KPI 요약 <span class="kpi-desc">클릭하면 요약 정보가 나타납니다</span></span>
         <span class="kpi-tr">
           <span id="kpi-txt-lms">펼치기</span><span class="kpi-arr" id="kpi-arr-lms">▼</span><button class="act-toggle-btn" id="act-btn-lms" onclick="event.stopPropagation();toggleActCol('lms')" style="display:none">작업 보이기</button>
         </span>
       </button>
-      <div class="kpi-grid" id="kpi-grid-lms"></div>
+      <div class="kpi-grid" id="kpi-grid-lms">
+        <div class="kpi-card"><div class="kpi-lbl">총 건수</div><div class="kpi-val" id="kv-lms-cnt">—</div></div>
+        <div class="kpi-card"><div class="kpi-lbl">평균 마진율</div><div class="kpi-val warn" id="kv-lms-avg">—</div></div>
+        <div class="kpi-card"><div class="kpi-lbl">최저 마진율</div><div class="kpi-val warn" id="kv-lms-min">—</div></div>
+        <div class="kpi-card"><div class="kpi-lbl">총 판매금액</div><div class="kpi-val" id="kv-lms-sum">—</div></div>
+      </div>
     </div>
     <div class="va" id="va-lms">
       <div class="fb">
@@ -617,20 +615,19 @@ table.report td:first-child,table.report th:first-child{width:105px;min-width:10
       <span class="ph-s"></span><span class="ph-m" id="ts-ret"></span>
     </div>
     <div class="kpi-wrap">
-      <div class="kpi-basic-grid" id="kpi-basic-ret">
+      <button class="kpi-toggle" onclick="toggleKPI('ret')">
+        <span class="kpi-tl">📊 KPI 요약 <span class="kpi-desc">클릭하면 요약 정보가 나타납니다</span></span>
+        <span class="kpi-tr">
+          <span id="kpi-txt-ret">펼치기</span><span class="kpi-arr" id="kpi-arr-ret">▼</span><button class="act-toggle-btn" id="act-btn-ret" onclick="event.stopPropagation();toggleActCol('ret')" style="display:none">작업 보이기</button>
+        </span>
+      </button>
+      <div class="kpi-grid" id="kpi-grid-ret">
         <div class="kpi-card"><div class="kpi-lbl">총 건수</div><div class="kpi-val" id="kv-ret-cnt">—</div></div>
         <div class="kpi-card"><div class="kpi-lbl">처리중</div><div class="kpi-val warn" id="kv-ret-접수">—</div></div>
         <div class="kpi-card" id="mstockcard-ret" style="cursor:pointer;"><div class="kpi-lbl">악성재고</div><div class="kpi-val warn" id="kv-ret-처리중">—</div><div class="kpi-sub">클릭해서 보기</div></div>
         <div class="kpi-card"><div class="kpi-lbl">재고사용</div><div class="kpi-val" id="kv-ret-재고사용">—</div></div>
         <div class="kpi-card"><div class="kpi-lbl">반품완료</div><div class="kpi-val ok" id="kv-ret-완료">—</div></div>
       </div>
-      <button class="kpi-toggle" onclick="toggleKPI('ret')" style="margin-top:10px;">
-        <span class="kpi-tl">📊 KPI 요약 <span class="kpi-desc">클릭하면 요약 정보가 나타납니다</span></span>
-        <span class="kpi-tr">
-          <span id="kpi-txt-ret">펼치기</span><span class="kpi-arr" id="kpi-arr-ret">▼</span><button class="act-toggle-btn" id="act-btn-ret" onclick="event.stopPropagation();toggleActCol('ret')" style="display:none">작업 보이기</button>
-        </span>
-      </button>
-      <div class="kpi-grid" id="kpi-grid-ret"></div>
     </div>
     <div class="va" id="va-ret">
       <div class="fb">
@@ -690,19 +687,18 @@ table.report td:first-child,table.report th:first-child{width:105px;min-width:10
       <span class="ph-s"></span><span class="ph-m" id="ts-lmo"></span>
     </div>
     <div class="kpi-wrap">
-      <div class="kpi-basic-grid" id="kpi-basic-lmo">
-        <div class="kpi-card"><div class="kpi-lbl">총 건수</div><div class="kpi-val" id="kv-lmo-cnt">—</div></div>
-        <div class="kpi-card"><div class="kpi-lbl">평균 마진율</div><div class="kpi-val warn" id="kv-lmo-avg">—</div></div>
-        <div class="kpi-card"><div class="kpi-lbl">최저 마진율</div><div class="kpi-val warn" id="kv-lmo-min">—</div></div>
-        <div class="kpi-card"><div class="kpi-lbl">총 판매금액</div><div class="kpi-val" id="kv-lmo-sum">—</div></div>
-      </div>
-      <button class="kpi-toggle" onclick="toggleKPI('lmo')" style="margin-top:10px;">
+      <button class="kpi-toggle" onclick="toggleKPI('lmo')">
         <span class="kpi-tl">📊 KPI 요약 <span class="kpi-desc">클릭하면 요약 정보가 나타납니다</span></span>
         <span class="kpi-tr">
           <span id="kpi-txt-lmo">펼치기</span><span class="kpi-arr" id="kpi-arr-lmo">▼</span><button class="act-toggle-btn" id="act-btn-lmo" onclick="event.stopPropagation();toggleActCol('lmo')" style="display:none">작업 보이기</button>
         </span>
       </button>
-      <div class="kpi-grid" id="kpi-grid-lmo"></div>
+      <div class="kpi-grid" id="kpi-grid-lmo">
+        <div class="kpi-card"><div class="kpi-lbl">총 건수</div><div class="kpi-val" id="kv-lmo-cnt">—</div></div>
+        <div class="kpi-card"><div class="kpi-lbl">평균 마진율</div><div class="kpi-val warn" id="kv-lmo-avg">—</div></div>
+        <div class="kpi-card"><div class="kpi-lbl">최저 마진율</div><div class="kpi-val warn" id="kv-lmo-min">—</div></div>
+        <div class="kpi-card"><div class="kpi-lbl">총 판매금액</div><div class="kpi-val" id="kv-lmo-sum">—</div></div>
+      </div>
     </div>
     <div class="va" id="va-lmo">
       <div class="fb">
@@ -947,7 +943,6 @@ function updKPI_margin(tab,data,saleField){
   const sum=cnt?Math.round(data.reduce((a,r)=>a+(+r[saleField]||0),0)).toLocaleString()+'원':'—';
   setKV('kv-'+tab+'-cnt',cnt+'건');setKV('kv-'+tab+'-avg',avg);
   setKV('kv-'+tab+'-min',min);setKV('kv-'+tab+'-sum',sum);
-  renderMinMarginTop10(tab, 'panel-'+tab);
 }
 function updKPI_ret(data){
   setKV('kv-ret-cnt',data.length+'건');
@@ -1078,7 +1073,6 @@ function resetFilters(tab){
     setKV('kv-ush-cnt','0건');setKV('kv-ush-ing','0건');setKV('kv-ush-chg','0건');setKV('kv-ush-done','0건');
   } else {
     setKV('kv-'+tab+'-cnt','0건');setKV('kv-'+tab+'-avg','—');setKV('kv-'+tab+'-sum','—');setKV('kv-'+tab+'-min','—');
-    const t10 = document.getElementById('top10card-'+tab); if(t10) t10.remove();
   }
 }
 
@@ -2387,11 +2381,11 @@ document.addEventListener('DOMContentLoaded', () => {
     lms: { table:'low_margin_shipments', dateField:'ship_date', repField:'rep',
            gridId:'kpi-grid-lms', repInputId:'lms-rep', yrId:'ym-yr-lms', moId:'ym-mo-lms',
            goSel:'#va-lms .btn-p', metric:'margin', marginField:'margin_rate',
-           custField:'customer_name', topN:5, layout:'col', label:'저마진 담당자 TOP5 (거래처 포함) · 올해' },
+           custField:'customer_name', layout:'col', label:'저마진 담당자 현황 (거래처 포함) · 올해' },
     lmo: { table:'orders', dateField:'order_date', repField:'orderer',
            gridId:'kpi-grid-lmo', repInputId:'lmo-rep', yrId:'ym-yr-lmo', moId:'ym-mo-lmo',
            goSel:'#va-lmo .btn-p', metric:'margin', marginField:'margin_rate',
-           custField:'customer_name', topN:5, layout:'col', label:'저마진 담당자 TOP5 (거래처 포함) · 올해' },
+           custField:'customer_name', layout:'col', label:'저마진 담당자 현황 (거래처 포함) · 올해' },
     ret: { table:'return_shipments', dateField:'return_date', repField:'rep',
            gridId:'kpi-grid-ret', repInputId:'ret-rep', yrId:'ym-yr-ret', moId:'ym-mo-ret',
            goSel:'#va-ret .btn-p', metric:'amount', amtField:'total', layout:'col' },
@@ -2450,10 +2444,14 @@ document.addEventListener('DOMContentLoaded', () => {
     rows.forEach(r=>{
       const name = (r[cfg.repField] || '').trim();
       if(!name) return;
-      if(!map.has(name)) map.set(name, { name, cnt:0, marginSum:0, amt:0, monthsSet:new Set(), oldestDate:null, customers:new Set() });
+      if(!map.has(name)) map.set(name, { name, cnt:0, marginSum:0, marginMin:null, marginMax:null, amt:0, monthsSet:new Set(), oldestDate:null, customers:new Set() });
       const g = map.get(name);
       g.cnt++;
-      if(cfg.metric === 'margin' && typeof r[cfg.marginField] === 'number') g.marginSum += r[cfg.marginField];
+      if(cfg.metric === 'margin' && typeof r[cfg.marginField] === 'number'){
+        g.marginSum += r[cfg.marginField];
+        if(g.marginMin===null || r[cfg.marginField]<g.marginMin) g.marginMin = r[cfg.marginField];
+        if(g.marginMax===null || r[cfg.marginField]>g.marginMax) g.marginMax = r[cfg.marginField];
+      }
       if(cfg.metric === 'amount' && typeof r[cfg.amtField] === 'number') g.amt += r[cfg.amtField];
       if(cfg.custField){
         const cust = (r[cfg.custField] || '').trim();
@@ -2472,7 +2470,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const list = [...map.values()].map(g=>{
       let sub = '';
       let elapsedMonths = 0;
-      if(cfg.metric === 'margin') sub = (g.cnt ? (g.marginSum/g.cnt).toFixed(1) : '0') + '%';
+      if(cfg.metric === 'margin') sub = (g.marginMin!==null ? g.marginMin.toFixed(1) : '0') + '%~' + (g.marginMax!==null ? g.marginMax.toFixed(1) : '0') + '%';
       else if(cfg.metric === 'amount') sub = Math.round(g.amt).toLocaleString() + '원';
       else if(cfg.metric === 'months'){
         if(g.oldestDate){
@@ -2578,7 +2576,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const inner = host.querySelector('.rank-inner');
     inner.classList.add('fading');
     setTimeout(()=>{
-      if(!cfg.standalone) host.style.gridColumn = 'span ' + computeFillSpan(cfg, host);
+      if(!cfg.standalone) host.style.gridColumn = '1 / -1'; // 아코디언이 닫힌 상태에서 폭 계산이 틀어지는 문제 방지 — 항상 가로 전체 사용
       const label = cfg.label || '담당자별 발생 빈도 · 올해';
       let bodyHtml;
       if(cfg.layout === 'col'){
@@ -2649,55 +2647,6 @@ document.addEventListener('DOMContentLoaded', () => {
     setTimeout(()=>{ Object.keys(RANK_CFG).forEach(refreshRank); }, 800);
   });
 
-  // "최저마진율 TOP10" — KPI 요약 아코디언을 펼치면 항상 같이 보이는 정적 리스트 (조회 데이터 기준)
-  function jumpToRowById(panelId, id){
-    const panel = document.getElementById(panelId);
-    if(!panel) return;
-    const tr = panel.querySelector('tr[data-id="'+id+'"]');
-    if(!tr) return;
-    tr.scrollIntoView({ behavior:'smooth', block:'center' });
-    tr.style.transition = 'background-color 0.5s';
-    tr.style.backgroundColor = '#fff3cd';
-    setTimeout(()=>{ tr.style.backgroundColor = ''; }, 2500);
-  }
-  function bottom10Margin(tab){
-    const data = (window._d && window._d[tab]) || [];
-    return data
-      .filter(r => r.margin_rate !== null && r.margin_rate !== undefined && !isNaN(+r.margin_rate))
-      .slice()
-      .sort((a,b) => (+a.margin_rate) - (+b.margin_rate))
-      .slice(0,10);
-  }
-  function mmEntryHtml(r, tab){
-    const mg = (tab==='lmo') ? Math.round(+r.margin_rate) : (+r.margin_rate).toFixed(1);
-    return '<div class="rank-entry" data-id="'+String(r.id)+'" style="cursor:pointer;padding:8px 10px;border-radius:8px;background:#F7F8FB;">' +
-      '<div style="font-size:13px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+(r.item_name||'—')+'</div>' +
-      '<div style="font-size:11.5px;color:#556;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px;">'+(r.customer_name||'—')+' · '+(r.rep||'—')+'</div>' +
-      '<div style="font-size:13px;color:#c0392b;font-weight:800;margin-top:2px;">'+mg+'%</div></div>';
-  }
-  function renderMinMarginTop10(tab, panelId){
-    const grid = document.getElementById('kpi-grid-'+tab);
-    if(!grid) return;
-    let host = document.getElementById('top10card-'+tab);
-    if(!host){
-      host = document.createElement('div');
-      host.id = 'top10card-'+tab;
-      host.className = 'kpi-card';
-      host.style.gridColumn = '1/-1';
-      grid.insertBefore(host, grid.firstChild);
-    }
-    const list = bottom10Margin(tab);
-    host.innerHTML =
-      '<div style="font-size:10px;color:rgb(139,154,174);margin-bottom:8px;">최저마진율 TOP10</div>' +
-      '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;">' +
-      (list.length ? list.map(r=>mmEntryHtml(r,tab)).join('') : '<div style="font-size:12px;color:#8b9aae;padding:6px;">데이터 없음</div>') +
-      '</div>';
-    host.querySelectorAll('.rank-entry').forEach(el=>{
-      el.addEventListener('click', (e)=>{ e.stopPropagation(); jumpToRowById(panelId, el.dataset.id); });
-    });
-  }
-  // updKPI_margin(전역 스코프, 806번 스크립트 블록)에서 호출하므로 전역에 노출 필요
-  window.renderMinMarginTop10 = renderMinMarginTop10;
   window.addEventListener('load', ()=>{
     setTimeout(()=>{
       const c3 = document.getElementById('mstockcard-ret');
