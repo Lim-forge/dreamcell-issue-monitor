@@ -139,6 +139,8 @@ body{font-family:'Pretendard',-apple-system,BlinkMacSystemFont,'Segoe UI','Malgu
          letter-spacing:.08em;margin-bottom:8px}
 .kpi-val{font-size:22px;font-weight:900;letter-spacing:-.03em;line-height:1;color:var(--text)}
 .kpi-sub{font-size:11px;color:var(--t3);margin-top:5px}
+/* 악성재고 카드처럼 문서 흐름에서 빼서 카드 높이에 영향 안 주게 할 때 함께 붙이는 클래스 (.kpi-sub와 같이 사용) */
+.kpi-sub-corner{position:absolute;top:10px;right:14px;margin-top:0}
 .kpi-val.warn{color:#B91C1C}
 .kpi-val.ok{color:#065F46}
 
@@ -643,7 +645,7 @@ table.report td:first-child,table.report th:first-child{width:105px;min-width:10
       <div class="kpi-grid" id="kpi-grid-ret">
         <div class="kpi-card acc-neutral"><div class="kpi-lbl">총 건수</div><div class="kpi-val" id="kv-ret-cnt">—</div></div>
         <div class="kpi-card acc-gold"><div class="kpi-lbl">처리중</div><div class="kpi-val warn" id="kv-ret-접수">—</div></div>
-        <div class="kpi-card acc-danger" id="mstockcard-ret" style="cursor:pointer;"><div class="kpi-lbl">악성재고</div><div class="kpi-val warn" id="kv-ret-처리중">—</div><div class="kpi-sub">클릭해서 보기</div></div>
+        <div class="kpi-card acc-danger" id="mstockcard-ret" style="cursor:pointer;"><div class="kpi-lbl">악성재고</div><div class="kpi-val warn" id="kv-ret-처리중">—</div><div class="kpi-sub kpi-sub-corner">클릭해서 보기</div></div>
         <div class="kpi-card acc-neutral"><div class="kpi-lbl">재고사용</div><div class="kpi-val" id="kv-ret-재고사용">—</div></div>
         <div class="kpi-card acc-ok"><div class="kpi-lbl">반품완료</div><div class="kpi-val ok" id="kv-ret-완료">—</div></div>
       </div>
