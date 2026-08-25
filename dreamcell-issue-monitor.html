@@ -574,7 +574,7 @@ table.report td:first-child,table.report th:first-child{width:105px;min-width:10
       <div class="kpi-grid" id="kpi-grid-lms">
         <div class="kpi-card"><div class="kpi-lbl">총 건수</div><div class="kpi-val" id="kv-lms-cnt">—</div></div>
         <div class="kpi-card"><div class="kpi-lbl">평균 마진율</div><div class="kpi-val warn" id="kv-lms-avg">—</div></div>
-        <div class="kpi-card" id="mmcard-lms" style="cursor:pointer;"><div class="rank-inner"><div class="kpi-lbl">최저마진율 TOP10</div><div class="kpi-val warn" id="kv-lms-min">—</div><div class="kpi-sub">TOP10 보기 ▾</div></div></div>
+        <div class="kpi-card" id="mmcard-lms" style="cursor:pointer;"><div class="rank-inner"><div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:4px;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgb(139,154,174)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/></svg><div style="font-size:12px;color:rgb(139,154,174);font-weight:700;">요약보기</div></div></div></div>
         <div class="kpi-card"><div class="kpi-lbl">총 판매금액</div><div class="kpi-val" id="kv-lms-sum">—</div></div>
       </div>
     </div>
@@ -694,7 +694,7 @@ table.report td:first-child,table.report th:first-child{width:105px;min-width:10
       <div class="kpi-grid" id="kpi-grid-lmo">
         <div class="kpi-card"><div class="kpi-lbl">총 건수</div><div class="kpi-val" id="kv-lmo-cnt">—</div></div>
         <div class="kpi-card"><div class="kpi-lbl">평균 마진율</div><div class="kpi-val warn" id="kv-lmo-avg">—</div></div>
-        <div class="kpi-card" id="mmcard-lmo" style="cursor:pointer;"><div class="rank-inner"><div class="kpi-lbl">최저마진율 TOP10</div><div class="kpi-val warn" id="kv-lmo-min">—</div><div class="kpi-sub">TOP10 보기 ▾</div></div></div>
+        <div class="kpi-card" id="mmcard-lmo" style="cursor:pointer;"><div class="rank-inner"><div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:4px;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgb(139,154,174)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/></svg><div style="font-size:12px;color:rgb(139,154,174);font-weight:700;">요약보기</div></div></div></div>
         <div class="kpi-card"><div class="kpi-lbl">총 판매금액</div><div class="kpi-val" id="kv-lmo-sum">—</div></div>
       </div>
     </div>
@@ -2647,8 +2647,9 @@ document.addEventListener('DOMContentLoaded', () => {
         host.dataset.expanded = '1';
       } else {
         host.style.gridColumn = '';
-        const cached = (window._minCache && window._minCache[tab]) || '—';
-        inner.innerHTML = '<div class="kpi-lbl">최저마진율 TOP10</div><div class="kpi-val warn" id="kv-'+tab+'-min">'+cached+'</div><div class="kpi-sub">TOP10 보기 ▾</div>';
+        inner.innerHTML = '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:4px;">' +
+          '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgb(139,154,174)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/></svg>' +
+          '<div style="font-size:12px;color:rgb(139,154,174);font-weight:700;">요약보기</div></div>';
         host.dataset.expanded = '0';
       }
       inner.classList.remove('fading');
