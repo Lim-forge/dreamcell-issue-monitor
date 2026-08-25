@@ -585,6 +585,7 @@ table.report td:first-child,table.report th:first-child{width:105px;min-width:10
         <input class="fi" id="lms-rep" placeholder="담당자" style="width:90px">
         <input class="fi" placeholder="거래처 검색" id="lms-cust">
         <button class="btn btn-p" onclick="loadLMS()">🔍 조회</button>
+        <button class="btn btn-g" onclick="resetFilters('lms')">↺ 초기화</button>
         <div class="fbr"><button class="btn btn-g" onclick="xcsv('lms')">⬇ CSV</button></div>
       </div>
       <div class="tbl-card"><div class="tx">
@@ -638,6 +639,7 @@ table.report td:first-child,table.report th:first-child{width:105px;min-width:10
         </select>
         <input class="fi" placeholder="거래처 검색" id="ret-cust">
         <button class="btn btn-p" onclick="loadRET()">🔍 조회</button>
+        <button class="btn btn-g" onclick="resetFilters('ret')">↺ 초기화</button>
         <div class="fbr"><button class="btn btn-g" onclick="xcsv('ret')">⬇ CSV</button></div>
       </div>
       <div class="tbl-card"><div class="tx">
@@ -705,6 +707,7 @@ table.report td:first-child,table.report th:first-child{width:105px;min-width:10
         <input class="fi" id="lmo-rep" placeholder="수주자" style="width:90px">
         <input class="fi" placeholder="거래처 검색" id="lmo-cust">
         <button class="btn btn-p" onclick="loadLMO()">🔍 조회</button>
+        <button class="btn btn-g" onclick="resetFilters('lmo')">↺ 초기화</button>
         <div class="fbr"><button class="btn btn-g" onclick="xcsv('lmo')">⬇ CSV</button></div>
       </div>
       <div class="tbl-card"><div class="tx">
@@ -760,6 +763,7 @@ table.report td:first-child,table.report th:first-child{width:105px;min-width:10
         </select>
         <input class="fi" placeholder="수주처 검색" id="ush-cust">
         <button class="btn btn-p" onclick="loadUSH()">🔍 조회</button>
+        <button class="btn btn-g" onclick="resetFilters('ush')">↺ 초기화</button>
         <div class="fbr"><button class="btn btn-g" onclick="xcsv('ush')">⬇ CSV</button></div>
       </div>
       <div class="tbl-card"><div class="tx">
@@ -1038,6 +1042,42 @@ function setCnt(tab,n){
 function emptyR(c,ic,msg){return '<tr><td colspan="'+c+'"><div class="empty"><div class="emic">'+ic+'</div><div class="emt">'+msg+'</div><div class="ems">조건을 확인하거나 Supabase 테이블을 점검해주세요</div></div></td></tr>';}
 function errR(c,msg){return '<tr><td colspan="'+c+'"><div class="empty"><div class="emic">❌</div><div class="emt">조회 오류</div><div class="ems">'+msg+'</div></div></td></tr>';}
 function guard(){if(!sb){alert('Supabase 연결 정보를 설정해주세요.');return false;}return true;}
+function initialR(c,ic){return '<tr><td colspan="'+c+'"><div class="empty"><div class="emic">'+ic+'</div><div class="emt">조회 전입니다</div><div class="ems">기간을 설정하고 조회 버튼을 눌러주세요</div></div></td></tr>';}
+
+/* 필터 초기화 (조회 옆 ↺ 초기화 버튼) — cc(수주취소·변경건)는 제외 */
+const RESET_CFG = {
+  lms: {dateIds:['lms-f','lms-t'], repId:'lms-rep', custId:'lms-cust', statusId:null, tbId:'tb-lms', colspan:11, icon:'📦'},
+  ret: {dateIds:['ret-f','ret-t'], repId:'ret-rep', custId:'ret-cust', statusId:'ret-status', tbId:'tb-ret', colspan:12, icon:'🔄'},
+  lmo: {dateIds:['lmo-f','lmo-t'], repId:'lmo-rep', custId:'lmo-cust', statusId:null, tbId:'tb-lmo', colspan:13, icon:'📋'},
+  ush: {dateIds:['ush-f','ush-t'], repId:'ush-rep', custId:'ush-cust', statusId:'ush-status', tbId:'tb-ush', colspan:16, icon:'📦'},
+};
+function resetFilters(tab){
+  const cfg = RESET_CFG[tab];
+  if(!cfg) return;
+  cfg.dateIds.forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
+  const repEl = document.getElementById(cfg.repId); if(repEl) repEl.value='';
+  const custEl = document.getElementById(cfg.custId); if(custEl) custEl.value='';
+  if(cfg.statusId){ const stEl=document.getElementById(cfg.statusId); if(stEl) stEl.value=''; }
+  // 빠른선택(연/월)도 기본값으로
+  const yrEl=document.getElementById('ym-yr-'+tab); if(yrEl) yrEl.value=String(new Date().getFullYear());
+  const moEl=document.getElementById('ym-mo-'+tab); if(moEl) moEl.value='';
+  // 테이블을 조회 전 상태로 되돌림
+  const tb=document.getElementById(cfg.tbId);
+  if(tb) tb.innerHTML = initialR(cfg.colspan, cfg.icon);
+  setCnt(tab,0);
+  window._d[tab]=[];
+  const ts=document.getElementById('ts-'+tab); if(ts) ts.textContent='';
+  // KPI 요약 카드도 초기화
+  if(tab==='ret'){
+    setKV('kv-ret-cnt','0건');setKV('kv-ret-접수','0건');setKV('kv-ret-처리중','0건');
+    setKV('kv-ret-재고사용','0건');setKV('kv-ret-완료','0건');
+  } else if(tab==='ush'){
+    setKV('kv-ush-cnt','0건');setKV('kv-ush-ing','0건');setKV('kv-ush-chg','0건');setKV('kv-ush-done','0건');
+  } else {
+    setKV('kv-'+tab+'-cnt','0건');setKV('kv-'+tab+'-avg','—');setKV('kv-'+tab+'-sum','—');
+    window._minCache = window._minCache || {}; window._minCache[tab]='—';
+  }
+}
 
 /* QUERY */
 async function loadLMS(){
