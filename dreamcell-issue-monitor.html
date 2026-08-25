@@ -144,6 +144,25 @@ body{font-family:'Pretendard',-apple-system,BlinkMacSystemFont,'Segoe UI','Malgu
 .kpi-val.warn{color:#B91C1C}
 .kpi-val.ok{color:#065F46}
 
+/* ===== 인쇄용 보고서 출력 =====
+   기본 용지는 A4 가로(landscape). 수주취소·변경건(cc) 탭만 업로더(월매출 연산기)와
+   동일한 A3 가로로 출력해야 해서, 실제 @page 크기는 printPanel()이 인쇄 직전에
+   <style id="print-page-size">로 주입/교체한다 (CSS만으로는 탭별 페이지 크기를 못 바꿈).
+   여기 있는 @media print는 "무엇을 숨기고 무엇만 보여줄지"만 담당. */
+@media print{
+  @page{size:A4 landscape;margin:10mm;}
+  body{background:#fff;}
+  #lb,#loginOverlay,.sb,.settings-fab,#toast,.pdf-btn{display:none!important;}
+  .main{overflow:visible!important;}
+  .panel{overflow:visible!important;}
+  .ph .mode-g,.fb{display:none!important;}
+  .va{overflow:visible!important;}
+  .tbl-card,.tx{overflow:visible!important;}
+  table{min-width:100%!important;}
+  .cc-report-wrap{box-shadow:none!important;overflow:visible!important;padding:0!important;}
+  .kpi-wrap{page-break-inside:avoid;}
+}
+
 /* VIEW / INPUT AREA */
 .va{display:flex;flex-direction:column;gap:10px;flex:1;overflow:hidden}
 .ia{display:none;flex-direction:column;gap:10px;flex:1;overflow:hidden}
@@ -613,7 +632,7 @@ table.report td:first-child,table.report th:first-child{width:105px;min-width:10
         <button class="btn btn-p" onclick="loadLMS()">🔍 조회</button>
         <button class="btn btn-g" onclick="resetFilters('lms')">↺ 초기화</button>
         <button class="act-toggle-btn" id="act-btn-lms" onclick="toggleActCol('lms')" style="display:inline-flex">작업 보이기</button>
-        <div class="fbr"><button class="btn btn-g" onclick="xcsv('lms')">⬇ CSV</button></div>
+        <div class="fbr"><button class="btn btn-g" onclick="xcsv('lms')">⬇ CSV</button><button class="btn btn-g pdf-btn" onclick="printPanel('lms')">🖨 PDF 출력</button></div>
       </div>
       <div class="tbl-card"><div class="tx">
         <table><thead><tr>
@@ -662,7 +681,7 @@ table.report td:first-child,table.report th:first-child{width:105px;min-width:10
         <button class="btn btn-p" onclick="loadRET()">🔍 조회</button>
         <button class="btn btn-g" onclick="resetFilters('ret')">↺ 초기화</button>
         <button class="act-toggle-btn" id="act-btn-ret" onclick="toggleActCol('ret')" style="display:inline-flex">작업 보이기</button>
-        <div class="fbr"><button class="btn btn-g" onclick="xcsv('ret')">⬇ CSV</button></div>
+        <div class="fbr"><button class="btn btn-g" onclick="xcsv('ret')">⬇ CSV</button><button class="btn btn-g pdf-btn" onclick="printPanel('ret')">🖨 PDF 출력</button></div>
       </div>
       <div class="tbl-card"><div class="tx">
         <table><thead><tr>
@@ -688,6 +707,7 @@ table.report td:first-child,table.report th:first-child{width:105px;min-width:10
         <button class="mbtn"    id="mbi-cc" onclick="setMode('cc','input')">✏️ 입력</button>
       </div>
       <span class="ph-s"></span><span class="ph-m" id="ts-cc"></span>
+      <button class="btn btn-g pdf-btn" onclick="printPanel('cc')">🖨 PDF 출력 (A3)</button>
     </div>
     <div class="va" id="va-cc">
       <div class="fb"></div>
@@ -725,7 +745,7 @@ table.report td:first-child,table.report th:first-child{width:105px;min-width:10
         <button class="btn btn-p" onclick="loadLMO()">🔍 조회</button>
         <button class="btn btn-g" onclick="resetFilters('lmo')">↺ 초기화</button>
         <button class="act-toggle-btn" id="act-btn-lmo" onclick="toggleActCol('lmo')" style="display:inline-flex">작업 보이기</button>
-        <div class="fbr"><button class="btn btn-g" onclick="xcsv('lmo')">⬇ CSV</button></div>
+        <div class="fbr"><button class="btn btn-g" onclick="xcsv('lmo')">⬇ CSV</button><button class="btn btn-g pdf-btn" onclick="printPanel('lmo')">🖨 PDF 출력</button></div>
       </div>
       <div class="tbl-card"><div class="tx">
         <table><thead><tr>
@@ -774,7 +794,7 @@ table.report td:first-child,table.report th:first-child{width:105px;min-width:10
         <input class="fi" placeholder="수주처 검색" id="ush-cust">
         <button class="btn btn-p" onclick="loadUSH()">🔍 조회</button>
         <button class="btn btn-g" onclick="resetFilters('ush')">↺ 초기화</button>
-        <div class="fbr"><button class="btn btn-g" onclick="xcsv('ush')">⬇ CSV</button></div>
+        <div class="fbr"><button class="btn btn-g" onclick="xcsv('ush')">⬇ CSV</button><button class="btn btn-g pdf-btn" onclick="printPanel('ush')">🖨 PDF 출력</button></div>
       </div>
       <div class="tbl-card"><div class="tx">
         <table><thead><tr>
@@ -2059,6 +2079,21 @@ function parseDate(v){
   if(/^\d{4}-\d{2}-\d{2}$/.test(v))return v;
   if(/^\d{2}-\d{2}-\d{2}$/.test(v))return '20'+v;
   return v;
+}
+
+/* PDF 인쇄 출력 — 탭마다 용지 크기가 다름(cc=A3 가로, 나머지=A4 가로) */
+function printPanel(tab){
+  const old=document.getElementById('print-page-size');
+  if(old)old.remove();
+  const style=document.createElement('style');
+  style.id='print-page-size';
+  style.textContent = tab==='cc'
+    ? '@page{size:A3 landscape;margin:8mm;}'
+    : '@page{size:A4 landscape;margin:10mm;}';
+  document.head.appendChild(style);
+  const cleanup=()=>{ style.remove(); window.removeEventListener('afterprint',cleanup); };
+  window.addEventListener('afterprint',cleanup);
+  window.print();
 }
 
 /* CSV EXPORT */
