@@ -574,7 +574,7 @@ table.report td:first-child,table.report th:first-child{width:105px;min-width:10
       <div class="kpi-grid" id="kpi-grid-lms">
         <div class="kpi-card"><div class="kpi-lbl">총 건수</div><div class="kpi-val" id="kv-lms-cnt">—</div></div>
         <div class="kpi-card"><div class="kpi-lbl">평균 마진율</div><div class="kpi-val warn" id="kv-lms-avg">—</div></div>
-        <div class="kpi-card"><div class="kpi-lbl">최저 마진율</div><div class="kpi-val warn" id="kv-lms-min">—</div><div class="kpi-sub">⚠ 가장 위험</div></div>
+        <div class="kpi-card" id="mmcard-lms" style="cursor:pointer;"><div class="rank-inner"><div class="kpi-lbl">최저마진율 TOP10</div><div class="kpi-val warn" id="kv-lms-min">—</div><div class="kpi-sub">TOP10 보기 ▾</div></div></div>
         <div class="kpi-card"><div class="kpi-lbl">총 판매금액</div><div class="kpi-val" id="kv-lms-sum">—</div></div>
       </div>
     </div>
@@ -623,7 +623,7 @@ table.report td:first-child,table.report th:first-child{width:105px;min-width:10
       <div class="kpi-grid" id="kpi-grid-ret">
         <div class="kpi-card"><div class="kpi-lbl">총 건수</div><div class="kpi-val" id="kv-ret-cnt">—</div></div>
         <div class="kpi-card"><div class="kpi-lbl">처리중</div><div class="kpi-val warn" id="kv-ret-접수">—</div></div>
-        <div class="kpi-card"><div class="kpi-lbl">악성재고</div><div class="kpi-val warn" id="kv-ret-처리중">—</div></div>
+        <div class="kpi-card" id="mstockcard-ret" style="cursor:pointer;"><div class="kpi-lbl">악성재고</div><div class="kpi-val warn" id="kv-ret-처리중">—</div><div class="kpi-sub">클릭해서 보기</div></div>
         <div class="kpi-card"><div class="kpi-lbl">재고사용</div><div class="kpi-val" id="kv-ret-재고사용">—</div></div>
         <div class="kpi-card"><div class="kpi-lbl">반품완료</div><div class="kpi-val ok" id="kv-ret-완료">—</div></div>
       </div>
@@ -694,7 +694,7 @@ table.report td:first-child,table.report th:first-child{width:105px;min-width:10
       <div class="kpi-grid" id="kpi-grid-lmo">
         <div class="kpi-card"><div class="kpi-lbl">총 건수</div><div class="kpi-val" id="kv-lmo-cnt">—</div></div>
         <div class="kpi-card"><div class="kpi-lbl">평균 마진율</div><div class="kpi-val warn" id="kv-lmo-avg">—</div></div>
-        <div class="kpi-card"><div class="kpi-lbl">최저 마진율</div><div class="kpi-val warn" id="kv-lmo-min">—</div><div class="kpi-sub">⚠ 가장 위험</div></div>
+        <div class="kpi-card" id="mmcard-lmo" style="cursor:pointer;"><div class="rank-inner"><div class="kpi-lbl">최저마진율 TOP10</div><div class="kpi-val warn" id="kv-lmo-min">—</div><div class="kpi-sub">TOP10 보기 ▾</div></div></div>
         <div class="kpi-card"><div class="kpi-lbl">총 판매금액</div><div class="kpi-val" id="kv-lmo-sum">—</div></div>
       </div>
     </div>
@@ -939,6 +939,8 @@ function updKPI_margin(tab,data,saleField){
   const sum=cnt?Math.round(data.reduce((a,r)=>a+(+r[saleField]||0),0)).toLocaleString()+'원':'—';
   setKV('kv-'+tab+'-cnt',cnt+'건');setKV('kv-'+tab+'-avg',avg);
   setKV('kv-'+tab+'-min',min);setKV('kv-'+tab+'-sum',sum);
+  window._minCache = window._minCache || {};
+  window._minCache[tab] = min;
 }
 function updKPI_ret(data){
   setKV('kv-ret-cnt',data.length+'건');
@@ -2587,40 +2589,84 @@ document.addEventListener('DOMContentLoaded', () => {
     setTimeout(()=>{ Object.keys(RANK_CFG).forEach(refreshRank); }, 800);
   });
 
-  // "최저 마진율" 카드 클릭 시 실제 해당 행으로 스크롤 + 하이라이트 이동
-  function attachMinMarginJump(panelId, minCardValId){
-    const kv = document.getElementById(minCardValId);
-    if(!kv) return;
-    const card = kv.closest('.kpi-card');
-    if(!card) return;
-    card.style.cursor = 'pointer';
-    card.onclick = () => {
-      const panel = document.getElementById(panelId);
-      if(!panel) return;
-      const table = Array.from(panel.querySelectorAll('table')).find(t => t.rows.length > 3);
-      if(!table) return;
-      const headerCells = Array.from(table.rows[0].cells).map(c => c.textContent.trim());
-      const colIdx = headerCells.findIndex(h => h.includes('마진율'));
-      if(colIdx < 0) return;
-      let minRow = null, minVal = Infinity;
-      Array.from(table.querySelectorAll('tr[data-id]')).forEach(tr=>{
-        const cell = tr.cells[colIdx];
-        if(!cell) return;
-        const val = parseFloat(cell.textContent.replace('%','').replace(',',''));
-        if(!isNaN(val) && val < minVal){ minVal = val; minRow = tr; }
-      });
-      if(minRow){
-        minRow.scrollIntoView({ behavior:'smooth', block:'center' });
-        minRow.style.transition = 'background-color 0.5s';
-        minRow.style.backgroundColor = '#fff3cd';
-        setTimeout(()=>{ minRow.style.backgroundColor = ''; }, 2500);
+  // "최저마진율 TOP10" 카드 — 클릭 시 마진율 낮은 순 10건 리스트로 펼쳐짐, 항목 클릭 시 해당 행으로 스크롤+하이라이트
+  function jumpToRowById(panelId, id){
+    const panel = document.getElementById(panelId);
+    if(!panel) return;
+    const tr = panel.querySelector('tr[data-id="'+id+'"]');
+    if(!tr) return;
+    tr.scrollIntoView({ behavior:'smooth', block:'center' });
+    tr.style.transition = 'background-color 0.5s';
+    tr.style.backgroundColor = '#fff3cd';
+    setTimeout(()=>{ tr.style.backgroundColor = ''; }, 2500);
+  }
+  function bottom10Margin(tab){
+    const data = (window._d && window._d[tab]) || [];
+    return data
+      .filter(r => r.margin_rate !== null && r.margin_rate !== undefined && !isNaN(+r.margin_rate))
+      .slice()
+      .sort((a,b) => (+a.margin_rate) - (+b.margin_rate))
+      .slice(0,10);
+  }
+  function computeFillSpanGrid(gridId, host){
+    const grid = document.getElementById(gridId);
+    if(!grid) return 3;
+    const totalCols = getComputedStyle(grid).gridTemplateColumns.split(' ').filter(Boolean).length;
+    const otherCards = Array.from(grid.children).filter(c => c !== host && c.classList.contains('kpi-card')).length;
+    return Math.max(1, totalCols - otherCards);
+  }
+  function mmEntryHtml(r, tab){
+    const mg = (tab==='lmo') ? Math.round(+r.margin_rate) : (+r.margin_rate).toFixed(1);
+    return '<div class="rank-entry" data-id="'+String(r.id)+'" style="cursor:pointer;padding:5px 8px;border-radius:6px;flex:0 0 auto;max-width:170px;">' +
+      '<div style="font-size:12.5px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+(r.item_name||'—')+'</div>' +
+      '<div style="font-size:11px;color:#556;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+(r.customer_name||'—')+' · '+(r.rep||'—')+'</div>' +
+      '<div style="font-size:12px;color:#c0392b;font-weight:800;">'+mg+'%</div></div>';
+  }
+  function toggleMinMarginCard(tab, panelId, gridId){
+    const host = document.getElementById('mmcard-'+tab);
+    if(!host) return;
+    const inner = host.querySelector('.rank-inner');
+    const expanded = host.dataset.expanded === '1';
+    inner.classList.add('fading');
+    setTimeout(()=>{
+      if(!expanded){
+        const list = bottom10Margin(tab);
+        host.style.gridColumn = 'span ' + computeFillSpanGrid(gridId, host);
+        inner.innerHTML =
+          '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">' +
+          '<span style="font-size:10px;color:rgb(139,154,174);">최저마진율 TOP10</span>' +
+          '<span class="rank-close" style="font-size:12px;color:#4A7FC1;cursor:pointer;font-weight:700;background:#EEF2FB;padding:5px 12px;border-radius:6px;border:1px solid #D6E0F5;">접기 ▲</span></div>' +
+          '<div style="display:flex;flex-wrap:nowrap;overflow-x:auto;gap:6px;">' +
+          (list.length ? list.map(r=>mmEntryHtml(r,tab)).join('') : '<div style="font-size:12px;color:#8b9aae;padding:6px;">데이터 없음 — 먼저 조회해주세요</div>') +
+          '</div>';
+        inner.querySelectorAll('.rank-entry').forEach(el=>{
+          el.addEventListener('click', (e)=>{ e.stopPropagation(); jumpToRowById(panelId, el.dataset.id); });
+        });
+        const closeEl = inner.querySelector('.rank-close');
+        if(closeEl) closeEl.addEventListener('click', (e)=>{ e.stopPropagation(); toggleMinMarginCard(tab, panelId, gridId); });
+        host.dataset.expanded = '1';
+      } else {
+        host.style.gridColumn = '';
+        const cached = (window._minCache && window._minCache[tab]) || '—';
+        inner.innerHTML = '<div class="kpi-lbl">최저마진율 TOP10</div><div class="kpi-val warn" id="kv-'+tab+'-min">'+cached+'</div><div class="kpi-sub">TOP10 보기 ▾</div>';
+        host.dataset.expanded = '0';
       }
-    };
+      inner.classList.remove('fading');
+    }, 180);
   }
   window.addEventListener('load', ()=>{
     setTimeout(()=>{
-      attachMinMarginJump('panel-lms', 'kv-lms-min');
-      attachMinMarginJump('panel-lmo', 'kv-lmo-min');
+      const c1 = document.getElementById('mmcard-lms');
+      if(c1) c1.addEventListener('click', ()=>toggleMinMarginCard('lms','panel-lms','kpi-grid-lms'));
+      const c2 = document.getElementById('mmcard-lmo');
+      if(c2) c2.addEventListener('click', ()=>toggleMinMarginCard('lmo','panel-lmo','kpi-grid-lmo'));
+      const c3 = document.getElementById('mstockcard-ret');
+      if(c3) c3.addEventListener('click', ()=>{
+        const sel = document.getElementById('ret-status');
+        if(sel){ sel.value = '악성재고'; }
+        const goBtn = document.querySelector('#va-ret .btn-p');
+        if(goBtn) goBtn.click();
+      });
     }, 800);
   });
 
