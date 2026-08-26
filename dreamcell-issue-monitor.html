@@ -162,16 +162,58 @@ body{font-family:'Pretendard',-apple-system,BlinkMacSystemFont,'Segoe UI','Malgu
      고정폭+nowrap 대신, 페이지 폭에 맞춰 컬럼이 줄어들고 셀 안에서 줄바꿈되도록 강제.
      #panel-ush 처럼 JS에서 별도 min-width/table-layout을 준 표도 모두 덮어씀. */
   table,#panel-ush table{
-    min-width:0!important;width:100%!important;table-layout:auto!important;
+    min-width:0!important;width:100%!important;table-layout:fixed!important;
   }
   table th,table td,#panel-ush th,#panel-ush td{
-    white-space:normal!important;word-break:break-word!important;overflow-wrap:break-word!important;
+    white-space:normal!important;word-break:keep-all!important;overflow-wrap:break-word!important;
   }
   table{font-size:10.5px!important;}
   thead th{padding:6px 8px!important;}
   tbody td{padding:5px 8px!important;}
+  /* 화면 전용 "사유" 말줄임(...) 툴팁 스타일 해제 — 인쇄물에서는 전체 문구가 줄바꿈되어 그대로 보여야 함 */
+  .reason-tip{
+    position:static!important;max-width:none!important;overflow:visible!important;
+    text-overflow:clip!important;white-space:normal!important;
+  }
   /* 화면에서 켜져 있어도, 인쇄물에는 작업(수정/삭제) 버튼 컬럼은 필요 없으므로 항상 숨김 */
   th.ac,td.act-cell{display:none!important;}
+  /* table-layout:fixed로 각 표의 컬럼 비율을 지정 — 짧은 라벨(담당자·마진율 등) 컬럼이
+     세로로 쪼개지듯 줄바꿈되던 문제 방지, 긴 텍스트(품명·사유) 컬럼엔 넉넉한 폭 배분 */
+  #panel-lms table th:nth-child(1),#panel-lms table td:nth-child(1){width:8%!important;}
+  #panel-lms table th:nth-child(2),#panel-lms table td:nth-child(2){width:9%!important;}
+  #panel-lms table th:nth-child(3),#panel-lms table td:nth-child(3){width:7%!important;}
+  #panel-lms table th:nth-child(4),#panel-lms table td:nth-child(4){width:9%!important;}
+  #panel-lms table th:nth-child(5),#panel-lms table td:nth-child(5){width:19%!important;}
+  #panel-lms table th:nth-child(6),#panel-lms table td:nth-child(6){width:7%!important;}
+  #panel-lms table th:nth-child(7),#panel-lms table td:nth-child(7){width:7%!important;}
+  #panel-lms table th:nth-child(8),#panel-lms table td:nth-child(8){width:7%!important;}
+  #panel-lms table th:nth-child(9),#panel-lms table td:nth-child(9){width:6%!important;}
+  #panel-lms table th:nth-child(10),#panel-lms table td:nth-child(10){width:21%!important;}
+
+  #panel-ret table th:nth-child(1),#panel-ret table td:nth-child(1){width:7%!important;}
+  #panel-ret table th:nth-child(2),#panel-ret table td:nth-child(2){width:7%!important;}
+  #panel-ret table th:nth-child(3),#panel-ret table td:nth-child(3){width:8%!important;}
+  #panel-ret table th:nth-child(4),#panel-ret table td:nth-child(4){width:17%!important;}
+  #panel-ret table th:nth-child(5),#panel-ret table td:nth-child(5){width:5%!important;}
+  #panel-ret table th:nth-child(6),#panel-ret table td:nth-child(6){width:10%!important;}
+  #panel-ret table th:nth-child(7),#panel-ret table td:nth-child(7){width:10%!important;}
+  #panel-ret table th:nth-child(8),#panel-ret table td:nth-child(8){width:16%!important;}
+  #panel-ret table th:nth-child(9),#panel-ret table td:nth-child(9){width:8%!important;}
+  #panel-ret table th:nth-child(10),#panel-ret table td:nth-child(10){width:6%!important;}
+  #panel-ret table th:nth-child(11),#panel-ret table td:nth-child(11){width:6%!important;}
+
+  #panel-lmo table th:nth-child(1),#panel-lmo table td:nth-child(1){width:7%!important;}
+  #panel-lmo table th:nth-child(2),#panel-lmo table td:nth-child(2){width:7%!important;}
+  #panel-lmo table th:nth-child(3),#panel-lmo table td:nth-child(3){width:9%!important;}
+  #panel-lmo table th:nth-child(4),#panel-lmo table td:nth-child(4){width:8%!important;}
+  #panel-lmo table th:nth-child(5),#panel-lmo table td:nth-child(5){width:16%!important;}
+  #panel-lmo table th:nth-child(6),#panel-lmo table td:nth-child(6){width:5%!important;}
+  #panel-lmo table th:nth-child(7),#panel-lmo table td:nth-child(7){width:7%!important;}
+  #panel-lmo table th:nth-child(8),#panel-lmo table td:nth-child(8){width:8%!important;}
+  #panel-lmo table th:nth-child(9),#panel-lmo table td:nth-child(9){width:8%!important;}
+  #panel-lmo table th:nth-child(10),#panel-lmo table td:nth-child(10){width:7%!important;}
+  #panel-lmo table th:nth-child(11),#panel-lmo table td:nth-child(11){width:6%!important;}
+  #panel-lmo table th:nth-child(12),#panel-lmo table td:nth-child(12){width:12%!important;}
   .cc-report-wrap{box-shadow:none!important;overflow:visible!important;padding:0!important;}
   .kpi-wrap{page-break-inside:avoid;}
 }
