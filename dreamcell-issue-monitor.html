@@ -177,6 +177,25 @@ body{font-family:'Pretendard',-apple-system,BlinkMacSystemFont,'Segoe UI','Malgu
   }
   /* 화면에서 켜져 있어도, 인쇄물에는 작업(수정/삭제) 버튼 컬럼은 필요 없으므로 항상 숨김 */
   th.ac,td.act-cell{display:none!important;}
+  /* 숫자 컬럼(마진율/단가/수주량 등)은 내용이 짧으니 좌우 여백을 좁게 */
+  table th.r,table td.r{padding-left:4px!important;padding-right:6px!important;}
+  /* 미출고내역 — 수주량/입고/미출고처럼 숫자 1~2자리만 들어가는 컬럼은 좁게,
+     대신 사유·품명처럼 내용이 긴 컬럼에 여유 폭을 더 줌 */
+  #panel-ush table th:nth-child(1),#panel-ush table td:nth-child(1){width:4%!important;}
+  #panel-ush table th:nth-child(2),#panel-ush table td:nth-child(2){width:11%!important;}
+  #panel-ush table th:nth-child(3),#panel-ush table td:nth-child(3){width:6%!important;}
+  #panel-ush table th:nth-child(4),#panel-ush table td:nth-child(4){width:13%!important;}
+  #panel-ush table th:nth-child(5),#panel-ush table td:nth-child(5){width:3%!important;}
+  #panel-ush table th:nth-child(6),#panel-ush table td:nth-child(6){width:3%!important;}
+  #panel-ush table th:nth-child(7),#panel-ush table td:nth-child(7){width:3%!important;}
+  #panel-ush table th:nth-child(8),#panel-ush table td:nth-child(8){width:5%!important;}
+  #panel-ush table th:nth-child(9),#panel-ush table td:nth-child(9){width:6%!important;}
+  #panel-ush table th:nth-child(10),#panel-ush table td:nth-child(10){width:18%!important;}
+  #panel-ush table th:nth-child(11),#panel-ush table td:nth-child(11){width:7%!important;}
+  #panel-ush table th:nth-child(12),#panel-ush table td:nth-child(12){width:5%!important;}
+  #panel-ush table th:nth-child(13),#panel-ush table td:nth-child(13){width:4%!important;}
+  #panel-ush table th:nth-child(14),#panel-ush table td:nth-child(14){width:6%!important;}
+  #panel-ush table th:nth-child(15),#panel-ush table td:nth-child(15){width:6%!important;}
   /* table-layout:fixed로 각 표의 컬럼 비율을 지정 — 짧은 라벨(담당자·마진율 등) 컬럼이
      세로로 쪼개지듯 줄바꿈되던 문제 방지, 긴 텍스트(품명·사유) 컬럼엔 넉넉한 폭 배분 */
   #panel-lms table th:nth-child(1),#panel-lms table td:nth-child(1){width:8%!important;}
