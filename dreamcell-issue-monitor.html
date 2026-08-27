@@ -1312,7 +1312,7 @@ async function loadRET(){
     const tb=document.getElementById('tb-ret');
     if(!data?.length){tb.innerHTML=emptyR(11,'🔄','해당 조건의 반품건이 없습니다');setCnt('ret',0);}
     else{
-      tb.innerHTML=data.map(r=>'<tr data-id="'+r.id+'"><td>'+(r.return_date||'—')+'</td><td>'+(r.rep||'—')+'</td><td>'+(r.code||'—')+'</td><td>'+(r.item_name||'—')+'</td><td class="r">'+fmt(r.qty)+'</td><td>'+(r.supplier||'—')+'</td><td>'+(r.customer_name||'—')+'</td><td>'+(r.reason||'—')+'</td><td><span class="badge '+(PB[r.process]||'bgr')+'">'+(r.process||'—')+'</span></td><td class="r">'+fmt(r.unit_price)+'</td><td class="r">'+fmt(r.total)+'</td>'+actCell('ret',r.id)+'</tr>').join('');window._d.ret=data;restoreActCol('ret');
+      tb.innerHTML=data.map(r=>'<tr data-id="'+r.id+'"><td>'+(r.return_date||'—')+'</td><td>'+(r.rep||'—')+'</td><td>'+(r.code||'—')+'</td><td>'+(r.item_name||'—')+'</td><td class="r">'+fmt(r.qty)+'</td><td>'+(r.supplier||'—')+'</td><td>'+(r.customer_name||'—')+'</td><td class="dm">'+(r.reason||'—')+'</td><td><span class="badge '+(PB[r.process]||'bgr')+'">'+(r.process||'—')+'</span></td><td class="r">'+fmt(r.unit_price)+'</td><td class="r">'+fmt(r.total)+'</td>'+actCell('ret',r.id)+'</tr>').join('');window._d.ret=data;restoreActCol('ret');
       setCnt('ret',data.length);updKPI_ret(data);
     }
     setTS('ret');
