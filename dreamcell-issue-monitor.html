@@ -912,8 +912,8 @@ table.report td:first-child,table.report th:first-child{width:105px;min-width:10
 </div>
 
 <script>
-const SB_URL='https://fhlowhfqgmjnmzgvmjsi.supabase.co';
-const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZobG93aGZxZ21qbm16Z3ZtanNpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU5ODU2NDgsImV4cCI6MjEwMTU2MTY0OH0.eW5_u_52wxD9UBPo_FzDgs6CqKqzTZPZO_j703gj1ps';
+const SB_URL='https://uvplpljddxqojiekbxjg.supabase.co'; // ★ 2026-09 Supabase 프로젝트 통합: dreamcell-report → dreamcell-uploader로 이전
+const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV2cGxwbGpkZHhxb2ppZWtieGpnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODYyNDgxODMsImV4cCI6MjEwMTgyNDE4M30.rc_5JRDCrUDE8a1w3LYZbbyUYT1TAyFkQT_mxFKA8Zg';
 let sb=null;
 try{sb=supabase.createClient(SB_URL,SB_KEY);
   document.getElementById('connDot').classList.add('on');
@@ -935,7 +935,7 @@ async function sha256Hex(text){
 
 async function getStoredPasswordHash(){
   try{
-    const {data, error} = await sb.from('app_config').select('value').eq('key','login_password_hash').single();
+    const {data, error} = await sb.from('report_app_config').select('value').eq('key','login_password_hash').single();
     if(error || !data) return AUTH_FALLBACK_HASH;
     return data.value || AUTH_FALLBACK_HASH;
   }catch(e){ return AUTH_FALLBACK_HASH; }
@@ -943,14 +943,14 @@ async function getStoredPasswordHash(){
 
 async function getGateEnabled(){
   try{
-    const {data, error} = await sb.from('app_config').select('value').eq('key','login_gate_enabled').single();
+    const {data, error} = await sb.from('report_app_config').select('value').eq('key','login_gate_enabled').single();
     if(error || !data || data.value===undefined || data.value===null) return LOGIN_GATE_ENABLED;
     return data.value === 'true';
   }catch(e){ return LOGIN_GATE_ENABLED; }
 }
 
 async function setGateEnabled(enabled){
-  await sb.from('app_config').upsert({key:'login_gate_enabled', value: enabled ? 'true' : 'false'});
+  await sb.from('report_app_config').upsert({key:'login_gate_enabled', value: enabled ? 'true' : 'false'});
 }
 
 async function onGateToggleChange(){
@@ -2322,7 +2322,7 @@ async function changeLoginPassword(){
   msgEl.textContent='저장 중...'; msgEl.style.color='#c0c4e0';
   try{
     const hash = await sha256Hex(pw1);
-    const {error} = await sb.from('app_config').upsert({key:'login_password_hash', value:hash});
+    const {error} = await sb.from('report_app_config').upsert({key:'login_password_hash', value:hash});
     if(error) throw error;
     msgEl.textContent='✅ 변경 완료! 다음 접속부터 새 비밀번호로 로그인하세요.'; msgEl.style.color='#4ade80';
     document.getElementById('new-login-pw').value='';
@@ -2579,7 +2579,7 @@ document.addEventListener('DOMContentLoaded', () => {
           <div class="settings-row-label" style="margin-bottom:10px;">🔗 Supabase 연결 정보</div>
           <div class="sb-field">
             <label>URL</label>
-            <input type="text" id="cfg-sb-url" value="https://fhlowhfqgmjnmzgvmjsi.supabase.co">
+            <input type="text" id="cfg-sb-url" value="https://uvplpljddxqojiekbxjg.supabase.co">
           </div>
           <div class="sb-field">
             <label>Anon Key</label>
