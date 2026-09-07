@@ -1275,7 +1275,10 @@ function resetFilters(tab){
 async function loadLMS(){
   if(!guard())return;L(true);
   try{
+    // ★ 2026-09: 업로더DB와 통합되면서 이 테이블에 업로더 원본(미검토)과 업로드된 사본이 섞여있음.
+    //   이슈모니터는 "업로드된(source_id 있는) 사본"만 보여줘야 함.
     let q=sb.from('low_margin_shipments').select('*')
+      .not('source_id','is',null)
       .gte('ship_date',document.getElementById('lms-f').value)
       .lte('ship_date',document.getElementById('lms-t').value)
       .order('ship_date',{ascending:true});
@@ -1298,7 +1301,10 @@ async function loadLMS(){
 async function loadRET(){
   if(!guard())return;L(true);
   try{
+    // ★ 2026-09: 업로더DB와 통합되면서 이 테이블에 업로더 원본(미검토)과 업로드된 사본이 섞여있음.
+    //   이슈모니터는 "업로드된(source_id 있는) 사본"만 보여줘야 함.
     let q=sb.from('return_shipments').select('*')
+      .not('source_id','is',null)
       .gte('return_date',document.getElementById('ret-f').value)
       .lte('return_date',document.getElementById('ret-t').value)
       .order('return_date',{ascending:true});
@@ -1559,7 +1565,10 @@ function renderBrandTableStatic(matrix,MGRS,BRANDS){
 async function loadLMO(){
   if(!guard())return;L(true);
   try{
+    // ★ 2026-09: 업로더DB와 통합되면서 이 테이블에 업로더 원본(미검토)과 업로드된 사본이 섞여있음.
+    //   이슈모니터는 "업로드된(source_id 있는) 사본"만 보여줘야 함.
     let q=sb.from('orders').select('*')
+      .not('source_id','is',null)
       .gte('order_date',document.getElementById('lmo-f').value)
       .lte('order_date',document.getElementById('lmo-t').value)
       .order('order_date',{ascending:false});
@@ -2399,12 +2408,19 @@ async function doAdminMonthDelete(){
     }
     // 그 외 테이블 날짜 범위 삭제
     const dk  = dkMap[tbl];
+    // ★ 2026-09 안전장치: low_margin_shipments·return_shipments·orders는 업로더DB와
+    //   프로젝트가 합쳐지면서 "업로더 원본 데이터"와 "업로더→이슈모니터 업로드 시 생긴 사본"이
+    //   같은 테이블에 함께 있음. 이 메뉴는 원래 "이슈모니터가 받은 사본"만 정리하려는 용도라,
+    //   source_id가 있는(=업로드된 사본인) 건만 지우도록 제한한다.
+    //   이 조건이 없으면 업로더의 실제 작업 원본 데이터까지 통째로 삭제될 위험이 있다.
+    const sharedWithUploader = (tblName === 'low_margin_shipments' || tblName === 'return_shipments' || tblName === 'orders');
+    const sourceFilter = sharedWithUploader ? '&source_id=not.is.null' : '';
     const res = await fetch(
-      `${SB_URL}/rest/v1/${tblName}?${dk}=gte.${ym}-01&${dk}=lt.${nm}-01`,
+      `${SB_URL}/rest/v1/${tblName}?${dk}=gte.${ym}-01&${dk}=lt.${nm}-01${sourceFilter}`,
       {method:'DELETE',headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Prefer':'return=minimal'}}
     );
     if(!res.ok){ const t=await res.text(); throw new Error(t); }
-    alert(`✅ ${ym} [${lbl}] 삭제 완료!`);
+    alert(`✅ ${ym} [${lbl}] 삭제 완료!`+(sharedWithUploader ? '\n(업로더 원본 데이터는 보호되어 삭제되지 않았습니다 — 업로더에서 삭제해야 원본도 지워집니다)' : ''));
   } catch(e){
     alert('삭제 오류: ' + (e.message||JSON.stringify(e)));
   }
