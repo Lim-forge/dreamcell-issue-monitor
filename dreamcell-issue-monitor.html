@@ -613,6 +613,23 @@ table.report td:first-child,table.report th:first-child{width:105px;min-width:10
 .cc-mdc-name{font-size:12px;font-weight:600;color:#3A3A3C;}
 .cc-mdc-val{font-size:13px;font-weight:700;}
 .cc-mdc-val.up{color:#30D158;}.cc-mdc-val.down{color:#FF3B30;}
+
+/* 변동건 수기 입력 누적 배지 (cc 탭 헤더 전용)
+   - 데이터 소스: manual_change_log 테이블 (월매출 연산기/index.html 업로더 화면에서 입력·저장)
+   - 이슈모니터는 같은 Supabase 프로젝트를 바라만 볼 뿐 쓰기 권한/UI가 없음 → 여기서는 "조회 전용"
+   - 월 선택(ccCurrentMonth)과 무관하게 항상 전체 누적 건수를 표시 */
+.cc-manual-badge{display:flex;align-items:center;gap:7px;padding:6px 14px;border-radius:20px;
+  background:#F5F3FF;border:1.5px solid #D6D0FA;cursor:pointer;transition:all .15s;user-select:none;flex-shrink:0}
+.cc-manual-badge:hover{background:#EFEAFE;transform:translateY(-1px)}
+.cc-manual-badge.open{border-color:#7C6FE0;background:#EFEAFE}
+.cc-manual-badge .cmb-icon{font-size:13px;line-height:1}
+.cc-manual-badge .cmb-label{font-size:11.5px;font-weight:700;color:#5B4FBF;white-space:nowrap}
+.cc-manual-badge .cmb-count{font-size:14px;font-weight:800;color:#3A2F8F}
+.cc-manual-badge .cmb-unit{font-size:11px;font-weight:600;color:#8B84C7}
+.cc-manual-badge .cmb-arrow{font-size:9px;color:#8B84C7;transition:transform .2s;margin-left:2px}
+.cc-manual-badge.open .cmb-arrow{transform:rotate(180deg)}
+.cc-manual-wrap{background:#fff;border-radius:12px;padding:14px 16px;box-shadow:0 1px 3px rgba(0,0,0,.05);}
+.cc-manual-note{font-size:11.5px;color:#8B9AAE;margin-bottom:10px;}
 </style>
 </head>
 <body>
@@ -789,12 +806,20 @@ table.report td:first-child,table.report th:first-child{width:105px;min-width:10
         <button class="mbtn on" id="mbv-cc" onclick="setMode('cc','view')">📊 조회</button>
         <button class="mbtn"    id="mbi-cc" onclick="setMode('cc','input')">✏️ 입력</button>
       </div>
+      <div class="cc-manual-badge" id="cc-manual-badge" onclick="toggleManualLog()" title="변동건 수기 입력 — 월 무관 전체 누적 (클릭해서 보기/닫기)">
+        <span class="cmb-icon">📝</span>
+        <span class="cmb-label">변동건 수기 입력</span>
+        <span class="cmb-count" id="cmb-count">—</span>
+        <span class="cmb-unit">건</span>
+        <span class="cmb-arrow" id="cmb-arrow">▾</span>
+      </div>
       <span class="ph-s"></span><span class="ph-m" id="ts-cc"></span>
       <button class="btn btn-g pdf-btn" onclick="printPanel('cc')">🖨 PDF 출력 (A3)</button>
     </div>
     <div class="va" id="va-cc">
       <div class="fb"></div>
 
+      <div id="cc-manual-wrap" class="cc-manual-wrap" style="display:none;"></div>
       <div id="cc-report-wrap" class="cc-report-wrap" style="display:none;"></div>
     </div>
     <div class="ia" id="ia-cc"></div>
@@ -1085,6 +1110,7 @@ window._d=window._d||{lms:[],ret:[],cc:[],lmo:[]};
   if(ccYr)ccYr.addEventListener('change',()=>loadCC());
   if(ccMo)ccMo.addEventListener('change',()=>loadCC());
   if(sb) initCCDefaultMonth();
+  if(sb) refreshManualBadge(); // 변동건 수기 입력 누적 배지 — 월/탭과 무관하게 항상 표시
   // 모든 탭 작업열 기본 숨김
   TABS.forEach(t=>{
     const panel=document.getElementById('panel-'+t);
@@ -1342,6 +1368,47 @@ function ccBeforeAfter(before,after,isAmount){
   const clr=diff<0?'#B91C1C':'#065F46';
   return f(before)+' → '+f(after)+' <span style="color:'+clr+';font-weight:700;">('+(diff>=0?'+':'')+fmt(diff)+')</span>';
 }
+// ── 변동건 수기 입력 누적 배지 (cc 탭 헤더) ──────────────────────────────
+// manual_change_log는 월매출 연산기(index.html 업로더)에서만 입력·삭제되는 테이블.
+// 이슈모니터는 같은 Supabase 프로젝트를 조회만 하며, 월 선택과 무관하게 전체 누적 건수를 보여준다.
+let ccManualOpen=false;
+async function refreshManualBadge(){
+  const el=document.getElementById('cmb-count');
+  if(!el)return;
+  try{
+    const{count,error}=await sb.from('manual_change_log').select('id',{count:'exact',head:true});
+    if(error)throw error;
+    el.textContent=count??0;
+  }catch(e){console.warn('[수기입력 배지] 건수 조회 실패:',e);}
+}
+async function toggleManualLog(){
+  const wrap=document.getElementById('cc-manual-wrap');
+  const badge=document.getElementById('cc-manual-badge');
+  if(!wrap||!badge)return;
+  ccManualOpen=!ccManualOpen;
+  badge.classList.toggle('open',ccManualOpen);
+  if(!ccManualOpen){wrap.style.display='none';wrap.innerHTML='';return;}
+  wrap.style.display='block';
+  wrap.innerHTML='<div class="cc-report-empty">불러오는 중...</div>';
+  try{
+    const{data,error,count}=await sb.from('manual_change_log').select('*',{count:'exact'}).order('created_at',{ascending:false}).limit(500);
+    if(error)throw error;
+    const rows=data||[];
+    const total=count??rows.length;
+    document.getElementById('cmb-count').textContent=total;
+    const note='<div class="cc-manual-note">📌 월매출 연산기(업로더)에서 입력한 내역이며, 이슈모니터에서는 조회만 가능합니다.'
+      +(total>rows.length?' (최근 '+rows.length+'건만 표시)':'')+'</div>';
+    wrap.innerHTML=note+manualLogTable(rows);
+  }catch(e){
+    wrap.innerHTML='<div class="cc-report-empty">불러오기 실패: '+e.message+'</div>';
+  }
+}
+function manualLogTable(rows){
+  if(!rows.length)return'<div class="cc-report-empty">입력된 수기 내역이 없습니다</div>';
+  const trs=rows.map(r=>'<tr><td>'+ccTypeBadges(r.change_type)+'</td><td>'+(r.manager||'—')+'</td><td>'+(r.order_date||'—')+'</td><td>'+(r.item_code||'—')+'</td><td>'+(r.item_name||'—')+'</td><td class="r" style="white-space:nowrap;">'+ccBeforeAfter(r.qty_before,r.qty_after,false)+'</td><td class="r" style="white-space:nowrap;">'+ccBeforeAfter(r.original_amount,r.changed_amount,true)+'</td><td class="dm" title="'+escHtml(r.reason||'')+'">'+(r.reason||'—')+'</td></tr>').join('');
+  return '<div class="tbl-card"><div class="tx"><table><thead><tr><th>변동유형</th><th>담당자</th><th>수주일</th><th>품명코드</th><th>품명</th><th class="r">수량</th><th class="r">수주금액</th><th>사유</th></tr></thead><tbody>'+trs+'</tbody></table></div></div>';
+}
+
 let ccCurrentMonth=null;
 let ccDetailOpen=null; // 'amt' | 'cost' | null
 
