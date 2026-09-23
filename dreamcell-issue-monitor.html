@@ -1171,10 +1171,14 @@ function updKPI_ret(data){
   setKV('kv-ret-접수',data.filter(r=>r.process==='처리중').length+'건');
   const badStock = data.filter(r=>r.process==='악성재고');
   setKV('kv-ret-처리중',badStock.length+'건');
-  const soldCount = badStock.filter(r=>r.sold_at).length;
+  const fullySold = badStock.filter(r=>(r.sold_qty||0) >= (r.qty||0) && (r.qty||0)>0);
+  const partialSold = badStock.filter(r=>(r.sold_qty||0) > 0 && (r.sold_qty||0) < (r.qty||0));
   const soldEl = document.getElementById('kv-ret-sold');
   if(soldEl){
-    if(soldCount>0){ soldEl.style.display=''; soldEl.textContent = '판매 '+soldCount+'건'; }
+    let txt = '';
+    if(fullySold.length>0) txt += '완료 '+fullySold.length+'건 ';
+    if(partialSold.length>0) txt += '부분 '+partialSold.length+'건';
+    if(txt){ soldEl.style.display=''; soldEl.textContent = txt.trim(); }
     else { soldEl.style.display='none'; soldEl.textContent=''; }
   }
   setKV('kv-ret-재고사용',data.filter(r=>r.process==='재고사용').length+'건');
@@ -1352,7 +1356,15 @@ async function loadRET(){
     const tb=document.getElementById('tb-ret');
     if(!data?.length){tb.innerHTML=emptyR(11,'🔄','해당 조건의 반품건이 없습니다');setCnt('ret',0);}
     else{
-      tb.innerHTML=data.map(r=>'<tr data-id="'+r.id+'"><td>'+(r.return_date||'—')+'</td><td>'+(r.rep||'—')+'</td><td>'+(r.code||'—')+'</td><td>'+(r.item_name||'—')+'</td><td class="r">'+fmt(r.qty)+'</td><td>'+(r.supplier||'—')+'</td><td>'+(r.customer_name||'—')+'</td><td class="dm">'+(r.reason||'—')+'</td><td><span class="badge '+(PB[r.process]||'bgr')+'">'+(r.process||'—')+'</span>'+(r.process==='악성재고'&&r.sold_at?'<div style="margin-top:3px;font-size:10px;color:#0E7C5A;font-weight:700;">✅ '+r.sold_at+' 판매완료</div>':'')+'</td><td class="r">'+fmt(r.unit_price)+'</td><td class="r">'+fmt(r.total)+'</td>'+actCell('ret',r.id)+'</tr>').join('');window._d.ret=data;restoreActCol('ret');
+      tb.innerHTML=data.map(r=>{
+        let soldTxt='';
+        if(r.process==='악성재고'){
+          const totalQty=r.qty||0, soldQty=r.sold_qty||0;
+          if(soldQty>0 && soldQty<totalQty) soldTxt='<div style="margin-top:3px;font-size:10px;color:#c98a1a;font-weight:700;">🟡 '+soldQty+'/'+totalQty+' 판매 ('+r.sold_at+')</div>';
+          else if(soldQty>0 && soldQty>=totalQty) soldTxt='<div style="margin-top:3px;font-size:10px;color:#0E7C5A;font-weight:700;">✅ '+r.sold_at+' 판매완료 ('+soldQty+'/'+totalQty+')</div>';
+        }
+        return '<tr data-id="'+r.id+'"><td>'+(r.return_date||'—')+'</td><td>'+(r.rep||'—')+'</td><td>'+(r.code||'—')+'</td><td>'+(r.item_name||'—')+'</td><td class="r">'+fmt(r.qty)+'</td><td>'+(r.supplier||'—')+'</td><td>'+(r.customer_name||'—')+'</td><td class="dm">'+(r.reason||'—')+'</td><td><span class="badge '+(PB[r.process]||'bgr')+'">'+(r.process||'—')+'</span>'+soldTxt+'</td><td class="r">'+fmt(r.unit_price)+'</td><td class="r">'+fmt(r.total)+'</td>'+actCell('ret',r.id)+'</tr>';
+      }).join('');window._d.ret=data;restoreActCol('ret');
       setCnt('ret',data.length);updKPI_ret(data);
     }
     setTS('ret');
