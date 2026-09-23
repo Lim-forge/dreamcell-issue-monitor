@@ -769,6 +769,7 @@ table.report td:first-child,table.report th:first-child{width:105px;min-width:10
         <div class="kpi-card acc-danger" id="mstockcard-ret" style="cursor:pointer;"><div class="kpi-lbl">악성재고</div><div class="kpi-val warn" id="kv-ret-처리중">—</div><div class="kpi-sub kpi-sub-corner">클릭해서 보기</div><div class="kpi-sub kpi-sub-bottom" id="kv-ret-sold" style="display:none;"></div></div>
         <div class="kpi-card acc-neutral"><div class="kpi-lbl">재고사용</div><div class="kpi-val" id="kv-ret-재고사용">—</div></div>
         <div class="kpi-card acc-ok"><div class="kpi-lbl">반품완료</div><div class="kpi-val ok" id="kv-ret-완료">—</div></div>
+        <div class="kpi-card acc-neutral"><div class="kpi-lbl">악성재고 잔여금액</div><div class="kpi-val" id="kv-ret-remain">—</div></div>
       </div>
     </div>
     <div class="va" id="va-ret">
@@ -1184,6 +1185,8 @@ function updKPI_ret(data){
   }
   setKV('kv-ret-재고사용',data.filter(r=>r.process==='재고사용').length+'건');
   setKV('kv-ret-완료',data.filter(r=>r.process==='반품완료').length+'건');
+  const remainAmt=badStock.reduce((s,r)=>s+((r.unit_price||0)*((r.qty||0)-(r.sold_qty||0))),0);
+  setKV('kv-ret-remain',Math.round(remainAmt).toLocaleString()+'원');
 }
 function updKPI_cc(data){
   setKV('kv-cc-cnt',data.length+'건');
